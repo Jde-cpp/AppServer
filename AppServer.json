@@ -1,0 +1,13 @@
+{
+	"app-server": 
+	{
+		"dbDriver":  "./libMySql.so",
+		"connectionString":  "mysqlx://logs:{password}@127.0.0.1:33060/logs?ssl-mode=disabled"
+	},
+	"logging": 
+	{
+		"level": 1,
+		"path": "..",
+		"server":  false
+	}
+}

@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+/source/.bin/*
+/source/.vs/*
+*.db
+*.opendb
+*.user
+*.pb.cc
+*.pb.h
+source/.vscode/tasks.json
+source/.vscode/launch.json
+source/.vscode/settings.json
+

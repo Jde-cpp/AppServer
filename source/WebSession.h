@@ -1,0 +1,23 @@
+#pragma once
+#include "WebSocket.h"
+
+namespace Jde::ApplicationServer::Web
+{
+	struct MySession final: WebSocket::TSession<MyFromServer,MyFromClient>
+	{
+		typedef WebSocket::TSession<MyFromServer,MyFromClient> Base;
+		MySession( sp<MyServer> pServer, uint id, boost::asio::ip::tcp::socket& socket )noexcept(false);
+		~MySession();
+		void OnConnect()noexcept;
+		void OnRead( sp<MyFromClient> pTransmission )noexcept override;
+		void SendStatuses()noexcept;
+		void SendLogs( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const TimePoint& start )noexcept;
+		void PushMessage( ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept;
+		void WriteCustom( uint32 clientId, const string& message )noexcept;
+		void Start()noexcept override;
+	private:
+		void WriteError( string&& msg, uint32 requestId=0 )noexcept;
+		bool Write( const MyFromServer& tranmission  )noexcept;
+		MyServer& Server()noexcept;
+	};
+}
