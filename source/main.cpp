@@ -5,9 +5,11 @@
 #include "LogClient.h"
 #include "LogData.h"
 
-#define var const auto
+#ifndef _MSC_VER
+	#include "../../Framework/source/application/ApplicationLinux.h"
+#endif
 
-//TODO:  Hookup server logging.
+#define var const auto
 
 namespace Jde::ApplicationServer
 {
@@ -16,7 +18,7 @@ namespace Jde::ApplicationServer
 }
 int main( int argc, char** argv )
 {
-	Jde::Application::Startup( argc, argv, "AppServer" );
+	Jde::OSApp::Startup( argc, argv, "AppServer" );
 	//auto result = console ? 0 : ::daemon( 1, 0 );
 	//Jde::Threading::SetThreadDescription( "app-server" );
 	//INFO( "Running as console='{}' daemon='{}'", console, result );
@@ -27,9 +29,9 @@ int main( int argc, char** argv )
 	Jde::ApplicationServer::SettingsPtr = Jde::Settings::Global().SubContainer( "app-server" );
 
 	std::thread{ []{Jde::ApplicationServer::Run();} }.detach();
-	Jde::Application::Pause();
+	Jde::IApplication::Pause();
 
-	Jde::Application::CleanUp();
+	Jde::IApplication::CleanUp();
 	//_CrtDumpMemoryLeaks();
 }
 
@@ -45,11 +47,11 @@ namespace Jde::ApplicationServer
 
 		constexpr PortType ReceivePort = 4321;
 		constexpr uint WebSocketPort = 1967;
-		Jde::Application::SetConsoleTitle( fmt::format("Log Server web( '{}' ) receive( '{}' )", WebSocketPort, ReceivePort)  );
+		//Jde::Application::SetConsoleTitle( fmt::format("Log Server web( '{}' ) receive( '{}' )", WebSocketPort, ReceivePort)  );
 		var spWebSocket = Web::MyServer::CreateInstance( WebSocketPort );
-		Application::AddShutdown( spWebSocket );
+		IApplication::AddShutdown( spWebSocket );
 		//EtwListener::Create();
-		Application::AddShutdown( Listener::Create( ReceivePort) );
+		IApplication::AddShutdown( Listener::Create( ReceivePort) );
 		//pServer = make_unique<IO::Sockets::Server>( ReceivePort, Listener::GetInstancePtr() );
 		
 		return EXIT_SUCCESS;

@@ -72,7 +72,7 @@ namespace Jde::ApplicationServer::Web
 					if( pSession )
 					{
 						DBG( "killing proc id='{}' from sessionId '{}'", pSession->ProcessId, Id );
-						Application::Kill( pSession->ProcessId );
+						IApplication::Kill( pSession->ProcessId );
 					}
 				}
 				if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);

@@ -34,10 +34,10 @@ OBJECTS = $(OUT_DIR)/main.o $(OUT_DIR)/Listener.o $(OUT_DIR)/Sender.o $(OUT_DIR)
 			$(OUT_DIR)/FromClient.pb.o $(OUT_DIR)/FromServer.pb.o
 
 $(OUTPUT): $(OUT_DIR)/stdafx.h.gch $(OBJECTS)
-	$(CXX) $(LIBFLAGS) -L/home/duffyj/code/libraries/boostorg/boost_1_68_0/stage/lib $(OBJECTS) -o$(OUTPUT) $(LIBS)
+	$(CXX) $(LIBFLAGS) $(OBJECTS) -o$(OUTPUT) $(LIBS)
 
 $(OUT_DIR)/stdafx.h.gch: pc.h
-	$(CXX) $(CXXFLAGS) ./pc.h -o $(OUT_DIR)/stdafx.h.gch -I/home/duffyj/code/libraries/spdlog/include -I/home/duffyj/code/libraries/boostorg/boost_1_68_0 -I/home/duffyj/code/libraries/json/include
+	$(CXX) $(CXXFLAGS) ./pc.h -o $(OUT_DIR)/stdafx.h.gch -I/home/duffyj/code/libraries/spdlog/include -I$$BOOST_ROOT -I/home/duffyj/code/libraries/json/include
 
 $(OUT_DIR)/main.o: ./main.cpp pc.h
 	$(CXX) $(CXXFLAGS) $< -o$@  $(INCLUDE)

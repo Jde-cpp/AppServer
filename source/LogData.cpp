@@ -15,7 +15,7 @@ namespace Jde::Logging::Data
 		TRACE( "SetDataSource='{}'", dataSource ? "on" : "off" );
 		_dataSource = dataSource;
 		_pDbQueue = make_shared<DB::DBQueue>( dataSource );
-		Application::AddShutdown( _pDbQueue );
+		IApplication::AddShutdown( _pDbQueue );
 	}
 	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( string_view applicationName, string_view hostName, uint processId )noexcept(false)
 	{
@@ -113,7 +113,9 @@ namespace Jde::Logging::Data
 		try
 		{
 			//constexpr string_view whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
-			vector<string> where = { fmt::format("time>{}", ToIsoString(start)) };
+			vector<string> where;
+			if( start>TimePoint{} )
+				where.push_back( fmt::format("time>'{}'", ToIsoString(start)) );
 			std::vector<DB::DataValue> parameters;
 			if( applicationId>0 )
 			{
@@ -128,7 +130,7 @@ namespace Jde::Logging::Data
 			
 			constexpr string_view sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
 			string whereString = StringUtilities::AddSeparators( where, " and " );
-			_dataSource->Select( fmt::format("{} where {} order by id, time", sql, whereString), fnctn, parameters );
+			_dataSource->Select( fmt::format("{} where {} order by id, time limit 5000", sql, whereString), fnctn, parameters );
 
 			auto fnctn = [&mapTraces]( const DB::IRow& row )
 			{

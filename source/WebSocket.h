@@ -6,7 +6,7 @@
 #include <list>
 #include <shared_mutex>
 
-//https://www.boost.org/doc/libs/1_68_0/libs/beast/example/websocket/server/sync/websocket_server_sync.cpp
+//https://www.boost.org/doc/libs/1_71_0/libs/beast/example/websocket/server/sync/websocket_server_sync.cpp
 
 //------------------------------------------------------------------------------
 namespace boost::asio::ip{ class tcp; }
@@ -129,7 +129,7 @@ namespace Jde::WebSocket
 				ERR( "std::exception returned: '{}'", e.what() );
 			}
 		}
-		Application::RemoveThread( _pThread );
+		IApplication::RemoveThread( _pThread );
 	}
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 	struct Server : std::enable_shared_from_this<Server>
@@ -148,7 +148,7 @@ namespace Jde::WebSocket
 	};
 
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
-	struct TServer : Server, public Application::IShutdown
+	struct TServer : Server, public IShutdown
 	{
 		TServer( uint16 port )noexcept:
 			Server{port}

@@ -21,7 +21,7 @@ namespace Jde::WebSocket
 	{
 		TRACE0( "WebSocket::StartAccepting" );
 		_pAcceptor = make_shared<Threading::InterruptibleThread>( "WebSocketServer", [&](){Accept();} );
-		Application::AddThread( _pAcceptor );
+		IApplication::AddThread( _pAcceptor );
 	}
 
 //auto pSession = make_shared<websocket::stream<tcp::socket>>( std::move(socket) );
@@ -49,7 +49,7 @@ namespace Jde::WebSocket
 		{
 			Run();
 		});
-		Application::AddThread( _pThread );
+		IApplication::AddThread( _pThread );
 	}
 
 	void Session::Disconnect()noexcept

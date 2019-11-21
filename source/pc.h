@@ -48,7 +48,7 @@
 #include "../../Framework/source/collections/Queue.h"
 #include "../../Framework/source/db/DBQueue.h"
 #include "../../Framework/source/threading/InterruptibleThread.h"
-#include "../../Framework/source/Application.h"
+#include "../../Framework/source/application/Application.h"
 #include "../../Framework/source/io/sockets/ProtoClient.h"
 #include "../../Framework/source/io/File.h"
 
