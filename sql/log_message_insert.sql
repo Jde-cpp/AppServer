@@ -1,4 +1,4 @@
-﻿use logs;
+﻿﻿use logs;
 drop procedure log_message_insert_out;
 drop procedure log_message_insert;
 drop procedure log_message_insert1;
@@ -42,7 +42,7 @@ DELIMITER $$
 CREATE PROCEDURE log_message_insert_out( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, out _id int unsigned )
 begin
 	INSERT INTO logs(application_id,application_instance_id,file_id,function_id,line_number,message_id,severity,thread_id,time,user_id)
-	VALUES( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time, _userId );
+	VALUES( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, CONVERT_TZ(time, '+00:00', @@session.time_zone), _userId );
 
 	select LAST_INSERT_ID() into _id;
 	if( mod(_id,10000)=0 ) then
