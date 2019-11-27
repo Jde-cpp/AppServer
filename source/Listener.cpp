@@ -10,6 +10,7 @@
 #define _logClient Logging::LogClient::Instance()
 
 #define _webServer (*Web::MyServer::GetInstance())
+#define _webLevelUint static_cast<uint>((Jde::ELogLevel)_webLevel)
 namespace Jde::ApplicationServer
 {
 	//using Messages::EMessages; using Messages::Application; using Messages::Message;
@@ -155,8 +156,8 @@ namespace Jde::ApplicationServer
 	Logging::Proto::LogLevels* Session::AllocatedLogLevels()noexcept
 	{
 		auto pValues = new Logging::Proto::LogLevels();
-		pValues->set_server( (Logging::Proto::ELogLevel)std::min((uint)_dbLevel,(uint)_webLevel) );
-		pValues->set_client( (Logging::Proto::ELogLevel)_fileLogLevel );
+		pValues->set_server( (Logging::Proto::ELogLevel)std::min((uint)_dbLevel, _webLevelUint) );
+		pValues->set_client( static_cast<Logging::Proto::ELogLevel>((Jde::ELogLevel)_fileLogLevel) );
 		return pValues;
 	}
 
@@ -208,9 +209,9 @@ namespace Jde::ApplicationServer
 
 	void Session::WebSubscribe( ELogLevel level )noexcept
 	{
-		var currentLevel = std::min( (uint)_dbLevel, (uint)_webLevel );
+		var currentLevel = std::min( (uint)_dbLevel, static_cast<uint>((Jde::ELogLevel)_webLevel) );
 		_webLevel = level;
-		if( currentLevel!=std::min((uint)_dbLevel, (uint)_webLevel) )
+		if( currentLevel!=std::min((uint)_dbLevel, _webLevelUint) )
 		{
 			Logging::Proto::FromServer transmission;
 			transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
@@ -259,7 +260,7 @@ namespace Jde::ApplicationServer
 						variables.push_back( message.variables(i) );
 					if( level>=(uint)_dbLevel )
 						Logging::Data::PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), variables );
-					if( level>=(uint)_webLevel )
+					if( level>=_webLevelUint )
 						_webLevel = Web::MyServer::GetInstance()->PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), variables );
 				}
 				else if( item.has_string() )

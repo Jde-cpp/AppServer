@@ -105,7 +105,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		shared_lock l{ _logSubscriptionMutex };
 		auto minLevel = ELogLevel::None;
-		auto pSessions = _logSubscriptions.find( instanceId );
+		auto pSessions = _logSubscriptions.find( applicationId );
 		WebSocket::SessionPK brokenSession{0};
 		if( pSessions!=_logSubscriptions.end() )
 		{

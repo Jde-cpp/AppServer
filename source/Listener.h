@@ -43,8 +43,8 @@ namespace Jde::ApplicationServer
 	private:
 		void OnDisconnect()noexcept;
 		ELogLevel _dbLevel;
-		ELogLevel _webLevel;
-		ELogLevel _fileLogLevel;
+		atomic<ELogLevel> _webLevel{ELogLevel::None};
+		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
 		atomic<uint> _requestId{0};
 		map<uint,tuple<uint,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
 	};
