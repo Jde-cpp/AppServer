@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Cache.h"
 #include "WebSocket.h"
 #include "LogData.h"
@@ -61,7 +60,7 @@ namespace Jde::ApplicationServer
 		// 	pStrings->MessagesPtr->Emplace( id, value );
 		// 	break;
 		default:
-			ERR( "unknown field {}.", field );
+			ERRN( "unknown field {}.", field );
 		}
 	}
 

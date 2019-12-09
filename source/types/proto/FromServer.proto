@@ -84,8 +84,9 @@ message ApplicationString
 
 message ApplicationStrings
 {
-	uint32 ApplicationId=1;
-	repeated ApplicationString Values=2;
+	uint32 RequestId=1;
+	uint32 ApplicationId=2;
+	repeated ApplicationString Values=3;
 }
 
 message ErrorMessage

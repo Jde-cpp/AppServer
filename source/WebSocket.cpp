@@ -1,9 +1,4 @@
-#include "stdafx.h"
 #include "WebSocket.h"
-//#include "../framework/log/server/ServerSink.h"
-//#include "../framework/threading/Thread.h"
-//#include "../framework/io/Buffer.h"
-//#include "../framework/io/sockets/ProtoClient.h"
 #include "Listener.h"
 #include "Cache.h"
 #define var const auto

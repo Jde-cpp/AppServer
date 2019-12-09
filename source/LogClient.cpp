@@ -1,9 +1,6 @@
-#include "stdafx.h"
 #include "LogClient.h"
 #include "LogData.h"
 #include "WebServer.h"
-//#include "../framework/Collections.h"
-
 
 #define var const auto
 namespace Jde::Logging
@@ -35,7 +32,10 @@ namespace Jde::Logging
 		//   = *LoadFiles(applicationId);
 		//  = *(applicationId);
 	}
-
+	void LogClient::Log( const Logging::Messages::Message& message )noexcept
+	{
+		Log( dynamic_cast<const Logging::MessageBase&>(message), message.Variables );
+	}
 	void LogClient::Log( const Logging::MessageBase& msg )noexcept
 	{
 		const static vector<string> values;

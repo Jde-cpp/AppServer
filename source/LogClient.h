@@ -6,6 +6,7 @@ namespace Jde::Logging
 	{
 		static void CreateInstance()noexcept(false);
 		static LogClient& Instance()noexcept{ ASSERT(_pInstance); return *_pInstance; }
+		void Log( const Logging::Messages::Message& message )noexcept override;
 		void Log( const Logging::MessageBase& messageBase )noexcept override;
 		void Log( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept override;
 

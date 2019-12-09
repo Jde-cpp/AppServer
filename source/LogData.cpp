@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "LogData.h"
 #include "types/proto/FromServer.pb.h"
 
@@ -87,14 +86,14 @@ namespace Jde::Logging::Data
 		_pDbQueue->Push( sql, pParameters, false );
 	}
 	
-	Traces* LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const TimePoint& start )noexcept
+	Traces* LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& start, uint limit )noexcept
 	{
 		auto pTraces = new Traces();
 		map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
 		auto fnctn = [&pTraces, &mapTraces, instanceId]( const DB::IRow& row )
 		{
 			auto pTrace = pTraces->add_values();
-			pTrace->set_instanceid( instanceId );
+			//pTrace->set_instanceid( instanceId );
 			uint i=0;
 			var id = row.GetUInt32(i++);
 			pTrace->set_instanceid( row.GetUInt32(i++) );
@@ -114,8 +113,8 @@ namespace Jde::Logging::Data
 		{
 			//constexpr string_view whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
 			vector<string> where;
-			if( start>TimePoint{} )
-				where.push_back( fmt::format("time>'{}'", ToIsoString(start)) );
+			if( start.has_value() )
+				where.push_back( fmt::format("time>'{}'", ToIsoString(start.value())) );
 			std::vector<DB::DataValue> parameters;
 			if( applicationId>0 )
 			{
@@ -129,8 +128,9 @@ namespace Jde::Logging::Data
 			}
 			
 			constexpr string_view sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
-			string whereString = StringUtilities::AddSeparators( where, " and " );
-			_dataSource->Select( fmt::format("{} where {} order by id, time limit 5000", sql, whereString), fnctn, parameters );
+			var whereString = StringUtilities::AddSeparators( where, " and " );
+			var orderDirection = start.has_value() ? "asc"sv : "desc"sv;
+			_dataSource->Select( fmt::format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
 
 			auto fnctn = [&mapTraces]( const DB::IRow& row )
 			{
@@ -140,7 +140,7 @@ namespace Jde::Logging::Data
 					*pTrace->second->add_variables() = row.GetString( 1 );
 			};
 			constexpr string_view variables = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
-			_dataSource->Select( fmt::format("{} where {} order by log_id, variable_index", variables, whereString), fnctn, parameters );
+			_dataSource->Select( fmt::format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn, parameters );
 		}
 		catch(const std::exception& e)
 		{}

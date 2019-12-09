@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "browse": { "path": [
+					"${workspaceFolder}",
+					"/home/duffyj/code/libraries/spdlog/include/"
+					], "limitSymbolsToIncludedHeaders": true },
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/duffyj/code/libraries/asio/asio/include/",
+                "/home/duffyj/code/libraries/spdlog/include/",
+                "/home/duffyj/code/libraries/eigen",
+                "/home/duffyj/code/libraries/boostorg/boost_1_71_0",
+					 "/home/duffyj/code/libraries/json/include"
+            ],
+				"defines": [],
+				"forcedInclude": [
+					"${workspaceFolder}/pc.h",
+					"/home/duffyj/code/libraries/spdlog/include/spdlog/fmt/ostr.h"
+				],
+            "compilerPath": "/usr/bin/clang++",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64",
+            "compilerArgs": []
+        }
+    ],
+    "version": 4
+}

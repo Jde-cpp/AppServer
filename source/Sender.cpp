@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Sender.h"
 
 namespace Jde::Logging::Server
@@ -10,14 +9,14 @@ namespace Jde::Logging::Server
 	
 	Sender& Sender::Create()noexcept(false)
 	{
-		ASSRT_TR( !_pSender );
+		ASSERT( !_pSender );
 		_pSender = unique_ptr<Sender>( new Sender() );
 		return *_pSender;
 	}
 
 	Sender& Sender::GetInstance()noexcept
 	{
-		ASSRT_TR( _pSender );
+		ASSERT( _pSender );
 		return *_pSender;
 	}
 

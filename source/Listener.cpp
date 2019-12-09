@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Listener.h"
 #include "LogData.h"
 #include "WebServer.h"
@@ -19,7 +18,7 @@ namespace Jde::ApplicationServer
 	shared_ptr<Listener> Listener::_pInstance{nullptr};
 	shared_ptr<Listener> Listener::Create( PortType port )noexcept(false)
 	{
-		ASSRT_TR( _pInstance==nullptr );
+		ASSERT( _pInstance==nullptr );
 		try
 		{
 			return _pInstance = shared_ptr<Listener>( new Listener(port) );
@@ -32,7 +31,7 @@ namespace Jde::ApplicationServer
 	}
 	shared_ptr<Listener>& Listener::GetInstancePtr()noexcept
 	{
-		ASSRT_TR( _pInstance!=nullptr );
+		ASSERT( _pInstance!=nullptr );
 		return _pInstance;
 	}
 

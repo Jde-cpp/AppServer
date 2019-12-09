@@ -7,6 +7,10 @@ drop procedure log_message_insert3;
 drop procedure log_message_insert4;
 drop procedure log_message_insert5;
 
+_lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, _variable0 varchar(4096) )
+
+call log_message_insert1(2,1603,3843190442,2520307216,164,3507572726,4,140736810022656,'2019-12-07 20:20:48.73054',0,'11/11/04')
+
 select FROM_UNIXTIME(1563617758)
 
 select ADDDATE(FROM_UNIXTIME(1389422614485000/1000000), INTERVAL mod(1389422614485000,1000000) MICROSECOND);
@@ -39,10 +43,10 @@ select time, CONVERT_TZ(time, @@session.time_zone, '+00:00') from logs order by 
 
 drop procedure log_message_insert_out;
 DELIMITER $$
-CREATE PROCEDURE log_message_insert_out( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, out _id int unsigned )
+CREATE PROCEDURE log_message_insert_out( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, out _id int unsigned )
 begin
 	INSERT INTO logs(application_id,application_instance_id,file_id,function_id,line_number,message_id,severity,thread_id,time,user_id)
-	VALUES( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, CONVERT_TZ(time, '+00:00', @@session.time_zone), _userId );
+	VALUES( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, CONVERT_TZ(_time, '+00:00', @@session.time_zone), _userId );
 
 	select LAST_INSERT_ID() into _id;
 	if( mod(_id,10000)=0 ) then
@@ -60,7 +64,7 @@ DELIMITER ;
 
 
 DELIMITER $$
-CREATE PROCEDURE log_message_insert( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned )
+CREATE PROCEDURE log_message_insert( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned )
 begin
 	declare _id int unsigned;
 	call log_message_insert_out( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time,  _userId, _id );
@@ -68,7 +72,7 @@ end$$
 DELIMITER ;
 
 DELIMITER $$
-CREATE PROCEDURE log_message_insert1( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, _variable0 varchar(4096) )
+CREATE PROCEDURE log_message_insert1( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, _variable0 varchar(4096) )
 begin
 	declare _id int unsigned;
 	call log_message_insert_out( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time, _userId, _id );
@@ -77,7 +81,7 @@ end$$
 DELIMITER ;
 
 DELIMITER $$
-CREATE PROCEDURE log_message_insert2( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096) )
+CREATE PROCEDURE log_message_insert2( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096) )
 begin
 	declare _id int unsigned;
 	call log_message_insert_out( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time, _userId, _id );
@@ -88,7 +92,7 @@ DELIMITER ;
 
 #drop procedure log_message_insert3;
 DELIMITER $$
-CREATE PROCEDURE log_message_insert3( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096), _variable2 varchar(4096) )
+CREATE PROCEDURE log_message_insert3( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096), _variable2 varchar(4096) )
 begin
 	declare _id int unsigned;
 	call log_message_insert_out( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time, _userId, _id );
@@ -99,7 +103,7 @@ end$$
 DELIMITER ;
 
 DELIMITER $$
-CREATE PROCEDURE log_message_insert4( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096), _variable2 varchar(4096), _variable3 varchar(4096) )
+CREATE PROCEDURE log_message_insert4( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096), _variable2 varchar(4096), _variable3 varchar(4096) )
 begin
 	declare _id int unsigned;
 	call log_message_insert_out( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time, _userId, _id );
@@ -111,7 +115,7 @@ end$$
 DELIMITER ;
 
 DELIMITER $$
-CREATE PROCEDURE log_message_insert5( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time datetime,  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096), _variable2 varchar(4096), _variable3 varchar(4096), _variable4 varchar(4096) )
+CREATE PROCEDURE log_message_insert5( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, _variable0 varchar(4096), _variable1 varchar(4096), _variable2 varchar(4096), _variable3 varchar(4096), _variable4 varchar(4096) )
 begin
 	declare _id int unsigned;
 	call log_message_insert_out( _application_id, _application_instance_id, _fileId, _functionId, _lineNumber, _messageId, _level, _threadId, _time, _userId, _id );

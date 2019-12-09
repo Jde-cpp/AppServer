@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "WebServer.h"
 #include "LogClient.h"
 #include "Listener.h"

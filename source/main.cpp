@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Listener.h"
 //#include "EtwListener.h"
 #include "WebServer.h"

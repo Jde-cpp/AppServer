@@ -86,7 +86,7 @@ namespace Jde::WebSocket
 	template<typename TFromServer, typename TFromClient>
 	void TSession<TFromServer,TFromClient>::Run()noexcept
 	{
-		//who calls this, should add thread at some point to application.
+		//who calls this, should add thread at some point to application.  crashes if close on transmission.
 		var pKeepAlive = this->shared_from_this();
 		Threading::SetThreadDescription( fmt::format("Session( '{}' )", Id) );
 
@@ -98,7 +98,7 @@ namespace Jde::WebSocket
 				_stream.read( buffer );
 				var str = boost::beast::buffers_to_string( buffer.data() );
 				google::protobuf::io::CodedInputStream input( (const uint8*)str.data(), str.size() );
-				IO::FileUtilities::Save( "/tmp/request.dat", str );
+				//IO::FileUtilities::Save( "/tmp/request.dat", str );
 
 				auto pTransmission = make_shared<TFromClient>(); 
 				if( !pTransmission->MergePartialFromCodedStream(&input) )

@@ -1,6 +1,6 @@
 //protoc --cpp_out . FromClient.proto
 //C:\code\libraries\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe --cpp_out . FromClient.proto
-//ln -s /home/duffyj/code/jde/ApplicationServer/source/types/proto/FromClient.proto ../proto/appFromClient.proto
+//ln -s ../../../ApplicationServer/source/types/proto/FromClient.proto ../proto/appFromClient.proto
 //npx pbjs -r app_from_client -t static-module -w es6 -o src/app/proto/appFromClient.js ../proto/appFromClient.proto & npx pbts -o src/app/proto/appFromClient.d.ts src/app/proto/appFromClient.js
 
 syntax = "proto3";
@@ -33,6 +33,7 @@ message RequestLogs
 	uint64 InstanceId=2;/*unused*/
 	uint32 Value=3;
 	uint32 Start=4;
+	uint32 Limit=5;
 }
 
 message LogValues
@@ -60,13 +61,14 @@ message RequestString
 
 message RequestStrings
 {
-	repeated RequestString Values=1;
+	uint32 RequestId=1;
+	repeated RequestString Values=2;
 }
 
 message Custom
 {
-	uint32 ApplicationId=1;
-	uint32 RequestId=2;
+	uint32 RequestId=1;
+	uint32 ApplicationId=2;
 	bytes Message=3;
 }
 

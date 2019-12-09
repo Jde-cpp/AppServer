@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Cache.h"
 #include "WebSession.h"
 #include "WebServer.h"
@@ -48,7 +47,7 @@ namespace Jde::ApplicationServer::Web
 				else if( request.value()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
 				{
 					Server().RemoveStatusSession( Id );
-					DBG( "({})  Remove status subscription.", Id );
+					DBG( "({})Remove status subscription.", Id );
 				}
 				else if( request.value() == FromClient::ERequest::Applications )
 				{
@@ -71,7 +70,7 @@ namespace Jde::ApplicationServer::Web
 					var pSession = _listener.FindSessionByInstance( instanceId );
 					if( pSession )
 					{
-						DBG( "killing proc id='{}' from sessionId '{}'", pSession->ProcessId, Id );
+						DBG( "({})killing proc id='{}'", Id, pSession->ProcessId );
 						IApplication::Kill( pSession->ProcessId );
 					}
 				}
@@ -86,22 +85,22 @@ namespace Jde::ApplicationServer::Web
 			{
 				var& values = message.logvalues();
 				if( values.dbvalue()<ELogLevelStrings.size() && values.clientvalue()<ELogLevelStrings.size() )
-					DBG( "({}) - SetLogLevel for instance='{}', db='{}', client='{}'", Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
+					DBG( "({})SetLogLevel for instance='{}', db='{}', client='{}'", Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
 				Logging::Proto::LogLevels levels;
 				_listener.SetLogLevel( values.instanceid(), (ELogLevel)values.dbvalue(), (ELogLevel)values.clientvalue() );
 			}
 			else if( message.has_requestlogs() )
 			{
-				var& value = message.requestlogs();
+				var value = message.requestlogs();
 				if( value.value()<ELogLevelStrings.size() )
 					DBG( "({})AddLogSubscription application='{}' instance='{}', level='{}'", Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, value.applicationid(), value.instanceid(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
-					std::thread{ [&](){SendLogs( value.applicationid(), value.instanceid(), (ELogLevel)value.value(), Clock::from_time_t(value.start()) );} }.detach();
+					std::thread{ [&,value](){SendLogs(value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());} }.detach();
 			}
 			else if( message.has_custom() )
 			{
 				var& custom = message.custom();
-				DBG( "Session '{}' received custom reqId='{}' for application='{}'", Id, custom.requestid(), custom.applicationid() );
+				DBG( "({})received custom reqId='{}' for application='{}'", Id, custom.requestid(), custom.applicationid() );
 				auto pSession = _listener.FindApplication( custom.applicationid() );
 				const string message = custom.message();
 				if( pSession )
@@ -110,48 +109,7 @@ namespace Jde::ApplicationServer::Web
 					WriteError( fmt::format("Could not find application '{}'", custom.applicationid()), custom.requestid() );
 			}
 			else if( message.has_requeststrings() )
-			{
-				var& request = message.requeststrings();
-				TRACE( "({}) requeststrings count='{}'", Id, request.values_size() );
-				map<ApplicationPK,forward_list<FromServer::ApplicationString>> values;
-				for( auto i=0; i<request.values_size(); ++i )
-				{
-					var& value = request.values( i );
-					auto pStrings = Cache::GetApplicationStrings( value.applicationid() );
-					if( !pStrings )
-						pStrings = Cache::Load( value.applicationid() );//todo wrap in try statement.
-					sp<string> pString;
-					if( value.type()==FromClient::EStringRequest::MessageString )
-						pString = pStrings->Get( Logging::EFields::Message, value.value() );
-					else if( value.type()==FromClient::EStringRequest::File )
-						pString = pStrings->Get( Logging::EFields::File, value.value() );
-					else if( value.type()==FromClient::EStringRequest::Function )
-						pString = pStrings->Get( Logging::EFields::Function, value.value() );
-					//else if( value.type()==FromClient::EStringRequest::Thread )
-					//	pString = pStrings->Get( Logging::EFields::ThreadId, value.value() );
-					else if( value.type()==FromClient::EStringRequest::User )
-						pString = pStrings->Get( Logging::EFields::User, value.value() );
-					if( pString )
-					{
-						FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( *pString );
-						auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
-						strings.push_front( appString );
-					}
-					else
-						WARN( "Could not find string type='{}', id='{}', application='{}'",value.type(), value.value(), value.applicationid() );
-				}
-				
-				MyFromServer transmission;
-				for( var& [id,strings] : values )
-				{
-					auto pStrings = new FromServer::ApplicationStrings();
-					pStrings->set_applicationid( id );
-					for( var& value : strings )
-						*pStrings->add_values() = value;
-					transmission.add_messages()->set_allocated_strings( pStrings );
-				}
-				Write( transmission );
-			}
+				SendStrings( message.requeststrings() );
 			else
 				ERR( "Unknown message:  {}", (uint)message.Value_case() );
 		}
@@ -174,19 +132,72 @@ namespace Jde::ApplicationServer::Web
 			Server().AddStatusSession( Id );
 		}
 	}
-	void MySession::SendLogs( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const TimePoint& start )noexcept
+	void MySession::SendLogs( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept
 	{
-		auto pTraces = Logging::Data::LoadEntries( applicationId, instanceId, level, start );
-		if( pTraces->values_size() )
+		std::optional<TimePoint> time = start ? Clock::from_time_t(start) : std::optional<TimePoint>{};
+		auto pTraces = Logging::Data::LoadEntries( applicationId, instanceId, level, time, limit );
+		pTraces->add_values();//Signify end.
+		//if( pTraces->values_size() )
 		{
 			pTraces->set_applicationid( applicationId );
-			DBG( "MySession::SendLogs({}, {}) write {}", instanceId, (uint)level, pTraces->values_size() );
+			DBG( "({})MySession::SendLogs({}, {}) write {}", Id, applicationId, (uint)level, pTraces->values_size() );
 			MyFromServer transmission;
 			transmission.add_messages()->set_allocated_traces( pTraces );
 			Write( transmission );
 		}
-		else
-			DBG( "MySession::SendLogs({}, {}) None to write", instanceId, (uint)level );
+		//else
+		//	DBG( "({})MySession::SendLogs({}, {}) None to write", Id, applicationId, (uint)level );
+	}
+	void MySession::SendStrings( const FromClient::RequestStrings& request )noexcept
+	{
+		var reqId = request.requestid();
+		TRACE( "({}) requeststrings count='{}'", Id, request.values_size() );
+		map<ApplicationPK,forward_list<FromServer::ApplicationString>> values;
+		for( auto i=0; i<request.values_size(); ++i )
+		{
+			var& value = request.values( i );
+			auto pStrings = Cache::GetApplicationStrings( value.applicationid() );
+			if( !pStrings )
+				pStrings = Cache::Load( value.applicationid() );//todo wrap in try statement.
+			sp<string> pString;
+			if( value.type()==FromClient::EStringRequest::MessageString )
+				pString = pStrings->Get( Logging::EFields::Message, value.value() );
+			else if( value.type()==FromClient::EStringRequest::File )
+				pString = pStrings->Get( Logging::EFields::File, value.value() );
+			else if( value.type()==FromClient::EStringRequest::Function )
+				pString = pStrings->Get( Logging::EFields::Function, value.value() );
+			//else if( value.type()==FromClient::EStringRequest::Thread )
+			//	pString = pStrings->Get( Logging::EFields::ThreadId, value.value() );
+			else if( value.type()==FromClient::EStringRequest::User )
+				pString = pStrings->Get( Logging::EFields::User, value.value() );
+			if( pString )
+			{
+				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( *pString );
+				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
+				strings.push_front( appString );
+			}
+			else
+			{
+				WARN( "Could not find string type='{}', id='{}', application='{}'",value.type(), value.value(), value.applicationid() );
+				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( "{{error}}" );
+				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
+				strings.push_front( appString );
+			}
+		}
+		
+		MyFromServer transmission;
+		for( var& [id,strings] : values )
+		{
+			auto pStrings = new FromServer::ApplicationStrings();
+			pStrings->set_requestid( reqId );
+			pStrings->set_applicationid( id );
+			for( var& value : strings )
+				*pStrings->add_values() = value;
+			transmission.add_messages()->set_allocated_strings( pStrings );
+		}
+		auto pStrings = new FromServer::ApplicationStrings(); pStrings->set_requestid( reqId );		
+		transmission.add_messages()->set_allocated_strings( pStrings );//finished.
+		Write( transmission );
 	}
 	void MySession::WriteCustom( uint32 clientId, const string& message )noexcept
 	{
@@ -199,7 +210,7 @@ namespace Jde::ApplicationServer::Web
 
 	void MySession::WriteError( string&& msg, uint32 requestId )noexcept
 	{
-		DBG( "WriteError( '{}', '{}' )", requestId, msg );
+		DBG( "({})WriteError( '{}', '{}' )", Id, requestId, msg );
 		var pError = new FromServer::ErrorMessage();
 		pError->set_requestid( requestId );
 		pError->set_message( msg );
