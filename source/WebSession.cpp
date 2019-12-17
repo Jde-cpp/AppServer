@@ -178,7 +178,9 @@ namespace Jde::ApplicationServer::Web
 			}
 			else
 			{
-				WARN( "Could not find string type='{}', id='{}', application='{}'",value.type(), value.value(), value.applicationid() );
+				static constexpr array<string_view,5> StringTypes = {"Message","File","Function","Thread","User"};
+				var typeString = value.type()<(int)StringTypes.size() ? StringTypes[value.type()] : ::to_string( value.type() );
+				WARN( "Could not find string type='{}', id='{}', application='{}'", typeString, value.value(), value.applicationid() );
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( "{{error}}" );
 				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
 				strings.push_front( appString );
@@ -205,6 +207,13 @@ namespace Jde::ApplicationServer::Web
 		pCustom->set_requestid( clientId );
 		pCustom->set_message( message );
 		MyFromServer transmission; transmission.add_messages()->set_allocated_custom( pCustom );
+		Write( transmission );
+	}
+	void MySession::WriteComplete( uint32 clientId )noexcept
+	{
+		var pCustom = new FromServer::Complete();
+		pCustom->set_requestid( clientId );
+		MyFromServer transmission; transmission.add_messages()->set_allocated_complete( pCustom );
 		Write( transmission );
 	}
 

@@ -1,5 +1,5 @@
 #pragma once
-
+#include "WebServer.h"
 //namespace IO
 //{
 //	class IncomingMessage;
@@ -10,10 +10,15 @@
 namespace Jde::ApplicationServer
 {
 	//namespace Messages{ struct Application; struct Message; }
+	
 	//class WebSocket;
 	using Logging::Proto::ToServer;
 	using Logging::Proto::FromServer;
-	namespace Web::FromServer{ class Status; }
+	namespace Web
+	{
+		class MySession;
+		namespace FromServer{ class Status; }
+	}
 	namespace basio=boost::asio;
 	//typedef IO::Sockets::ISession<ToServer> SessionType;
 
@@ -30,7 +35,6 @@ namespace Jde::ApplicationServer
 		ELogLevel FileLogLevel()const noexcept{ return _fileLogLevel; }
 		void SetStatus( Web::FromServer::Status& status )const noexcept;
 		void WebSubscribe( ELogLevel level )noexcept;
-		void WriteCustom( IO::Sockets::SessionPK webClientId, uint requestId, const string& message )noexcept;
 		ApplicationInstancePK InstanceId{0};
 		ApplicationPK ApplicationId{0};
 		string Name;
@@ -40,8 +44,13 @@ namespace Jde::ApplicationServer
 		TimePoint StartTime;
 		uint Memory{0};
 		typedef IO::Sockets::TProtoSession<ToServer,FromServer> Base;
+		void WriteCustom( IO::Sockets::SessionPK webClientId, uint clientId, const string& message )noexcept;
 	private:
 		void OnDisconnect()noexcept;
+		template<class T> using CustomFunction = function<void(Web::MySession&, uint, const T&)>;
+		//template<typename T> typedef  CustomFunction<T>;
+		template<class T>
+		void SendCustomToWeb( const T& message, CustomFunction<T> write, bool erase=false )noexcept;
 		ELogLevel _dbLevel;
 		atomic<ELogLevel> _webLevel{ELogLevel::None};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
@@ -73,4 +82,32 @@ namespace Jde::ApplicationServer
 		static shared_ptr<Listener> _pInstance;
 		//WebSocket& _sender;
 	};
+
+#define var const auto
+	template<class T>
+	void Session::SendCustomToWeb( const T& message, CustomFunction<T> write, bool erase )noexcept
+	{
+		uint clientId;
+		var reqId = message.requestid();
+		IO::Sockets::SessionPK sessionId;
+		{
+			lock_guard l{_customWebRequestsMutex};
+			var pRequest = _customWebRequests.find( reqId );
+			if( pRequest==_customWebRequests.end() )
+			{
+				DBG( "Could not fine request {}", reqId );
+				return;
+			}
+			clientId = get<0>( pRequest->second );
+			sessionId = get<1>( pRequest->second );
+			if( erase )
+				_customWebRequests.erase( pRequest );
+		}
+		var pSession = Web::MyServer::GetInstance()->Find( sessionId );
+		if( pSession )
+			write( *pSession, clientId, message );//pSession->WriteCustom( clientId, message.message() );
+		else
+			DBG( "Could not web session {}", sessionId );
+	}
+#undef var
 }

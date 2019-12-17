@@ -8,7 +8,7 @@ namespace Jde::ApplicationServer
 	struct ApplicationStrings
 	{
 		ApplicationStrings( ApplicationPK id ):Id{id}
-			{}
+		{}
 		ApplicationPK Id;
 		UnorderedMapPtr<uint32,string> FilesPtr;
 		UnorderedMapPtr<uint32,string> FunctionsPtr;

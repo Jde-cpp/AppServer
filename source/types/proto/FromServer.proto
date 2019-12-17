@@ -101,6 +101,11 @@ message Custom
 	bytes Message=2;
 }
 
+message Complete
+{
+	uint32 RequestId=1;
+}
+
 message MessageUnion
 {
 	oneof Value
@@ -112,6 +117,7 @@ message MessageUnion
 		Applications Applications=5;
 		ErrorMessage Error=6;
 		Custom Custom=7;
+		Complete Complete=8;
 	}
 }
 

@@ -39,7 +39,7 @@ namespace Jde::ApplicationServer
 		IO::Sockets::ProtoServer{ port }
 	{
 		Accept();
-		RunAsyncHelper();//_pThread = make_shared<Threading::InterruptibleThread>( [&](){Run();} );
+		RunAsyncHelper( "AppListener" );//_pThread = make_shared<Threading::InterruptibleThread>( [&](){Run();} );
 		INFO( "Accepting on port '{}'", port );
 	}
 
@@ -284,26 +284,35 @@ namespace Jde::ApplicationServer
 				}
 				else if( item.has_custom() )
 				{
-					var& custom = item.custom();
-					uint clientId;
-					IO::Sockets::SessionPK sessionId;
-					{
-						lock_guard l{_customWebRequestsMutex};
-						var pRequest = _customWebRequests.find( custom.requestid() );
-						if( pRequest==_customWebRequests.end() )
-						{
-							DBG( "Could not fine request {}", custom.requestid() );
-							return;
-						}
-						clientId = get<0>( pRequest->second );
-						sessionId = get<1>( pRequest->second );
-						_customWebRequests.erase( pRequest );
-					}
-					var pSession = _webServer.Find( sessionId );
-					if( pSession )
-						pSession->WriteCustom( clientId, custom.message() );
-					else
-						DBG( "Could not web session {}", sessionId );
+					CustomFunction<Logging::Proto::CustomMessage> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomMessage& b ){ webSession.WriteCustom(a, b.message()); };
+					SendCustomToWeb<Logging::Proto::CustomMessage>( item.custom(), fnctn );
+//					‘const Jde::Logging::Proto::CustomMessage’) to type 
+	//				‘const Jde::ApplicationServer::Web::FromClient::Custom
+					// var& custom = item.custom();
+					// uint clientId;
+					// IO::Sockets::SessionPK sessionId;
+					// {
+					// 	lock_guard l{_customWebRequestsMutex};
+					// 	var pRequest = _customWebRequests.find( custom.requestid() );
+					// 	if( pRequest==_customWebRequests.end() )
+					// 	{
+					// 		DBG( "Could not fine request {}", custom.requestid() );
+					// 		return;
+					// 	}
+					// 	clientId = get<0>( pRequest->second );
+					// 	sessionId = get<1>( pRequest->second );
+					// 	//_customWebRequests.erase( pRequest );
+					// }
+					// var pSession = _webServer.Find( sessionId );
+					// if( pSession )
+					// 	pSession->WriteCustom( clientId, custom.message() );
+					// else
+					// 	DBG( "Could not web session {}", sessionId );
+				}
+				else if( item.has_complete() )
+				{
+					CustomFunction<Logging::Proto::CustomComplete> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomComplete& ){ webSession.WriteComplete(a); };
+					SendCustomToWeb<Logging::Proto::CustomComplete>( item.complete(), fnctn, true );
 				}
 				else if( item.has_instance() )
 				{
