@@ -13,7 +13,7 @@ cd $output
 
 if [ $clean -eq 1 ]; then
 	rm CMakeCache.txt;
-	cmake -DCMAKE_BUILD_TYPE=$type  ../..;
+	cmake -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
 	make clean;
 fi
 make -j7

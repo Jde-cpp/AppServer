@@ -25,19 +25,19 @@ delete from deletme
 insert into deletme values( ADDDATE(FROM_UNIXTIME(1563617631958551/1000000), INTERVAL mod(1563617631958551,1000000) MICROSECOND) );
 select * from deletme
 
-SELECT timex local_time, CONVERT_TZ(timex, @@session.time_zone, '+00:00') AS `utc_datetime` 
+SELECT timex local_time, CONVERT_TZ(timex, @@session.time_zone, '+00:00') AS `utc_datetime`
 FROM deletme
 
 select * from log_applications
 update log_applications set file_log_level=1
 
-SET time_zone = "+00:00"; 
+SET time_zone = "+00:00";
 select time, CONVERT_TZ(time, @@session.time_zone, '+00:00') from logs order by time desc limit 1;
 
-SET time_zone = "+01:00"; 
+SET time_zone = "+01:00";
 select time, CONVERT_TZ(time, @@session.time_zone, '+00:00') from logs order by time desc limit 1;
 
-SET time_zone = "-04:00"; 
+SET time_zone = "-04:00";
 select time, CONVERT_TZ(time, @@session.time_zone, '+00:00') from logs order by time desc limit 1;
 
 
@@ -52,7 +52,7 @@ begin
 	if( mod(_id,10000)=0 ) then
 		if( _id>1000000 ) then
 			delete from log_variables where log_id<_id-1000000;
-			delete from log_logs where id<_id-1000000;
+			delete from logs where id<_id-1000000;
 			delete from log_files where id not in (select file_id from logs);
 			delete from log_functions where id not in (select function_id from logs);
 			delete from log_messages where id not in (select message_id from logs);

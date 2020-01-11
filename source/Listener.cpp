@@ -43,8 +43,8 @@ namespace Jde::ApplicationServer
 		INFO( "Accepting on port '{}'", port );
 	}
 
-	
-	vector<google::protobuf::uint8> data( 4, 0 ); 
+
+	vector<google::protobuf::uint8> data( 4, 0 );
 	sp<IO::Sockets::ProtoSession> Listener::CreateSession( basio::ip::tcp::socket socket, IO::Sockets::SessionPK id )noexcept
 	{
 		//auto onDone = [&]( std::error_code ec, std::size_t length )
@@ -125,14 +125,14 @@ namespace Jde::ApplicationServer
 		};
 		return dynamic_pointer_cast<Session>( _sessions.FindFirst(fnctn) );
 	}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Session::Session( basio::ip::tcp::socket& socket, IO::Sockets::SessionPK id )noexcept:
 		IO::Sockets::TProtoSession<ToServer,FromServer>{ socket, id }
 	{
 		Start2();//0x7fffe0004760
 	}
-	
+
 	void Session::Start2()noexcept
 	{
 		auto pAck = new Logging::Proto::Acknowledgement();
@@ -140,7 +140,7 @@ namespace Jde::ApplicationServer
 
 		Logging::Proto::FromServer transmission;
 		transmission.add_messages()->set_allocated_acknowledgement( pAck );
-		
+
 		Write( transmission );
 	}
 
@@ -192,7 +192,7 @@ namespace Jde::ApplicationServer
 		status.set_dbloglevel( (Web::FromServer::ELogLevel)DbLogLevel() );
 		status.set_fileloglevel( (Web::FromServer::ELogLevel)FileLogLevel() );
 		status.set_memory( Memory );
-		
+
 		var statuses = StringUtilities::Split( Status, '\n' );
 		for( var& statusDescription : statuses )
 			status.add_values( statusDescription );
@@ -215,7 +215,7 @@ namespace Jde::ApplicationServer
 			Logging::Proto::FromServer transmission;
 			transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
 			Write( transmission );
-		}	
+		}
 	}
 
 	void Session::WriteCustom( IO::Sockets::SessionPK webClientId, uint clientId, const string& message )noexcept
@@ -230,11 +230,11 @@ namespace Jde::ApplicationServer
 		auto pCustom = new Logging::Proto::CustomMessage();
 		pCustom->set_requestid( requestId );
 		pCustom->set_message( message );
-		DBG( "'{}'('{}') sending custom message reqId='{}' for webClient='{}'('{}')", Name, InstanceId, requestId, webClientId, clientId );
+		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')", InstanceId, Name, requestId, webClientId, clientId );
 		transmission.add_messages()->set_allocated_custom( pCustom );
 		Write( transmission );
 	}
-	
+
 	void Session::OnReceive( sp<Logging::Proto::ToServer> pTransmission )noexcept
 	{
 		try
@@ -284,9 +284,10 @@ namespace Jde::ApplicationServer
 				}
 				else if( item.has_custom() )
 				{
+					DBG( "({})Received custom message, sending to web.", InstanceId );
 					CustomFunction<Logging::Proto::CustomMessage> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomMessage& b ){ webSession.WriteCustom(a, b.message()); };
 					SendCustomToWeb<Logging::Proto::CustomMessage>( item.custom(), fnctn );
-//					‘const Jde::Logging::Proto::CustomMessage’) to type 
+//					‘const Jde::Logging::Proto::CustomMessage’) to type
 	//				‘const Jde::ApplicationServer::Web::FromClient::Custom
 					// var& custom = item.custom();
 					// uint clientId;

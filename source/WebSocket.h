@@ -5,6 +5,7 @@
 #include "types/proto/FromClient.pb.h"
 #include <list>
 #include <shared_mutex>
+#include <boost/beast/core/multi_buffer.hpp>
 
 //https://www.boost.org/doc/libs/1_71_0/libs/beast/example/websocket/server/sync/websocket_server_sync.cpp
 

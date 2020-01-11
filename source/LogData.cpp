@@ -85,7 +85,7 @@ namespace Jde::Logging::Data
 		pParameters->push_back( pValue );
 		_pDbQueue->Push( sql, pParameters, false );
 	}
-	
+
 	Traces* LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& start, uint limit )noexcept
 	{
 		auto pTraces = new Traces();
@@ -108,7 +108,7 @@ namespace Jde::Logging::Data
 			pTrace->set_userid( row.GetUInt32(i++) );
 			mapTraces.emplace( id, pTrace );
 		};
-	
+
 		try
 		{
 			//constexpr string_view whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
@@ -126,7 +126,7 @@ namespace Jde::Logging::Data
 				where.push_back( "application_instance_id=?" );
 				parameters.push_back( instanceId );
 			}
-			
+
 			constexpr string_view sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
 			var whereString = StringUtilities::AddSeparators( where, " and " );
 			var orderDirection = start.has_value() ? "asc"sv : "desc"sv;
@@ -147,7 +147,7 @@ namespace Jde::Logging::Data
 
 		return pTraces;
 	}
-	Applications* LoadApplications()noexcept
+	Applications* LoadAllocatedApplications( ApplicationPK id )noexcept
 	{
 		auto pApplications = new Applications();
 		auto fnctn = [&pApplications]( const DB::IRow& row )
@@ -161,20 +161,20 @@ namespace Jde::Logging::Data
 			pApplication->set_filelevel( fileLevel.has_value() ? (ApplicationServer::Web::FromServer::ELogLevel)fileLevel.value() : ApplicationServer::Web::FromServer::ELogLevel::Information );
 		};
 
-		try
+		constexpr string_view sql = "select id, name, db_log_level, file_log_level from log_applications"sv;
+		Try( [&]()
 		{
-			constexpr string_view sql = "select id, name, db_log_level, file_log_level from log_applications"sv;
-			_dataSource->Select( sql, fnctn, {} );
-		}
-		catch(const std::exception& e)
-		{}
-
+			if( id )
+				_dataSource->Select( fmt::format("{} where id=?", sql), fnctn, {id} );
+			else
+				_dataSource->Select( sql, fnctn, {} );
+		} );
 		return pApplications;
 	}
 	void PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
 	{
 		var variableCount = std::min( (uint)5, variables.size() );
-		auto pParameters = make_shared<vector<DB::DataValue>>(); 
+		auto pParameters = make_shared<vector<DB::DataValue>>();
 		pParameters->reserve( 10+variableCount );
 		pParameters->push_back( applicationId );
 		pParameters->push_back( instanceId );
@@ -188,7 +188,7 @@ namespace Jde::Logging::Data
 		pParameters->push_back( (uint)userId );
 		constexpr string_view procedure = "log_message_insert"sv;
 		constexpr string_view args = "(?,?,?,?,?,?,?,?,?,?"sv;
-		ostringstream os; 
+		ostringstream os;
 		os << procedure;
 		if( variableCount>0 )
 			os << variableCount;

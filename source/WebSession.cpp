@@ -12,7 +12,7 @@ namespace Jde::ApplicationServer::Web
 	MySession::MySession( sp<MyServer> pServer, uint id, boost::asio::ip::tcp::socket& socket )noexcept(false):
 		Base( pServer, id, socket )
 	{}
-	
+
 	MySession::~MySession()
 	{
 		DBG( "~MySession( {} )", Id );
@@ -51,7 +51,7 @@ namespace Jde::ApplicationServer::Web
 				}
 				else if( request.value() == FromClient::ERequest::Applications )
 				{
-					auto pApplications = Logging::Data::LoadApplications();
+					auto pApplications = Logging::Data::LoadAllocatedApplications();
 					MyFromServer transmission;
 					transmission.add_messages()->set_allocated_applications( pApplications );
 					DBG( "({})Writing Applications count='{}'", Id, pApplications->values_size() );
@@ -74,7 +74,7 @@ namespace Jde::ApplicationServer::Web
 						IApplication::Kill( pSession->ProcessId );
 					}
 				}
-				if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
+				else if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
 					Server().RemoveLogSubscription( Id, instanceId );
 				else if( value == FromClient::ERequest::Power )
 					WARN0( "unsupported request Power" );
@@ -100,13 +100,17 @@ namespace Jde::ApplicationServer::Web
 			else if( message.has_custom() )
 			{
 				var& custom = message.custom();
-				DBG( "({})received custom reqId='{}' for application='{}'", Id, custom.requestid(), custom.applicationid() );
+				DBG( "({})received From Web custom reqId='{}' for application='{}'", Id, custom.requestid(), custom.applicationid() );
 				auto pSession = _listener.FindApplication( custom.applicationid() );
 				const string message = custom.message();
 				if( pSession )
 					pSession->WriteCustom( Id, custom.requestid(), message );
 				else
-					WriteError( fmt::format("Could not find application '{}'", custom.applicationid()), custom.requestid() );
+				{
+					auto pApps = sp<FromServer::Applications>{ Logging::Data::LoadAllocatedApplications(custom.applicationid()) };
+					var name = pApps->values_size() ? pApps->values(0).name() : std::to_string( custom.applicationid() );
+					WriteError( fmt::format("Application '{}' is not running", name), custom.requestid() );
+				}
 			}
 			else if( message.has_requeststrings() )
 				SendStrings( message.requeststrings() );
@@ -186,7 +190,7 @@ namespace Jde::ApplicationServer::Web
 				strings.push_front( appString );
 			}
 		}
-		
+
 		MyFromServer transmission;
 		for( var& [id,strings] : values )
 		{
@@ -197,7 +201,7 @@ namespace Jde::ApplicationServer::Web
 				*pStrings->add_values() = value;
 			transmission.add_messages()->set_allocated_strings( pStrings );
 		}
-		auto pStrings = new FromServer::ApplicationStrings(); pStrings->set_requestid( reqId );		
+		auto pStrings = new FromServer::ApplicationStrings(); pStrings->set_requestid( reqId );
 		transmission.add_messages()->set_allocated_strings( pStrings );//finished.
 		Write( transmission );
 	}

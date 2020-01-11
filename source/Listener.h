@@ -10,7 +10,7 @@
 namespace Jde::ApplicationServer
 {
 	//namespace Messages{ struct Application; struct Message; }
-	
+
 	//class WebSocket;
 	using Logging::Proto::ToServer;
 	using Logging::Proto::FromServer;
@@ -107,7 +107,7 @@ namespace Jde::ApplicationServer
 		if( pSession )
 			write( *pSession, clientId, message );//pSession->WriteCustom( clientId, message.message() );
 		else
-			DBG( "Could not web session {}", sessionId );
+			DBG( "({})Could not find web session.", sessionId );
 	}
 #undef var
 }
