@@ -25,7 +25,7 @@ namespace Jde::ApplicationServer
 	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>
 	{
 		Session( basio::ip::tcp::socket& socket, IO::Sockets::SessionPK id )noexcept;
-		~Session(){DBG0("Session::~Session");}
+		~Session(){DBG0("Session::~Session"sv);}
 		void OnReceive( sp<ToServer> pValue )noexcept override;
 		void Start2()noexcept;
 		void WriteStrings()noexcept;
@@ -95,7 +95,7 @@ namespace Jde::ApplicationServer
 			var pRequest = _customWebRequests.find( reqId );
 			if( pRequest==_customWebRequests.end() )
 			{
-				DBG( "Could not fine request {}", reqId );
+				DBG( "Could not fine request {}"sv, reqId );
 				return;
 			}
 			clientId = get<0>( pRequest->second );
@@ -107,7 +107,7 @@ namespace Jde::ApplicationServer
 		if( pSession )
 			write( *pSession, clientId, message );//pSession->WriteCustom( clientId, message.message() );
 		else
-			DBG( "({})Could not find web session.", sessionId );
+			DBG( "({})Could not find web session."sv, sessionId );
 	}
 #undef var
 }

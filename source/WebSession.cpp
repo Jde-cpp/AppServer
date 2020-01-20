@@ -15,7 +15,7 @@ namespace Jde::ApplicationServer::Web
 
 	MySession::~MySession()
 	{
-		DBG( "~MySession( {} )", Id );
+		DBG( "~MySession( {} )"sv, Id );
 	}
 
 	void MySession::Start()noexcept
@@ -47,18 +47,18 @@ namespace Jde::ApplicationServer::Web
 				else if( request.value()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
 				{
 					Server().RemoveStatusSession( Id );
-					DBG( "({})Remove status subscription.", Id );
+					DBG( "({})Remove status subscription."sv, Id );
 				}
 				else if( request.value() == FromClient::ERequest::Applications )
 				{
 					auto pApplications = Logging::Data::LoadAllocatedApplications();
 					MyFromServer transmission;
 					transmission.add_messages()->set_allocated_applications( pApplications );
-					DBG( "({})Writing Applications count='{}'", Id, pApplications->values_size() );
+					DBG( "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
 					Write( transmission );
 				}
 				else
-					WARN( "unsupported request '{}'", request.value() );
+					WARN( "unsupported request '{}'"sv, request.value() );
 			}
 			else if( message.has_requestid() )
 			{
@@ -70,22 +70,22 @@ namespace Jde::ApplicationServer::Web
 					var pSession = _listener.FindSessionByInstance( instanceId );
 					if( pSession )
 					{
-						DBG( "({})killing proc id='{}'", Id, pSession->ProcessId );
+						DBG( "({})killing proc id='{}'"sv, Id, pSession->ProcessId );
 						IApplication::Kill( pSession->ProcessId );
 					}
 				}
 				else if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
 					Server().RemoveLogSubscription( Id, instanceId );
 				else if( value == FromClient::ERequest::Power )
-					WARN0( "unsupported request Power" );
+					WARN0( "unsupported request Power"sv );
 				else
-					WARN( "unsupported request '{}'", request.value() );
+					WARN( "unsupported request '{}'"sv, request.value() );
 			}
 			else if( message.has_logvalues() )
 			{
 				var& values = message.logvalues();
 				if( values.dbvalue()<ELogLevelStrings.size() && values.clientvalue()<ELogLevelStrings.size() )
-					DBG( "({})SetLogLevel for instance='{}', db='{}', client='{}'", Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
+					DBG( "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
 				Logging::Proto::LogLevels levels;
 				_listener.SetLogLevel( values.instanceid(), (ELogLevel)values.dbvalue(), (ELogLevel)values.clientvalue() );
 			}
@@ -93,14 +93,14 @@ namespace Jde::ApplicationServer::Web
 			{
 				var value = message.requestlogs();
 				if( value.value()<ELogLevelStrings.size() )
-					DBG( "({})AddLogSubscription application='{}' instance='{}', level='{}'", Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
+					DBG( "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, value.applicationid(), value.instanceid(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
 					std::thread{ [&,value](){SendLogs(value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());} }.detach();
 			}
 			else if( message.has_custom() )
 			{
 				var& custom = message.custom();
-				DBG( "({})received From Web custom reqId='{}' for application='{}'", Id, custom.requestid(), custom.applicationid() );
+				DBG( "({})received From Web custom reqId='{}' for application='{}'"sv, Id, custom.requestid(), custom.applicationid() );
 				auto pSession = _listener.FindApplication( custom.applicationid() );
 				const string message = custom.message();
 				if( pSession )
@@ -115,7 +115,7 @@ namespace Jde::ApplicationServer::Web
 			else if( message.has_requeststrings() )
 				SendStrings( message.requeststrings() );
 			else
-				ERR( "Unknown message:  {}", (uint)message.Value_case() );
+				ERR( "Unknown message:  {}"sv, (uint)message.Value_case() );
 		}
 	};
 
@@ -132,7 +132,7 @@ namespace Jde::ApplicationServer::Web
 		transmission.add_messages()->set_allocated_statuses( pStatuses );
 		if( Write(transmission) )
 		{
-			DBG( "({})Add status subscription.", Id );
+			DBG( "({})Add status subscription."sv, Id );
 			Server().AddStatusSession( Id );
 		}
 	}
@@ -144,7 +144,7 @@ namespace Jde::ApplicationServer::Web
 		//if( pTraces->values_size() )
 		{
 			pTraces->set_applicationid( applicationId );
-			DBG( "({})MySession::SendLogs({}, {}) write {}", Id, applicationId, (uint)level, pTraces->values_size() );
+			DBG( "({})MySession::SendLogs({}, {}) write {}"sv, Id, applicationId, (uint)level, pTraces->values_size()-1 );
 			MyFromServer transmission;
 			transmission.add_messages()->set_allocated_traces( pTraces );
 			Write( transmission );
@@ -155,7 +155,7 @@ namespace Jde::ApplicationServer::Web
 	void MySession::SendStrings( const FromClient::RequestStrings& request )noexcept
 	{
 		var reqId = request.requestid();
-		TRACE( "({}) requeststrings count='{}'", Id, request.values_size() );
+		TRACE( "({}) requeststrings count='{}'"sv, Id, request.values_size() );
 		map<ApplicationPK,forward_list<FromServer::ApplicationString>> values;
 		for( auto i=0; i<request.values_size(); ++i )
 		{
@@ -184,7 +184,7 @@ namespace Jde::ApplicationServer::Web
 			{
 				static constexpr array<string_view,5> StringTypes = {"Message","File","Function","Thread","User"};
 				var typeString = value.type()<(int)StringTypes.size() ? StringTypes[value.type()] : ::to_string( value.type() );
-				WARN( "Could not find string type='{}', id='{}', application='{}'", typeString, value.value(), value.applicationid() );
+				WARN( "Could not find string type='{}', id='{}', application='{}'"sv, typeString, value.value(), value.applicationid() );
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( "{{error}}" );
 				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
 				strings.push_front( appString );
@@ -223,7 +223,7 @@ namespace Jde::ApplicationServer::Web
 
 	void MySession::WriteError( string&& msg, uint32 requestId )noexcept
 	{
-		DBG( "({})WriteError( '{}', '{}' )", Id, requestId, msg );
+		DBG( "({})WriteError( '{}', '{}' )"sv, Id, requestId, msg );
 		var pError = new FromServer::ErrorMessage();
 		pError->set_requestid( requestId );
 		pError->set_message( msg );

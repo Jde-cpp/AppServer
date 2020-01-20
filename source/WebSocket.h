@@ -101,9 +101,9 @@ namespace Jde::WebSocket
 				google::protobuf::io::CodedInputStream input( (const uint8*)str.data(), str.size() );
 				//IO::FileUtilities::Save( "/tmp/request.dat", str );
 
-				auto pTransmission = make_shared<TFromClient>(); 
+				auto pTransmission = make_shared<TFromClient>();
 				if( !pTransmission->MergePartialFromCodedStream(&input) )
-					ERR( "MergePartialFromCodedStream returned false, length={}", str.size() );
+					ERR( "MergePartialFromCodedStream returned false, length={}"sv, str.size() );
 				OnRead( pTransmission );
 			}
 			catch(boost::system::system_error const& se)
@@ -113,21 +113,21 @@ namespace Jde::WebSocket
 					DBG0( "se.code()==websocket::error::closed" );
 				else if( code.value()==104 )//reset by peer
 				{
-					DBG( "'{}' - closing '{}'", se.code().message(), Id );
+					DBG( "'{}' - closing '{}'"sv, se.code().message(), Id );
 					Disconnect();
 					break;
 				}
 				else
 				{
 					Disconnect();
-					DBG( "system_error returned: '{}' - closing connection - {}", se.code().message(), Id );
+					DBG( "system_error returned: '{}' - closing connection - {}"sv, se.code().message(), Id );
 					//pSession->close( boost::beast::websocket::close_code::try_again_later, code );
 					break;
-				}				
+				}
 			}
 			catch( std::exception const& e )
 			{
-				ERR( "std::exception returned: '{}'", e.what() );
+				ERR( "std::exception returned: '{}'"sv, e.what() );
 			}
 		}
 		IApplication::RemoveThread( _pThread );
@@ -167,7 +167,7 @@ namespace Jde::WebSocket
 		sp<boost::asio::ip::tcp::acceptor> _pAcceptor;
 	private:
 		void Accept()noexcept override;
-	};	
+	};
 
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
 	void TServer<TFromServer,TFromClient,TServerSession>::Push( uint sessionId, sp<TFromServer>& pItem )noexcept
@@ -190,8 +190,8 @@ namespace Jde::WebSocket
 	}
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
 	void TServer<TFromServer,TFromClient,TServerSession>::RemoveSession( SessionPK id )noexcept
-	{ 
-		_sessions.erase(id); 
+	{
+		_sessions.erase(id);
 		TRACE( "Removed session '{}'", id );
 	}
 

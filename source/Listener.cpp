@@ -230,7 +230,7 @@ namespace Jde::ApplicationServer
 		auto pCustom = new Logging::Proto::CustomMessage();
 		pCustom->set_requestid( requestId );
 		pCustom->set_message( message );
-		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')", InstanceId, Name, requestId, webClientId, clientId );
+		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, Name, requestId, webClientId, clientId );
 		transmission.add_messages()->set_allocated_custom( pCustom );
 		Write( transmission );
 	}
@@ -284,7 +284,7 @@ namespace Jde::ApplicationServer
 				}
 				else if( item.has_custom() )
 				{
-					DBG( "({})Received custom message, sending to web.", InstanceId );
+					DBG( "({})Received custom message, sending to web."sv, InstanceId );
 					CustomFunction<Logging::Proto::CustomMessage> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomMessage& b ){ webSession.WriteCustom(a, b.message()); };
 					SendCustomToWeb<Logging::Proto::CustomMessage>( item.custom(), fnctn );
 //					‘const Jde::Logging::Proto::CustomMessage’) to type
@@ -325,14 +325,14 @@ namespace Jde::ApplicationServer
 					try
 					{
 						var [applicationId,instanceId, dbLogLevel, fileLogLevel] = Logging::Data::AddInstance( Name, HostName, ProcessId );
-						DBG( "Adding applicaiton ({}){}@{}", ProcessId, Name, HostName );
+						DBG( "Adding applicaiton ({}){}@{}"sv, ProcessId, Name, HostName );
 						InstanceId = instanceId; ApplicationId = applicationId; _dbLevel = dbLogLevel; _fileLogLevel = fileLogLevel;
 						Cache::Load( ApplicationId );
 						WriteStrings();
 					}
 					catch( const Exception& e )
 					{
-						ERR( "Could not create app instance - {}", e.what() );
+						ERR( "Could not create app instance - {}"sv, e.what() );
 					}
 					break;
 				}
@@ -340,7 +340,7 @@ namespace Jde::ApplicationServer
 		}
 		catch( const Exception& e )//parsing errors
 		{
-			ERR( "JdeException - {}", e.what() );
+			ERR( "JdeException - {}"sv, e.what() );
 		}
 	}
 }

@@ -6,7 +6,7 @@
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
 
-namespace Jde::WebSocket	
+namespace Jde::WebSocket
 {
 	Server::Server( uint16 port )noexcept:
 		_port{ port }
@@ -35,7 +35,7 @@ namespace Jde::WebSocket
 		boost::system::error_code ec;
 		_stream.close( cr, ec );
 		if( ec )
-			ERR( "_stream.close returned:  '{}'", ec.message() );
+			ERR( "_stream.close returned:  '{}'"sv, ec.message() );
 	}
 
 	void Session::Start()noexcept

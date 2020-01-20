@@ -70,7 +70,7 @@ namespace Jde::ApplicationServer::Web
 			newSubscription = sessions.try_emplace( sessionId, level ).second;
 			for( var& subscriber : sessions )
 				minLevel = std::min(minLevel, (uint)subscriber.second );
-		}		
+		}
 		_listener.WebSubscribe( applicationId, (ELogLevel)minLevel );
 
 		return newSubscription;
@@ -89,14 +89,14 @@ namespace Jde::ApplicationServer::Web
 				if( !pSubscriptions->second.size() )
 					_logSubscriptions.erase( pSubscriptions );
 				l.unlock();
-				DBG("({}) removing log subscription for instance {}, new level={}.", sessionId, instanceId, minLevel );
+				DBG("({}) removing log subscription for instance {}, new level={}."sv, sessionId, instanceId, minLevel );
 			}
 			else
 			{
 				l.unlock();
-				DBG("({}) could not find existing subscription for instance {} logs.", sessionId, instanceId );
+				DBG("({}) could not find existing subscription for instance {} logs."sv, sessionId, instanceId );
 			}
-		}		
+		}
 		_listener.WebSubscribe( instanceId, (ELogLevel)minLevel );
 	}
 

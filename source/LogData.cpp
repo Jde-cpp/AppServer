@@ -11,7 +11,7 @@ namespace Jde::Logging::Data
 	sp<DB::DBQueue> _pDbQueue;
 	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept
 	{
-		TRACE( "SetDataSource='{}'", dataSource ? "on" : "off" );
+		TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
 		_dataSource = dataSource;
 		_pDbQueue = make_shared<DB::DBQueue>( dataSource );
 		IApplication::AddShutdown( _pDbQueue );
@@ -72,7 +72,7 @@ namespace Jde::Logging::Data
 			table = "log_functions"sv;
 			break;
 		default:
-			ERR( "unknown field '{}'.", field );
+			ERR( "unknown field '{}'."sv, field );
 			return;
 		// case Proto::EFields::ThreadId:
 		// 	pStrings->MessagesPtr->Emplace( id, value );
@@ -114,7 +114,7 @@ namespace Jde::Logging::Data
 			//constexpr string_view whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
 			vector<string> where;
 			if( start.has_value() )
-				where.push_back( fmt::format("time>'{}'", ToIsoString(start.value())) );
+				where.push_back( fmt::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(start.value())) );
 			std::vector<DB::DataValue> parameters;
 			if( applicationId>0 )
 			{
