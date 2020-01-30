@@ -14,7 +14,7 @@ namespace Jde::WebSocket
 	}
 	void Server::StartAccepting()noexcept
 	{
-		TRACE0( "WebSocket::StartAccepting" );
+		TRACE0( "WebSocket::StartAccepting"sv );
 		_pAcceptor = make_shared<Threading::InterruptibleThread>( "WebSocketServer", [&](){Accept();} );
 		IApplication::AddThread( _pAcceptor );
 	}
@@ -59,7 +59,7 @@ namespace Jde::WebSocket
 		var result = msg.SerializeToArray( pData->data(), (int)pData->size() );
 		if( !result )
 		{
-			WARN0( "Could not serialize to an array" );
+			WARN0( "Could not serialize to an array"sv );
 			pData = nullptr;
 		}
 		return pData;

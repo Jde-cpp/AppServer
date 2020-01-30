@@ -25,7 +25,7 @@ namespace Jde::ApplicationServer
 		}
 		catch( const std::system_error& e )
 		{
-			CRITICAL0( e.what() );
+			CRITICAL0( string(e.what()) );
 			THROW( Exception("Could not create listener:  '{}'", e.what()) );
 		}
 	}
@@ -40,7 +40,7 @@ namespace Jde::ApplicationServer
 	{
 		Accept();
 		RunAsyncHelper( "AppListener" );//_pThread = make_shared<Threading::InterruptibleThread>( [&](){Run();} );
-		INFO( "Accepting on port '{}'", port );
+		INFO( "Accepting on port '{}'"sv, port );
 	}
 
 
@@ -75,7 +75,7 @@ namespace Jde::ApplicationServer
 		};
 		auto pSession = _sessions.FindFirst( fnctn );
 		if( !pSession )
-			WARN( "Could not find session '{}'.", id );
+			WARN( "Could not find session '{}'."sv, id );
 		return dynamic_pointer_cast<Session>( pSession );
 	}
 	sp<Session> Listener::FindSessionByInstance( ApplicationInstancePK id )noexcept
@@ -86,7 +86,7 @@ namespace Jde::ApplicationServer
 		};
 		auto pSession = _sessions.FindFirst( fnctn );
 		if( !pSession )
-			WARN( "Could not find instance '{}'.", id );
+			WARN( "Could not find instance '{}'."sv, id );
 		return dynamic_pointer_cast<Session>( pSession );
 	}
 	void Listener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept
@@ -177,7 +177,7 @@ namespace Jde::ApplicationServer
 			transmission.add_messages()->set_allocated_strings( pValues );
 		}
 		else
-			CRITICAL0( "!pStrings" );
+			CRITICAL0( "!pStrings"sv );
 
 		transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
 		Write( transmission );
@@ -218,19 +218,19 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	void Session::WriteCustom( IO::Sockets::SessionPK webClientId, uint clientId, const string& message )noexcept
+	void Session::WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, const string& message )noexcept
 	{
 		Logging::Proto::FromServer transmission;
 
-		const uint requestId = ++_requestId;
+		const RequestId requestId = ++_requestId;
 		{
 			lock_guard l{_customWebRequestsMutex};
-			_customWebRequests.emplace( requestId, make_tuple(clientId, webClientId) );
+			_customWebRequests.emplace( requestId, make_tuple(webRequestId, webClientId) );
 		}
 		auto pCustom = new Logging::Proto::CustomMessage();
 		pCustom->set_requestid( requestId );
 		pCustom->set_message( message );
-		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, Name, requestId, webClientId, clientId );
+		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, Name, requestId, webClientId, webRequestId );
 		transmission.add_messages()->set_allocated_custom( pCustom );
 		Write( transmission );
 	}
@@ -247,7 +247,7 @@ namespace Jde::ApplicationServer
 				{
 					if( !ApplicationId || !InstanceId )
 					{
-						ERR0( "sent message but have no instance." );
+						ERR0( "sent message but have no instance."sv );
 						continue;
 					}
 
@@ -268,7 +268,7 @@ namespace Jde::ApplicationServer
 					if( ApplicationId && InstanceId )
 						Cache::Add( ApplicationId, strings.field(), strings.id(), strings.value() );
 					else
-						ERR0( "sent string but have no instance." );
+						ERR0( "sent string but have no instance."sv );
 				}
 				else if( item.has_status() )
 				{

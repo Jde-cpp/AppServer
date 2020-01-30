@@ -44,7 +44,8 @@ namespace Jde::ApplicationServer
 		TimePoint StartTime;
 		uint Memory{0};
 		typedef IO::Sockets::TProtoSession<ToServer,FromServer> Base;
-		void WriteCustom( IO::Sockets::SessionPK webClientId, uint clientId, const string& message )noexcept;
+		typedef uint WebRequestId; //
+		void WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, const string& message )noexcept;
 	private:
 		void OnDisconnect()noexcept;
 		template<class T> using CustomFunction = function<void(Web::MySession&, uint, const T&)>;
@@ -54,8 +55,9 @@ namespace Jde::ApplicationServer
 		ELogLevel _dbLevel;
 		atomic<ELogLevel> _webLevel{ELogLevel::None};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
-		atomic<uint> _requestId{0};
-		map<uint,tuple<uint,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
+		typedef uint RequestId;
+		atomic<RequestId> _requestId{0};
+		map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
 	};
 
 	struct Listener final : public IO::Sockets::ProtoServer
@@ -87,8 +89,8 @@ namespace Jde::ApplicationServer
 	template<class T>
 	void Session::SendCustomToWeb( const T& message, CustomFunction<T> write, bool erase )noexcept
 	{
-		uint clientId;
-		var reqId = message.requestid();
+		WebRequestId webRequestId;
+		const RequestId reqId = message.requestid();
 		IO::Sockets::SessionPK sessionId;
 		{
 			lock_guard l{_customWebRequestsMutex};
@@ -98,14 +100,14 @@ namespace Jde::ApplicationServer
 				DBG( "Could not fine request {}"sv, reqId );
 				return;
 			}
-			clientId = get<0>( pRequest->second );
+			webRequestId = get<0>( pRequest->second );
 			sessionId = get<1>( pRequest->second );
 			if( erase )
 				_customWebRequests.erase( pRequest );
 		}
 		var pSession = Web::MyServer::GetInstance()->Find( sessionId );
 		if( pSession )
-			write( *pSession, clientId, message );//pSession->WriteCustom( clientId, message.message() );
+			write( *pSession, webRequestId, message );//pSession->WriteCustom( WebRequestId, message.message() );
 		else
 			DBG( "({})Could not find web session."sv, sessionId );
 	}

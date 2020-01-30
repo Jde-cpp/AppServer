@@ -66,19 +66,19 @@ namespace Jde::WebSocket
 	{
 		try
 		{
-			TRACE( "WebSocket::Write '{}'", data.size() );
+			TRACE( "WebSocket::Write '{}'"sv, data.size() );
 			_stream.write( boost::asio::buffer(data.data(), data.size()) );
 		}
 		catch( boost::exception& e )
 		{
-			DBGX( "Error writing to Session:  '{}'", boost::diagnostic_information(&e) );
+			DBGX( "Error writing to Session:  '{}'"sv, boost::diagnostic_information(&e) );
 			try
 			{
 				_stream.close( boost::beast::websocket::close_code::none );
 			}
 			catch( const boost::exception& e2 )
 			{
-				DBGX( "Error closing:  '{}'", boost::diagnostic_information(&e2) );
+				DBGX( "Error closing:  '{}'"sv, boost::diagnostic_information(&e2) );
 			}
 			Disconnect();
 		}
@@ -110,7 +110,7 @@ namespace Jde::WebSocket
 			{
 				auto code = se.code();
 				if( code == boost::beast::websocket::error::closed )
-					DBG0( "se.code()==websocket::error::closed" );
+					DBG0( "se.code()==websocket::error::closed"sv );
 				else if( code.value()==104 )//reset by peer
 				{
 					DBG( "'{}' - closing '{}'"sv, se.code().message(), Id );
@@ -192,7 +192,7 @@ namespace Jde::WebSocket
 	void TServer<TFromServer,TFromClient,TServerSession>::RemoveSession( SessionPK id )noexcept
 	{
 		_sessions.erase(id);
-		TRACE( "Removed session '{}'", id );
+		TRACE( "Removed session '{}'"sv, id );
 	}
 
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
@@ -210,14 +210,14 @@ namespace Jde::WebSocket
 			return;
 		}
 		//boost::asio::ip::tcp::acceptor acceptor{ ioc, {boost::asio::ip::tcp::v4(), (short unsigned int)_port} };
-		INFO( "Accepting web sockets on port {}.", _port );
+		INFO( "Accepting web sockets on port {}."sv, _port );
 		while( !Threading::GetThreadInterruptFlag().IsSet() )
 		{
 			boost::asio::ip::tcp::socket socket{ioc};
 			try
 			{
 				_pAcceptor->accept( socket );// Blocking
-				TRACE0( "Accepted Connection." );
+				TRACE0( "Accepted Connection."sv );
 				var id = ++_id;
 				sp<TFromServer> pServer = dynamic_pointer_cast<TFromServer>( shared_from_this() );
 				auto pSession = make_shared<TServerSession>( pServer, id, socket );//deadlock if included in _sessions.emplace

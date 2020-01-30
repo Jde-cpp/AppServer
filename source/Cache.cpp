@@ -179,7 +179,7 @@ namespace Jde::ApplicationServer
 			pString = UsersPtr->Find( id );
 		break;
 		default:
-			WARN( "requested string for field '{}'", field );
+			WARN( "requested string for field '{}'"sv, field );
 		}
 		return pString;
 	}
