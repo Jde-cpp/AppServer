@@ -42,3 +42,4 @@ source/.vscode/launch.json
 source/.vscode/settings.json
 
 source/.vscode/c_cpp_properties.json
+/AppServer.log
