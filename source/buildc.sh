@@ -7,12 +7,18 @@ if [ $all -eq 1 ]; then
 	../../Framework/cmake/buildc.sh ../../Framework/source $type $clean || exit 1;
 	../../Framework/cmake/buildc.sh ../../MySql/source $type $clean || exit 1;
 fi
-output=.obj/$type
-if [ ! -d $output ]; then mkdir $output; fi;
-cd $output
-
+if [ ! -d .obj ];	then
+	mkdir .obj;
+	clean=1;
+fi;
+cd .obj;
+if [ ! -d $type ]; then
+	mkdir $type;
+	clean=1;
+fi;
+cd $type;
 if [ $clean -eq 1 ]; then
-	rm CMakeCache.txt;
+	rm -f CMakeCache.txt;
 	cmake -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
 	make clean;
 fi
