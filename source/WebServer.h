@@ -8,7 +8,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		typedef WebSocket::TServer<MyServer,MyFromClient,MySession> Base;
 	public:
-		static sp<MyServer> GetInstance()noexcept;//TODOrefactor 
+		static sp<MyServer> GetInstance()noexcept;//TODOrefactor
 		static sp<MyServer> CreateInstance( uint16 port )noexcept;
 		template<typename T>
 		void UpdateStatus( const T& app )noexcept;
@@ -16,7 +16,7 @@ namespace Jde::ApplicationServer::Web
 		void SetStatus( FromServer::Status& status )const noexcept;
 		void AddStatusSession( const WebSocket::SessionPK& id )noexcept{ _statusSessions.emplace(id); }
 		void RemoveStatusSession( const WebSocket::SessionPK& id )noexcept{ _statusSessions.erase(id); }
-		Collections::UnorderedSet<WebSocket::SessionPK> _statusSessions;
+		UnorderedSet<WebSocket::SessionPK> _statusSessions;
 		void Shutdown()noexcept override{ Base::Shutdown(); _spInstance=nullptr;}
 		void RemoveSession( WebSocket::SessionPK id )noexcept;
 		bool AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level )noexcept;
