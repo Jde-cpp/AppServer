@@ -1,4 +1,3 @@
-#export CXX=g++-8
 cmake_minimum_required(VERSION 3.16)
 project(Jde.AppServer)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
@@ -15,7 +14,8 @@ target_link_libraries(Jde.AppServer Threads::Threads)
 target_link_libraries(Jde.AppServer Jde)
 target_link_libraries(Jde.AppServer dl)
 target_link_libraries(Jde.AppServer protobuf)
-target_link_libraries(Jde.AppServer stdc++fs)
+#target_link_libraries(Jde.AppServer stdc++fs)
+target_link_libraries(Jde.AppServer stdc++)
 #######################################################
 target_precompile_headers(Jde.AppServer
 	PRIVATE
@@ -25,10 +25,10 @@ target_precompile_headers(Jde.AppServer
 		<spdlog/spdlog.h>
 		<spdlog/sinks/basic_file_sink.h>
 		<spdlog/fmt/ostr.h>
-		<boost/crc.hpp> 
+		<boost/crc.hpp>
 		<boost/system/error_code.hpp>
 		<boost/asio.hpp>
-		<boost/exception/diagnostic_information.hpp> 
+		<boost/exception/diagnostic_information.hpp>
 		<boost/asio/ts/io_context.hpp>
 		<boost/beast/websocket.hpp>
 		<boost/beast/core/buffers_to_string.hpp>

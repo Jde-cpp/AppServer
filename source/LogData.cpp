@@ -90,7 +90,7 @@ namespace Jde::Logging::Data
 	{
 		auto pTraces = new Traces();
 		map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
-		auto fnctn = [&pTraces, &mapTraces, instanceId]( const DB::IRow& row )
+		auto fnctn = [&pTraces, &mapTraces]( const DB::IRow& row )
 		{
 			auto pTrace = pTraces->add_values();
 			//pTrace->set_instanceid( instanceId );

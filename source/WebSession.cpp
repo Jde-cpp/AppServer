@@ -183,7 +183,7 @@ namespace Jde::ApplicationServer::Web
 			else
 			{
 				static constexpr array<string_view,5> StringTypes = {"Message","File","Function","Thread","User"};
-				var typeString = value.type()<(int)StringTypes.size() ? StringTypes[value.type()] : ::to_string( value.type() );
+				const string typeString = value.type()<(int)StringTypes.size() ? string(StringTypes[value.type()]) : ::to_string( value.type() );
 				WARN( "Could not find string type='{}', id='{}', application='{}'"sv, typeString, value.value(), value.applicationid() );
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( "{{error}}" );
 				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;

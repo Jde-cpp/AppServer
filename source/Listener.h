@@ -16,7 +16,7 @@ namespace Jde::ApplicationServer
 	using Logging::Proto::FromServer;
 	namespace Web
 	{
-		class MySession;
+		struct MySession;
 		namespace FromServer{ class Status; }
 	}
 	namespace basio=boost::asio;
@@ -47,7 +47,7 @@ namespace Jde::ApplicationServer
 		typedef uint WebRequestId; //
 		void WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, const string& message )noexcept;
 	private:
-		void OnDisconnect()noexcept;
+		void OnDisconnect()noexcept override;
 		template<class T> using CustomFunction = function<void(Web::MySession&, uint, const T&)>;
 		//template<typename T> typedef  CustomFunction<T>;
 		template<class T>

@@ -14,7 +14,7 @@ namespace boost::asio::ip{ class tcp; }
 //TODORefactor Move WebSocket to Framework
 namespace Jde::WebSocket
 {
-	class Server;
+	struct Server;
 	typedef uint SessionPK;
 //using namespace boost::beast::websocket;
 	class Session
@@ -158,8 +158,8 @@ namespace Jde::WebSocket
 		}
 		void Push( SessionPK sessionId, sp<TFromServer>& pItem )noexcept;
 		uint SessionCount()const noexcept override{ return _sessions.size(); }
-		void RemoveSession( SessionPK id )noexcept;
-		void Shutdown()noexcept;
+		void RemoveSession( SessionPK id )noexcept override;
+		void Shutdown()noexcept override;
 		sp<TServerSession> Find( SessionPK id )noexcept{ return _sessions.Find( id ); }
 	protected:
 		Collections::UnorderedMap<SessionPK,TServerSession> _sessions;
