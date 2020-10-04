@@ -89,7 +89,7 @@ namespace Jde::WebSocket
 	{
 		//who calls this, should add thread at some point to application.  crashes if close on transmission.
 		var pKeepAlive = this->shared_from_this();
-		Threading::SetThreadDescription( fmt::format("Session( '{}' )", Id) );
+		Threading::SetThreadDscrptn( fmt::format("Session( '{}' )", Id) );
 
 		while( !Threading::GetThreadInterruptFlag().IsSet() )
 		{
@@ -198,7 +198,7 @@ namespace Jde::WebSocket
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
 	void TServer<TFromServer,TFromClient,TServerSession>::Accept()noexcept
 	{
-		Threading::SetThreadDescription( "wsAcceptor" );
+		Threading::SetThreadDscrptn( "wsAcceptor" );
 		boost::asio::io_context ioc{1};
 		try
 		{
