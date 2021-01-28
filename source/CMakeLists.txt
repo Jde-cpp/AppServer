@@ -36,7 +36,6 @@ target_precompile_headers(Jde.AppServer
 		"../../Framework/source/JdeAssert.h"
 		"../../Framework/source/DateTime.h"
 		"../../Framework/source/StringUtilities.h"
-		"../../Framework/source/Diagnostics.h"
 		"../../Framework/source/Settings.h"
 		"../../Framework/source/log/Logging.h"
 		"../../Framework/source/log/server/ServerSink.h"

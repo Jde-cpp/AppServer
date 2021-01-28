@@ -10,7 +10,7 @@ namespace Jde::Logging
 	void LogClient::CreateInstance()noexcept(false)
 	{
 		ASSERT( !_pInstance );
-		var [applicationId, applicationInstanceId, dbLogLevel, fileLogLevel] = Logging::Data::AddInstance( "Main", Diagnostics::HostName(), Diagnostics::ProcessId() );
+		var [applicationId, applicationInstanceId, dbLogLevel, fileLogLevel] = Logging::Data::AddInstance( "Main", IApplication::HostName(), IApplication::ProcessId() );
 		_pInstance = sp<LogClient>{ new LogClient(applicationId, applicationInstanceId,dbLogLevel) };
 		SetServerSink( _pInstance.get() );
 	}

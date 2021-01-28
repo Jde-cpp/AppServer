@@ -47,11 +47,11 @@ namespace Jde::ApplicationServer::Web
 	{
 		status.set_applicationid( _logClient.ApplicationId );
 		status.set_instanceid( _logClient.InstanceId );
-		status.set_hostname( Diagnostics::HostName() );
+		status.set_hostname( IApplication::HostName() );
 		status.set_starttime( Clock::to_time_t(IApplication::StartTime()) );
 		status.set_dbloglevel( (Web::FromServer::ELogLevel)GetServerSink()->GetLogLevel() );
 		status.set_fileloglevel( (Web::FromServer::ELogLevel)GetDefaultLogger()->level() );
-		status.set_memory( Diagnostics::GetMemorySize() );
+		status.set_memory( IApplication::MemorySize() );
 		status.add_values( fmt::format("Web Connections:  {}", SessionCount()) );
 	}
 	void MyServer::RemoveSession( WebSocket::SessionPK id )noexcept
