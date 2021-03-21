@@ -86,9 +86,9 @@ namespace Jde::Logging::Data
 		_pDbQueue->Push( sql, pParameters, false );
 	}
 
-	Traces* LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& start, uint limit )noexcept
+	unique_ptr<Traces> LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& pStart, uint limit )noexcept
 	{
-		auto pTraces = new Traces();
+		auto pTraces = make_unique<Traces>();
 		map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
 		auto fnctn = [&pTraces, &mapTraces]( const DB::IRow& row )
 		{
@@ -96,6 +96,7 @@ namespace Jde::Logging::Data
 			//pTrace->set_instanceid( instanceId );
 			uint i=0;
 			var id = row.GetUInt32(i++);
+			pTrace->set_id( id );
 			pTrace->set_instanceid( row.GetUInt32(i++) );
 			pTrace->set_fileid( row.GetUInt32(i++) );
 			pTrace->set_functionid( row.GetUInt32(i++) );
@@ -113,8 +114,8 @@ namespace Jde::Logging::Data
 		{
 			//constexpr string_view whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
 			vector<string> where;
-			if( start.has_value() )
-				where.push_back( fmt::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(start.value())) );
+			if( pStart )
+				where.push_back( fmt::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
 			std::vector<DB::DataValue> parameters;
 			if( applicationId>0 )
 			{
@@ -128,19 +129,26 @@ namespace Jde::Logging::Data
 			}
 
 			constexpr string_view sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
-			var whereString = StringUtilities::AddSeparators( where, " and " );
-			var orderDirection = start.has_value() ? "asc"sv : "desc"sv;
+			auto whereString = StringUtilities::AddSeparators( where, " and " );
+			var orderDirection = pStart ? "asc"sv : "desc"sv;
 			_dataSource->Select( fmt::format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
-
-			auto fnctn = [&mapTraces]( const DB::IRow& row )
+			if( mapTraces.size() )
 			{
-				var id = row.GetUInt32( 0 );
-				auto pTrace = mapTraces.find( id );
-				if( pTrace!=mapTraces.end() )
-					*pTrace->second->add_variables() = row.GetString( 1 );
-			};
-			constexpr string_view variables = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
-			_dataSource->Select( fmt::format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn, parameters );
+				auto fnctn = [&mapTraces]( const DB::IRow& row )
+				{
+					var id = row.GetUInt32( 0 );
+					auto pTrace = mapTraces.find( id );
+					if( pTrace!=mapTraces.end() )
+						*pTrace->second->add_variables() = row.GetString( 1 );
+				};
+				constexpr string_view variables = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
+				if( whereString.size() && mapTraces.size()==limit )
+				{
+					whereString += " and logs.id>=?";
+					parameters.push_back( mapTraces.begin()->first );
+				}
+				_dataSource->Select( fmt::format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn, parameters );
+			}
 		}
 		catch(const std::exception& e)
 		{}

@@ -95,7 +95,7 @@ namespace Jde::ApplicationServer::Web
 				if( value.value()<ELogLevelStrings.size() )
 					DBG( "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, value.applicationid(), value.instanceid(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
-					std::thread{ [&,value](){SendLogs(value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());} }.detach();
+					std::thread{ [self=dynamic_pointer_cast<MySession>(shared_from_this()),value](){SendLogs(self,value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());} }.detach();
 			}
 			else if( message.has_custom() )
 			{
@@ -136,7 +136,7 @@ namespace Jde::ApplicationServer::Web
 			Server().AddStatusSession( Id );
 		}
 	}
-	void MySession::SendLogs( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept
+	void MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept
 	{
 		std::optional<TimePoint> time = start ? Clock::from_time_t(start) : std::optional<TimePoint>{};
 		auto pTraces = Logging::Data::LoadEntries( applicationId, instanceId, level, time, limit );
@@ -144,13 +144,11 @@ namespace Jde::ApplicationServer::Web
 		//if( pTraces->values_size() )
 		{
 			pTraces->set_applicationid( applicationId );
-			DBG( "({})MySession::SendLogs({}, {}) write {}"sv, Id, applicationId, (uint)level, pTraces->values_size()-1 );
+			DBG( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
 			MyFromServer transmission;
-			transmission.add_messages()->set_allocated_traces( pTraces );
-			Write( transmission );
+			transmission.add_messages()->set_allocated_traces( pTraces.release() );
+			self->Write( transmission );
 		}
-		//else
-		//	DBG( "({})MySession::SendLogs({}, {}) None to write", Id, applicationId, (uint)level );
 	}
 	void MySession::SendStrings( const FromClient::RequestStrings& request )noexcept
 	{
@@ -237,11 +235,12 @@ namespace Jde::ApplicationServer::Web
 			Write2( *pData );
 		return pData!=nullptr;
 	}
-	void MySession::PushMessage( ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
+	void MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
 	{
 		auto pTraces = new FromServer::Traces();
 		pTraces->set_applicationid( applicationId );
 		auto pTrace = pTraces->add_values();
+		pTrace->set_id( id );
 		pTrace->set_instanceid( instanceId );
 		pTrace->set_time( Chrono::MillisecondsSinceEpoch(time) );
 		pTrace->set_level( (FromServer::ELogLevel)level );

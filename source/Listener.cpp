@@ -247,7 +247,7 @@ namespace Jde::ApplicationServer
 				{
 					if( !ApplicationId || !InstanceId )
 					{
-						ERR0( "sent message but have no instance."sv );
+						ERR( "sent message but have no instance."sv );
 						continue;
 					}
 
@@ -260,7 +260,7 @@ namespace Jde::ApplicationServer
 					if( level>=(uint)_dbLevel )
 						Logging::Data::PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), variables );
 					if( level>=_webLevelUint )
-						_webLevel = Web::MyServer::GetInstance()->PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), variables );
+						_webLevel = Web::MyServer::GetInstance()->PushMessage( 0, ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), variables );
 				}
 				else if( item.has_string() )
 				{
@@ -268,7 +268,7 @@ namespace Jde::ApplicationServer
 					if( ApplicationId && InstanceId )
 						Cache::Add( ApplicationId, strings.field(), strings.id(), strings.value() );
 					else
-						ERR0( "sent string but have no instance."sv );
+						ERR( "sent string but have no instance."sv );
 				}
 				else if( item.has_status() )
 				{

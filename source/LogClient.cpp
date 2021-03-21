@@ -52,6 +52,6 @@ namespace Jde::Logging
 
 		Logging::Data::PushMessage( ApplicationId, InstanceId, Clock::now(), msg.Level, msg.MessageId, msg.FileId, msg.FunctionId, msg.LineNumber, msg.UserId, msg.ThreadId, values );
 		if( msg.Level>=_webLevel )
-			ApplicationServer::Web::MyServer::GetInstance()->PushMessage( ApplicationId, InstanceId, Clock::now(), msg.Level, msg.MessageId, msg.FileId, msg.FunctionId, msg.LineNumber, msg.UserId, msg.ThreadId, values );
+			ApplicationServer::Web::MyServer::GetInstance()->PushMessage( 0, ApplicationId, InstanceId, Clock::now(), msg.Level, msg.MessageId, msg.FileId, msg.FunctionId, msg.LineNumber, msg.UserId, msg.ThreadId, values );
 	}
 }

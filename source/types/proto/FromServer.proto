@@ -57,16 +57,17 @@ message Statuses
 
 message TraceMessage
 {
-	uint64 InstanceId=1;
-	uint64 Time=2;
-	ELogLevel Level=3;
-	uint32 MessageId=4;
-	uint32 FileId=5;
-	uint32 FunctionId=6;
-	uint32 LineNumber=7;
-	uint32 UserId=8;
-	uint64 ThreadId=9;
-	repeated string Variables=10;
+	uint64 id=1;
+	uint64 InstanceId=2;
+	uint64 Time=3;
+	ELogLevel Level=4;
+	uint32 MessageId=5;
+	uint32 FileId=6;
+	uint32 FunctionId=7;
+	uint32 LineNumber=8;
+	uint32 UserId=9;
+	uint64 ThreadId=10;
+	repeated string Variables=11;
 }
 
 message Traces

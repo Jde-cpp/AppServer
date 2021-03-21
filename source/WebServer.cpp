@@ -100,7 +100,7 @@ namespace Jde::ApplicationServer::Web
 		_listener.WebSubscribe( instanceId, (ELogLevel)minLevel );
 	}
 
-	ELogLevel MyServer::PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
+	ELogLevel MyServer::PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
 	{
 		shared_lock l{ _logSubscriptionMutex };
 		auto minLevel = ELogLevel::None;
@@ -117,7 +117,7 @@ namespace Jde::ApplicationServer::Web
 				if( !pSession )
 					brokenSession = sessionId;
 				else
-					pSession->PushMessage( applicationId, instanceId, time, level, messageId, fileId, functionId, lineNumber, userId, threadId, variables );
+					pSession->PushMessage( id, applicationId, instanceId, time, level, messageId, fileId, functionId, lineNumber, userId, threadId, variables );
 			}
 		}
 		if( brokenSession )
