@@ -1,20 +1,48 @@
 #include "LogData.h"
+#pragma warning( disable : 4715) 
+#include <nlohmann/json.hpp>
+#pragma warning( default : 4715) 
+
 #include "types/proto/FromServer.pb.h"
+#include "../../Framework/source/DateTime.h"
+#include "../../Framework/source/db/Database.h"
+#include "../../Framework/source/db/DataSource.h"
+#include "../../Framework/source/db/DBQueue.h"
+#include "../../Framework/source/db/Row.h"
+#include "../../Framework/source/io/File.h"
+#include "../../Framework/source/Settings.h"
+#include "../../Framework/source/StringUtilities.h"
 
 #define var const auto
 
 namespace Jde::Logging::Data
 {
+	using nlohmann::json;
 	using ApplicationServer::Web::FromServer::Traces;
 	using ApplicationServer::Web::FromServer::Applications;
 	sp<DB::IDataSource> _dataSource;
 	sp<DB::DBQueue> _pDbQueue;
+	void Configure()noexcept
+	{
+		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
+		INFO( "db meta='{}'"sv, path.string() );
+		var j = json::parse( IO::FileUtilities::Load(path) );
+		if( auto p=_dataSource; p )
+			p->SchemaProc()->CreateSchema( j );
+	}
+
 	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept
 	{
 		TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
 		_dataSource = dataSource;
+		function<void()> clean =  [](){ DBG( "LogData::_dataSource = nullptr;"sv ); _dataSource = nullptr;  };
+		DB::ShutdownClean( clean );
 		_pDbQueue = make_shared<DB::DBQueue>( dataSource );
 		IApplication::AddShutdown( _pDbQueue );
+		IApplication::AddShutdownFunction( [](){_pDbQueue=nullptr;} );
+
+
+		Configure();
 	}
 	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( string_view applicationName, string_view hostName, uint processId )noexcept(false)
 	{
@@ -56,7 +84,7 @@ namespace Jde::Logging::Data
 	{
 		return Fetch( "select id, value from log_messages where application_id=?", applicationId );
 	}
-
+	#define _pQueue if( auto p = _pDbQueue; p )p
 	void SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept
 	{
 		string_view table = "";
@@ -83,10 +111,10 @@ namespace Jde::Logging::Data
 		pParameters->push_back( applicationId );
 		pParameters->push_back( static_cast<uint>(id) );
 		pParameters->push_back( pValue );
-		_pDbQueue->Push( sql, pParameters, false );
+		_pQueue->Push( sql, pParameters, false );
 	}
 
-	unique_ptr<Traces> LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& pStart, uint limit )noexcept
+	unique_ptr<Traces> LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel /*level*/, const std::optional<TimePoint>& pStart, uint limit )noexcept
 	{
 		auto pTraces = make_unique<Traces>();
 		map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
@@ -134,7 +162,7 @@ namespace Jde::Logging::Data
 			_dataSource->Select( fmt::format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
 			if( mapTraces.size() )
 			{
-				auto fnctn = [&mapTraces]( const DB::IRow& row )
+				auto fnctn2 = [&mapTraces]( const DB::IRow& row )
 				{
 					var id = row.GetUInt32( 0 );
 					auto pTrace = mapTraces.find( id );
@@ -147,10 +175,10 @@ namespace Jde::Logging::Data
 					whereString += " and logs.id>=?";
 					parameters.push_back( mapTraces.begin()->first );
 				}
-				_dataSource->Select( fmt::format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn, parameters );
+				_dataSource->Select( fmt::format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn2, parameters );
 			}
 		}
-		catch(const std::exception& e)
+		catch(const std::exception& /*e*/)
 		{}
 
 		return pTraces;
@@ -207,6 +235,6 @@ namespace Jde::Logging::Data
 			pParameters->push_back( variables[i] );
 		}
 		os << ")";
-		_pDbQueue->Push( os.str(), pParameters );
+		_pQueue->Push( os.str(), pParameters );
 	}
 }

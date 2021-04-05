@@ -1,9 +1,7 @@
 {
-	"app-server": 
-	{
-		"dbDriver":  "./libMySql.so",
-		"connectionString":  "mysqlx://logs:{password}@127.0.0.1:33060/logs?ssl-mode=disabled"
-	},
+	"dbDriver": "Jde.DB.Odbc.dll",
+	"connectionString": "DSN=Jde_Log_Connection",
+	"metaDataPath": "../meta.json",
 	"logging": 
 	{
 		"level": 1,

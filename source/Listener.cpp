@@ -185,10 +185,10 @@ namespace Jde::ApplicationServer
 //send status update...
 	void Session::SetStatus( Web::FromServer::Status& status )const noexcept
 	{
-		status.set_applicationid( ApplicationId );
-		status.set_instanceid( InstanceId );
+		status.set_applicationid( (uint32)ApplicationId );
+		status.set_instanceid( (uint32)InstanceId );
 		status.set_hostname( HostName );
-		status.set_starttime( Clock::to_time_t(StartTime) );
+		status.set_starttime( (uint32)Clock::to_time_t(StartTime) );
 		status.set_dbloglevel( (Web::FromServer::ELogLevel)DbLogLevel() );
 		status.set_fileloglevel( (Web::FromServer::ELogLevel)FileLogLevel() );
 		status.set_memory( Memory );
@@ -228,7 +228,7 @@ namespace Jde::ApplicationServer
 			_customWebRequests.emplace( requestId, make_tuple(webRequestId, webClientId) );
 		}
 		auto pCustom = new Logging::Proto::CustomMessage();
-		pCustom->set_requestid( requestId );
+		pCustom->set_requestid( (uint32)requestId );
 		pCustom->set_message( message );
 		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, Name, requestId, webClientId, webRequestId );
 		transmission.add_messages()->set_allocated_custom( pCustom );
@@ -285,7 +285,7 @@ namespace Jde::ApplicationServer
 				else if( item.has_custom() )
 				{
 					DBG( "({})Received custom message, sending to web."sv, InstanceId );
-					CustomFunction<Logging::Proto::CustomMessage> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomMessage& b ){ webSession.WriteCustom(a, b.message()); };
+					CustomFunction<Logging::Proto::CustomMessage> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomMessage& b ){ webSession.WriteCustom((uint32)a, b.message()); };
 					SendCustomToWeb<Logging::Proto::CustomMessage>( item.custom(), fnctn );
 //					‘const Jde::Logging::Proto::CustomMessage’) to type
 	//				‘const Jde::ApplicationServer::Web::FromClient::Custom
@@ -312,7 +312,7 @@ namespace Jde::ApplicationServer
 				}
 				else if( item.has_complete() )
 				{
-					CustomFunction<Logging::Proto::CustomComplete> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomComplete& ){ webSession.WriteComplete(a); };
+					CustomFunction<Logging::Proto::CustomComplete> fnctn = []( Web::MySession& webSession, uint a, const Logging::Proto::CustomComplete& ){ webSession.WriteComplete((uint32)a); };
 					SendCustomToWeb<Logging::Proto::CustomComplete>( item.complete(), fnctn, true );
 				}
 				else if( item.has_instance() )

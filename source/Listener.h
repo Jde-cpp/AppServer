@@ -1,5 +1,6 @@
 #pragma once
 #include "WebServer.h"
+	#include "../../Framework/source/io/sockets/ProtoServer.h"
 //namespace IO
 //{
 //	class IncomingMessage;

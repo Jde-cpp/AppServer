@@ -45,10 +45,10 @@ namespace Jde::ApplicationServer::Web
 	}
 	void MyServer::SetStatus( FromServer::Status& status )const noexcept
 	{
-		status.set_applicationid( _logClient.ApplicationId );
-		status.set_instanceid( _logClient.InstanceId );
+		status.set_applicationid( (google::protobuf::uint32)_logClient.ApplicationId );
+		status.set_instanceid( (google::protobuf::uint32)_logClient.InstanceId );
 		status.set_hostname( IApplication::HostName() );
-		status.set_starttime( Clock::to_time_t(IApplication::StartTime()) );
+		status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(IApplication::StartTime()) );
 		status.set_dbloglevel( (Web::FromServer::ELogLevel)GetServerSink()->GetLogLevel() );
 		status.set_fileloglevel( (Web::FromServer::ELogLevel)GetDefaultLogger()->level() );
 		status.set_memory( IApplication::MemorySize() );
@@ -60,7 +60,7 @@ namespace Jde::ApplicationServer::Web
 		Base::RemoveSession( id );
 	}
 
-	bool MyServer::AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level )noexcept
+	bool MyServer::AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK /*instanceId*/, ELogLevel level )noexcept
 	{
 		bool newSubscription;
 		uint minLevel = (uint)ELogLevel::None;

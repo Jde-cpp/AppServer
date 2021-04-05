@@ -1,4 +1,6 @@
 #pragma once
+#include "../../Framework/source/threading/Interrupt.h"
+#include "../../Framework/source/collections/Queue.h"
 
 namespace Jde
 {

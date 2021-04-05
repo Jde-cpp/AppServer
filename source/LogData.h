@@ -1,6 +1,11 @@
 #pragma once
+#include "../../Framework/source/collections/UnorderedMap.h"
+#include "TypeDefs.h"
+#include "../../Framework/source/log/server/proto/messages.pb.h"
+
 
 namespace Jde::ApplicationServer::Web::FromServer{ class Traces; class Applications;}
+namespace Jde::DB{ struct IDataSource; }
 
 namespace Jde::Logging::Data
 {

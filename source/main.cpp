@@ -3,32 +3,33 @@
 #include "WebServer.h"
 #include "LogClient.h"
 #include "LogData.h"
+#include "../../Framework/source/Settings.h"
+#include "../../Framework/source/DB/Database.h"
 
 #define var const auto
 
 namespace Jde::ApplicationServer
 {
-	std::shared_ptr<Jde::Settings::Container> SettingsPtr;
 	int Run();
 }
 int main( int argc, char** argv )
 {
 	Jde::OSApp::Startup( argc, argv, "AppServer" );
 
-	Jde::ApplicationServer::SettingsPtr = Jde::Settings::Global().SubContainer( "app-server" );
+	//Jde::ApplicationServer::SettingsPtr = Jde::Settings::Global().SubContainer( "app-server" );
 
 	std::thread{ []{Jde::ApplicationServer::Run();} }.detach();
 	Jde::IApplication::Pause();
 
 	Jde::IApplication::CleanUp();
-	//_CrtDumpMemoryLeaks();
 }
 
 namespace Jde::ApplicationServer
 {
 	int Run()
 	{
-		Logging::Data::SetDataSource( DB::DataSource(SettingsPtr->Get<fs::path>("dbDriver"), SettingsPtr->Get<string>("connectionString")) );
+		Threading::SetThreadDscrptn( "Startup" );
+		Logging::Data::SetDataSource( DB::DataSource(Settings::Global().Get<fs::path>("dbDriver"), Settings::Global().Get<string>("connectionString")) );
 		Logging::LogClient::CreateInstance();
 
 		constexpr PortType ReceivePort = 4321;

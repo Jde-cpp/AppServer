@@ -1,0 +1,88 @@
+{
+	"$types":
+	{
+		"name":{ "length": 255 },
+		"$target":{ "length": 255 },
+		"description":{ "length": 2047 },
+		"path":{ "length": 4095 },
+		"bigId": { "type": "uint64", "sequence": true },
+		"id": "uint32",
+		"smallId": "uint16",
+		"tinyId": "uint8",
+		"crc": "uint32"
+	},
+	"$smallValues":
+	{
+		"id":{ "type": "smallId", "sequence": true },
+		"name": "name",
+		"$surrogateKey":["id"],
+		"$naturalKey":["name"]
+	},
+	"logApplications":
+	{
+		"$parent": "$smallValues",
+		"dbLogLevel": "tinyId",
+		"fileLogLevel": "tinyId",
+		"location": "path?"
+	},
+	"logApplicationInstances":
+	{
+		"id":{ "type": "uint32", "sequence": true },
+		"applicationId": "logApplications",
+		"endTime": "dateTime?",
+		"hostId": "logHosts",
+		"processId": "uint64",
+		"start": "dateTime",
+		"$surrogateKey":["id"]
+	},
+	"logFiles":
+	{
+		"id": "crc",
+		"applicationId": "logApplications",
+		"value": "path",
+		"$surrogateKey":["id"],
+		"$naturalKey":["applicationId","id"]
+	},
+	"logFunctions":
+	{
+		"id": "crc",
+		"applicationId": "logApplications",
+		"value": "path",
+		"$surrogateKey":["id"],
+		"$naturalKey":["applicationId","id"]
+	},
+	"logHosts":
+	{
+		"$parent": "$smallValues"
+	},
+	"logMessages":
+	{
+		"id": "crc",
+		"applicationId": "logApplications",
+		"value": { "length": 4095 },
+		"$surrogateKey":["id"],
+		"$naturalKey":["id","applicationId"]
+	},
+	"logVariables":
+	{
+		"logId": "logs",
+		"variable_index": "uint8",
+		"value": { "length": 4095 },
+		"$surrogateKey":["logId","variable_index"]
+	},
+	"logs":
+	{
+		"id": "bigId",
+		"applicationId": "logApplications",
+		"applicationInstanceId": "logApplicationInstances",
+		"fileId": "logFiles",
+		"functionId": "logFunctions",
+		"lineNumber": "uint16",
+		"messageId": "logMessages",
+		"severity": "uint8",
+		"threadId": "uint64",
+		"time": "dateTime",
+		"userId": "uint32",
+		"$surrogateKey":["id"]
+	}
+}

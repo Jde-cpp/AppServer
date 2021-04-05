@@ -1,7 +1,9 @@
 #include "Cache.h"
-#include "WebSocket.h"
+//#include "WebSocket.h"
 #include "LogData.h"
+
 //#include "../framework/log/server/ReceivedMessages.h"
+
 #define var const auto
 
 namespace Jde::ApplicationServer
@@ -37,10 +39,10 @@ namespace Jde::ApplicationServer
 
 	void Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, string_view value )
 	{
-		auto pStrings = _applicationStrings.Find( applicationId );
+		auto pStrings = _applicationStrings.Find( applicationId ); 
 		if( !pStrings )
 		{
-			WARNN( "No application strings loaded for {}", applicationId );
+			Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, "No application strings loaded for {}"sv, "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 45), applicationId );
 			return;
 		}
 		auto pValue = make_shared<string>(value);
@@ -60,7 +62,8 @@ namespace Jde::ApplicationServer
 		// 	pStrings->MessagesPtr->Emplace( id, value );
 		// 	break;
 		default:
-			ERRN( "unknown field {}.", field );
+			Logging::Log( Logging::MessageBase(ELogLevel::Error, "unknown field {}.", "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 65, IO::Crc::Calc32RunTime("unknown field {}."), IO::Crc::Calc32RunTime("C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp"), IO::Crc::Calc32RunTime(__func__)), field );
+			//ERR( "unknown field {}."sv, field );
 		}
 	}
 
@@ -70,7 +73,7 @@ namespace Jde::ApplicationServer
 		function<void(UnorderedMap<uint,string>&)> afterInsert = [threadId, thread](UnorderedMap<uint,string>& value){ value.Set( threadId, make_shared<string>(thread) ); };
 		_instanceThreads.Insert( afterInsert, sessionId, shared_ptr<UnorderedMap<uint,string>>{ new UnorderedMap<uint,string>() } );
 	}
-	void Cache::AddMessageStrings( uint sessionId, const Messages::Message& message )
+	void Cache::AddMessageStrings( uint /*sessionId*/, const Messages::Message& /*message*/ )
 	{
 		//var pApplication = _sessions.Find( sessionId );
 		//if( pApplication==nullptr )
@@ -84,7 +87,7 @@ namespace Jde::ApplicationServer
 		return _sessions.ForEach( func );
 	}
 
-	void Cache::FetchStrings( uint sessionId, const Messages::RequestStrings& request )
+	void Cache::FetchStrings( uint /*sessionId*/, const Messages::RequestStrings& /*request*/ )
 	{
 /*		auto pResult = make_shared<Messages::Strings>( request.ApplicationInstanceId );
 		auto pApplication = _sessions.Find( request.ApplicationInstanceId );
@@ -134,7 +137,7 @@ namespace Jde::ApplicationServer
 	*/
 	}
 
-	void ApplicationStrings::Add( const Messages::Message& message )noexcept
+	void ApplicationStrings::Add( const Messages::Message& /*message*/ )noexcept
 	{
 /*		if( message.File.size() )
 		{
@@ -167,19 +170,20 @@ namespace Jde::ApplicationServer
 		switch( field )
 		{
 		case Logging::EFields::Message:
-			pString = MessagesPtr->Find( id );
+			pString = MessagesPtr->Find( (uint32)id );
 		break;
 		case Logging::EFields::File:
-			pString = FilesPtr->Find( id );
+			pString = FilesPtr->Find( (uint32)id );
 		break;
 		case Logging::EFields::Function:
-			pString = FunctionsPtr->Find( id );
+			pString = FunctionsPtr->Find( (uint32)id );
 		break;
 		case Logging::EFields::User:
-			pString = UsersPtr->Find( id );
+			pString = UsersPtr->Find( (uint32)id );
 		break;
 		default:
-			WARN( "requested string for field '{}'"sv, field );
+			//WARN( "requested string for field '{}'"sv, field );
+			Logging::Log( Logging::MessageBase(ELogLevel::Warning, "requested string for field '{}'"sv, "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 184), field );
 		}
 		return pString;
 	}

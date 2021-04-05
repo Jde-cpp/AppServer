@@ -3,6 +3,7 @@
 #include "WebServer.h"
 #include "Listener.h"
 #include "LogData.h"
+#include "../../Framework/source/DateTime.h"
 
 #define var const auto
 #define _listener Listener::GetInstance()
@@ -22,7 +23,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		Session::Start();
 		auto pAck = new Web::FromServer::Acknowledgement();
-		pAck->set_id( Id );
+		pAck->set_id( (uint32)Id );
 		MyFromServer transmission;
 		transmission.add_messages()->set_allocated_acknowledgement( pAck );
 		Write( transmission );
@@ -102,9 +103,9 @@ namespace Jde::ApplicationServer::Web
 				var& custom = message.custom();
 				DBG( "({})received From Web custom reqId='{}' for application='{}'"sv, Id, custom.requestid(), custom.applicationid() );
 				auto pSession = _listener.FindApplication( custom.applicationid() );
-				const string message = custom.message();
+				const string message2 = custom.message();
 				if( pSession )
-					pSession->WriteCustom( Id, custom.requestid(), message );
+					pSession->WriteCustom( (IO::Sockets::SessionPK)Id, custom.requestid(), message2 );
 				else
 				{
 					auto pApps = sp<FromServer::Applications>{ Logging::Data::LoadAllocatedApplications(custom.applicationid()) };
@@ -123,7 +124,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		auto pStatuses = new FromServer::Statuses();
 		Server().SetStatus( *pStatuses->add_values() );
-		std::function<void( const IO::Sockets::SessionPK&, const ApplicationServer::Session& session )> fncn = [pStatuses]( const IO::Sockets::SessionPK& id, const ApplicationServer::Session& session )
+		std::function<void( const IO::Sockets::SessionPK&, const ApplicationServer::Session& session )> fncn = [pStatuses]( const IO::Sockets::SessionPK& /*id*/, const ApplicationServer::Session& session )
 		{
 			session.SetStatus( *pStatuses->add_values() );
 		};
@@ -143,7 +144,7 @@ namespace Jde::ApplicationServer::Web
 		pTraces->add_values();//Signify end.
 		//if( pTraces->values_size() )
 		{
-			pTraces->set_applicationid( applicationId );
+			pTraces->set_applicationid( (google::protobuf::uint32)applicationId );
 			DBG( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
 			MyFromServer transmission;
 			transmission.add_messages()->set_allocated_traces( pTraces.release() );
@@ -194,7 +195,7 @@ namespace Jde::ApplicationServer::Web
 		{
 			auto pStrings = new FromServer::ApplicationStrings();
 			pStrings->set_requestid( reqId );
-			pStrings->set_applicationid( id );
+			pStrings->set_applicationid( (google::protobuf::uint32)id );
 			for( var& value : strings )
 				*pStrings->add_values() = value;
 			transmission.add_messages()->set_allocated_strings( pStrings );
@@ -238,7 +239,7 @@ namespace Jde::ApplicationServer::Web
 	void MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
 	{
 		auto pTraces = new FromServer::Traces();
-		pTraces->set_applicationid( applicationId );
+		pTraces->set_applicationid( (google::protobuf::uint32)applicationId );
 		auto pTrace = pTraces->add_values();
 		pTrace->set_id( id );
 		pTrace->set_instanceid( instanceId );

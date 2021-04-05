@@ -3,14 +3,19 @@
 // #include "../framework/collections/Queue.h"
 #include "types/proto/FromServer.pb.h"
 #include "types/proto/FromClient.pb.h"
-#include <list>
-#include <shared_mutex>
+//#include <list>
+#include <boost/asio.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/multi_buffer.hpp>
-
+#include <boost/exception/diagnostic_information.hpp> 
 //https://www.boost.org/doc/libs/1_71_0/libs/beast/example/websocket/server/sync/websocket_server_sync.cpp
-
+#include "../../Framework/source/collections/UnorderedMap.h"
+#include "../../Framework/source/threading/Thread.h"
+#include "../../Framework/source/threading/InterruptibleThread.h"
 //------------------------------------------------------------------------------
 namespace boost::asio::ip{ class tcp; }
+namespace Jde::Threading{ struct InterruptibleThread; }
 //TODORefactor Move WebSocket to Framework
 namespace Jde::WebSocket
 {
@@ -98,7 +103,7 @@ namespace Jde::WebSocket
 			{
 				_stream.read( buffer );
 				var str = boost::beast::buffers_to_string( buffer.data() );
-				google::protobuf::io::CodedInputStream input( (const uint8*)str.data(), str.size() );
+				google::protobuf::io::CodedInputStream input( (const uint8*)str.data(), (int)str.size() );
 				//IO::FileUtilities::Save( "/tmp/request.dat", str );
 
 				auto pTransmission = make_shared<TFromClient>();

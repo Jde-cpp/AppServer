@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../Framework/source/collections/UnorderedMap.h"
+
 namespace Jde::ApplicationServer
 {
 	using Collections::UnorderedMap;

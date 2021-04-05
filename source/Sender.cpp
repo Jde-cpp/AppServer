@@ -1,4 +1,5 @@
 #include "Sender.h"
+#include "../../Framework/source/JdeAssert.h"
 
 namespace Jde::Logging::Server
 {
