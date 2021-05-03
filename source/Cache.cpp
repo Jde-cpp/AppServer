@@ -37,7 +37,7 @@ namespace Jde::ApplicationServer
 		return result.first.second;
 	}
 
-	void Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, string_view value )
+	void Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )
 	{
 		auto pStrings = _applicationStrings.Find( applicationId ); 
 		if( !pStrings )
@@ -68,7 +68,7 @@ namespace Jde::ApplicationServer
 	}
 
 
-	void Cache::AddThread( uint sessionId, uint threadId, string_view thread )
+	void Cache::AddThread( uint sessionId, uint threadId, sv thread )
 	{
 		function<void(UnorderedMap<uint,string>&)> afterInsert = [threadId, thread](UnorderedMap<uint,string>& value){ value.Set( threadId, make_shared<string>(thread) ); };
 		_instanceThreads.Insert( afterInsert, sessionId, shared_ptr<UnorderedMap<uint,string>>{ new UnorderedMap<uint,string>() } );

@@ -23,9 +23,9 @@ namespace Jde::ApplicationServer
 
 	struct Cache
 	{
-		static void Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, string_view value );
+		static void Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value );
 		static void AddSession( uint id, shared_ptr<Messages::Application> pApplication );
-		static void AddThread( uint sessionId, uint threadId, string_view thread );
+		static void AddThread( uint sessionId, uint threadId, sv thread );
 		static void AddMessageStrings( uint sessionId, const Messages::Message& message );
 		static uint ForEachApplication( std::function<void(const uint&,const Messages::Application&)> func );
 		static void FetchStrings( uint sessionId, const Messages::RequestStrings& request );

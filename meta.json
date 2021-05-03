@@ -5,7 +5,7 @@
 		"$target":{ "length": 255 },
 		"description":{ "length": 2047 },
 		"path":{ "length": 4095 },
-		"bigId": { "type": "uint64", "sequence": true },
+		"bigId": "uint64",
 		"id": "uint32",
 		"smallId": "uint16",
 		"tinyId": "uint8",
@@ -23,15 +23,16 @@
 		"$parent": "$smallValues",
 		"dbLogLevel": "tinyId",
 		"fileLogLevel": "tinyId",
-		"location": "path?"
+		"location": "path",
+		"$surrogateKey":["id"]
 	},
 	"logApplicationInstances":
 	{
 		"id":{ "type": "uint32", "sequence": true },
 		"applicationId": "logApplications",
-		"endTime": "dateTime?",
+		"end": "dateTime",
 		"hostId": "logHosts",
-		"processId": "uint64",
+		"processId": "uint",
 		"start": "dateTime",
 		"$surrogateKey":["id"]
 	},
@@ -48,7 +49,6 @@
 		"id": "crc",
 		"applicationId": "logApplications",
 		"value": "path",
-		"$surrogateKey":["id"],
 		"$naturalKey":["applicationId","id"]
 	},
 	"logHosts":
@@ -66,23 +66,22 @@
 	"logVariables":
 	{
 		"logId": "logs",
-		"variable_index": "uint8",
+		"variable_index": "tinyUInt",
 		"value": { "length": 4095 },
-		"$surrogateKey":["logId","variable_index"]
+		"$surrogateKey":["logId","id"]
 	},
 	"logs":
 	{
-		"id": "bigId",
+		"id": "crc",
 		"applicationId": "logApplications",
 		"applicationInstanceId": "logApplicationInstances",
 		"fileId": "logFiles",
 		"functionId": "logFunctions",
 		"lineNumber": "uint16",
 		"messageId": "logMessages",
-		"severity": "uint8",
-		"threadId": "uint64",
+		"severity": "tinyUint",
+		"threadId": "uint",
 		"time": "dateTime",
-		"userId": "uint32",
-		"$surrogateKey":["id"]
+		"userId": "uint32"
 	}
 }

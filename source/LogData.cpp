@@ -44,7 +44,7 @@ namespace Jde::Logging::Data
 
 		Configure();
 	}
-	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( string_view applicationName, string_view hostName, uint processId )noexcept(false)
+	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( sv applicationName, sv hostName, uint processId )noexcept(false)
 	{
 		ApplicationPK applicationId;
 		ApplicationInstancePK applicationInstanceId;
@@ -61,7 +61,7 @@ namespace Jde::Logging::Data
 		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
 	}
 
-	Collections::UnorderedMapPtr<uint32,string> Fetch( string_view sql, ApplicationPK applicationId )noexcept(false)
+	Collections::UnorderedMapPtr<uint32,string> Fetch( sv sql, ApplicationPK applicationId )noexcept(false)
 	{
 		auto pMap = make_shared<Collections::UnorderedMap<uint32,string>>();
 		auto fnctn = [&pMap]( const DB::IRow& row )
@@ -87,7 +87,7 @@ namespace Jde::Logging::Data
 	#define _pQueue if( auto p = _pDbQueue; p )p
 	void SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept
 	{
-		string_view table = "";
+		sv table = "";
 		switch( field )
 		{
 		case Proto::EFields::MessageId:
@@ -140,7 +140,7 @@ namespace Jde::Logging::Data
 
 		try
 		{
-			//constexpr string_view whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
+			//constexpr sv whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
 			vector<string> where;
 			if( pStart )
 				where.push_back( fmt::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
@@ -156,7 +156,7 @@ namespace Jde::Logging::Data
 				parameters.push_back( instanceId );
 			}
 
-			constexpr string_view sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
+			constexpr sv sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
 			auto whereString = StringUtilities::AddSeparators( where, " and " );
 			var orderDirection = pStart ? "asc"sv : "desc"sv;
 			_dataSource->Select( fmt::format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
@@ -169,7 +169,7 @@ namespace Jde::Logging::Data
 					if( pTrace!=mapTraces.end() )
 						*pTrace->second->add_variables() = row.GetString( 1 );
 				};
-				constexpr string_view variables = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
+				constexpr sv variables = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
 				if( whereString.size() && mapTraces.size()==limit )
 				{
 					whereString += " and logs.id>=?";
@@ -197,7 +197,7 @@ namespace Jde::Logging::Data
 			pApplication->set_filelevel( fileLevel.has_value() ? (ApplicationServer::Web::FromServer::ELogLevel)fileLevel.value() : ApplicationServer::Web::FromServer::ELogLevel::Information );
 		};
 
-		constexpr string_view sql = "select id, name, db_log_level, file_log_level from log_applications"sv;
+		constexpr sv sql = "select id, name, db_log_level, file_log_level from log_applications"sv;
 		Try( [&]()
 		{
 			if( id )
@@ -222,8 +222,8 @@ namespace Jde::Logging::Data
 		pParameters->push_back( threadId );
 		pParameters->push_back( time );
 		pParameters->push_back( (uint)userId );
-		constexpr string_view procedure = "log_message_insert"sv;
-		constexpr string_view args = "(?,?,?,?,?,?,?,?,?,?"sv;
+		constexpr sv procedure = "log_message_insert"sv;
+		constexpr sv args = "(?,?,?,?,?,?,?,?,?,?"sv;
 		ostringstream os;
 		os << procedure;
 		if( variableCount>0 )

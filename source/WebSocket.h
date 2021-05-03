@@ -46,7 +46,7 @@ namespace Jde::WebSocket
 	};
 
 	template<typename TFromServer, typename TFromClient>
-	struct TSession : Session, public enable_shared_from_this<TSession<TFromServer,TFromClient>>
+	struct TSession : Session, public std::enable_shared_from_this<TSession<TFromServer,TFromClient>>
 	{
 		TSession( sp<Server> pServer, uint id, boost::asio::ip::tcp::socket& socket )noexcept(false):
 			Session{ pServer, id, socket }

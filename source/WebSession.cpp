@@ -155,7 +155,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		var reqId = request.requestid();
 		TRACE( "({}) requeststrings count='{}'"sv, Id, request.values_size() );
-		map<ApplicationPK,forward_list<FromServer::ApplicationString>> values;
+		map<ApplicationPK,std::forward_list<FromServer::ApplicationString>> values;
 		for( auto i=0; i<request.values_size(); ++i )
 		{
 			var& value = request.values( i );
@@ -176,16 +176,16 @@ namespace Jde::ApplicationServer::Web
 			if( pString )
 			{
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( *pString );
-				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
+				auto& strings = values.try_emplace(value.applicationid(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
 				strings.push_front( appString );
 			}
 			else
 			{
-				static constexpr array<string_view,5> StringTypes = {"Message","File","Function","Thread","User"};
-				const string typeString = value.type()<(int)StringTypes.size() ? string(StringTypes[value.type()]) : ::to_string( value.type() );
+				static constexpr array<sv,5> StringTypes = {"Message","File","Function","Thread","User"};
+				const string typeString = value.type()<(int)StringTypes.size() ? string(StringTypes[value.type()]) : std::to_string( value.type() );
 				WARN( "Could not find string type='{}', id='{}', application='{}'"sv, typeString, value.value(), value.applicationid() );
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( "{{error}}" );
-				auto& strings = values.try_emplace(value.applicationid(), forward_list<FromServer::ApplicationString>{} ).first->second;
+				auto& strings = values.try_emplace(value.applicationid(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
 				strings.push_front( appString );
 			}
 		}

@@ -10,7 +10,7 @@ namespace Jde::DB{ struct IDataSource; }
 namespace Jde::Logging::Data
 {
 	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept;
-	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( string_view applicationName, string_view hostName, uint processId )noexcept(false);
+	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( sv applicationName, sv hostName, uint processId )noexcept(false);
 	void SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept;
 
 	Jde::ApplicationServer::Web::FromServer::Applications* LoadAllocatedApplications( ApplicationPK pk=0 )noexcept;
