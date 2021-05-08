@@ -16,6 +16,9 @@
     <Filter Include="Source Files\types">
       <UniqueIdentifier>{ee876595-3297-465f-9d70-e0fa0f9e7b83}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\types">
+      <UniqueIdentifier>{f2bf6e13-c819-4f72-b888-4baf2a9d96ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Listener.h">

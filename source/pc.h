@@ -27,7 +27,7 @@
 #include "../../Framework/source/log/Logging.h"
 
 #include "../../Framework/source/log/server/proto/messages.pb.h"
-#include "../../Framework/source/StringUtilities.h"
+//#include "../../Framework/source/StringUtilities.h"
 /*
 #pragma warning( push )
 #pragma warning (disable: 4244)

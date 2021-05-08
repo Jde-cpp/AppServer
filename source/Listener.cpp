@@ -4,6 +4,7 @@
 #include "Cache.h"
 #include "LogClient.h"
 #include "WebServer.h"
+#include "../../Framework/source/StringUtilities.h"
 
 #define var const auto
 #define _logClient Logging::LogClient::Instance()
