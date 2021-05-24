@@ -47,3 +47,4 @@ sql/SQLQuery*.sql
 source/*.i
 *.log
 source/stdafx.h
+tests/.bin/*

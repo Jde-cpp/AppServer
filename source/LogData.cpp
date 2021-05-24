@@ -9,9 +9,10 @@
 #include "../../Framework/source/db/DataSource.h"
 #include "../../Framework/source/db/DBQueue.h"
 #include "../../Framework/source/db/Row.h"
-#include "../../Framework/source/io/File.h"
+//#include "../../Framework/source/"
+#include <jde/Str.h>
+#include <jde/io/File.h>
 #include "../../Framework/source/Settings.h"
-#include "../../Framework/source/StringUtilities.h"
 
 #define var const auto
 
@@ -22,16 +23,16 @@ namespace Jde::Logging::Data
 	using ApplicationServer::Web::FromServer::Applications;
 	sp<DB::IDataSource> _dataSource;
 	sp<DB::DBQueue> _pDbQueue;
-	void Configure()noexcept
+	void Configure()noexcept(false)
 	{
 		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
 		INFO( "db meta='{}'"sv, path.string() );
 		var j = json::parse( IO::FileUtilities::Load(path) );
 		if( auto p=_dataSource; p )
-			p->SchemaProc()->CreateSchema( j );
+			p->SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
 
-	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept
+	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept(false)
 	{
 		TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
 		_dataSource = dataSource;
@@ -53,7 +54,7 @@ namespace Jde::Logging::Data
 		{
 			row >> applicationId >> applicationInstanceId >> dbLogLevelInt >> fileLogLevelInt;
 		};
-		_dataSource->ExecuteProc( "log_application_instance_insert2(?,?,?)", {applicationName, hostName, processId}, fnctn );
+		_dataSource->ExecuteProc( "log_application_instance_insert(?,?,?)", {applicationName, hostName, processId}, fnctn );
 
 		ELogLevel dbLogLevel = dbLogLevelInt.has_value() ? (ELogLevel)dbLogLevelInt.value() : ELogLevel::Information;
 		ELogLevel fileLogLevel = fileLogLevelInt.has_value() ? (ELogLevel)fileLogLevelInt.value() : ELogLevel::Information;
@@ -157,7 +158,7 @@ namespace Jde::Logging::Data
 			}
 
 			constexpr sv sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
-			auto whereString = StringUtilities::AddSeparators( where, " and " );
+			auto whereString = Str::AddSeparators( where, " and " );
 			var orderDirection = pStart ? "asc"sv : "desc"sv;
 			_dataSource->Select( fmt::format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
 			if( mapTraces.size() )

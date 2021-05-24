@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "../../Framework/source/Settings.h"
-#include "../../Framework/source/application/Application.h"
+#include <jde/App.h>
 #include "../source/LogClient.h"
 #include "../source/LogData.h"
 #include "../../Framework/source/db/Database.h"

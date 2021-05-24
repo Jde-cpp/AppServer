@@ -14,21 +14,31 @@ namespace Jde::ApplicationServer
 }
 int main( int argc, char** argv )
 {
-	Jde::OSApp::Startup( argc, argv, "AppServer" );
+	using namespace Jde;
+	OSApp::Startup( argc, argv, "AppServer" );
 
 	//Jde::ApplicationServer::SettingsPtr = Jde::Settings::Global().SubContainer( "app-server" );
+	try
+	{
+		//std::thread{ []{ApplicationServer::Run();} }.detach();
+		ApplicationServer::Run();
+	}
+	catch( const Exception&  )
+	{
+		return EXIT_FAILURE;
+	}
 
-	std::thread{ []{Jde::ApplicationServer::Run();} }.detach();
-	Jde::IApplication::Pause();
+	IApplication::Pause();
 
-	Jde::IApplication::CleanUp();
+	IApplication::CleanUp();
+	return EXIT_SUCCESS;
 }
 
 namespace Jde::ApplicationServer
 {
 	int Run()
 	{
-		Threading::SetThreadDscrptn( "Startup" );
+		//Threading::SetThreadDscrptn( "Startup" );
 		Logging::Data::SetDataSource( DB::DataSource(Settings::Global().Get<fs::path>("dbDriver"), Settings::Global().Get<string>("connectionString")) );
 		Logging::LogClient::CreateInstance();
 

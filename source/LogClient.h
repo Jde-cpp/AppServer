@@ -1,6 +1,6 @@
 #pragma once
 #include "TypeDefs.h"
-#include "../../Framework/source/JdeAssert.h"
+#include <jde/Assert.h>
 #include "../../Framework/source/log/server/ServerSink.h"
 
 namespace Jde::Logging

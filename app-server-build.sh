@@ -1,33 +1,34 @@
 clean=${1:-0};
-fetch=${2:-1};
-set disable-completion on;
-#windows() { [[ -n "$WINDIR" ]]; }
-source ./common.sh
-source ./source-build.sh
+shouldFetch=${2:-1};
+#buildPrivate=${3:-0};
+baseDir=`pwd`;
 
-fetch framework-build.sh
-file=framework-build.sh;
-if [ ! -f $file ]; then
-	if [ -f jde/Framework/$file ]; then
-		if windows; then
-			dest=`pwd`;
-			dest=${dest////\\};
-			dest=${dest/\\c/c:};
-			cmd <<< "mklink $dest\\$file $dest\\jde\\Framework\\$file" > /dev/null;
-		else
-			ln -s jde/Framework/$file .;
-		fi;
-	else
-		curl https://raw.githubusercontent.com/Jde-cpp/Framework/master/$file -o $file
-	fi;
-fi
+t=$(readlink -f "${BASH_SOURCE[0]}"); scriptName=$(basename "$t"); unset t;
+appServerDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-function appServerProtoc
+echo $scriptName clean=$clean shouldFetch=$shouldFetch #buildPrivate=$buildPrivate
+function myFetch
 {
-    createProto types/proto FromServer;
-    createProto types/proto FromClient;
+	pushd `pwd`> /dev/null;
+	dir=$1;
+	if test ! -d $dir; then git clone https://github.com/Jde-cpp/$dir.git; else cd $dir; if (( $shouldFetch == 1 )); then git pull; cd ..; fi; fi;
+	popd> /dev/null;
 }
+cd ..;
+myFetch Framework
+if [[ -z $sourceBuild ]]; then source Framework/source-build.sh; fi;
+if [ ! windows ]; then set disable-completion on; fi;
+#echo `pwd`;
+Framework/framework-build.sh $clean $shouldFetch; if [ $? -ne 0 ]; then echo framework-build.sh failed - $?; exit 1; fi;
+fetchBuild Odbc 0 Jde.DB.Odbc.dll;
 
-source $file $clean $fetch;
-build Odbc 0
-build AppServer 0 'appServerProtoc'
+cd $appServerDir/source;
+#echo `pwd`;
+findProtoc;
+createProto types/proto FromServer;
+createProto types/proto FromClient;
+build AppServer 0 Jde.AppServer.exe;
+cd $appServerDir/tests;
+build Tests.AppServer 0 Jde.AppServer.exe;
+
+exit 1;

@@ -4,7 +4,7 @@
 #include "Cache.h"
 #include "LogClient.h"
 #include "WebServer.h"
-#include "../../Framework/source/StringUtilities.h"
+#include <jde/Str.h>
 
 #define var const auto
 #define _logClient Logging::LogClient::Instance()
@@ -194,7 +194,7 @@ namespace Jde::ApplicationServer
 		status.set_fileloglevel( (Web::FromServer::ELogLevel)FileLogLevel() );
 		status.set_memory( Memory );
 
-		var statuses = StringUtilities::Split( Status, '\n' );
+		var statuses = Str::Split( Status, '\n' );
 		for( var& statusDescription : statuses )
 			status.add_values( statusDescription );
 	}

@@ -5,7 +5,7 @@
 		"$target":{ "length": 255 },
 		"description":{ "length": 2047 },
 		"path":{ "length": 4095 },
-		"bigId": "uint64",
+		"bigId": { "type": "uint64", "sequence": true },
 		"id": "uint32",
 		"smallId": "uint16",
 		"tinyId": "uint8",
@@ -18,23 +18,25 @@
 		"$surrogateKey":["id"],
 		"$naturalKey":["name"]
 	},
+	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql"],
 	"logApplications":
 	{
 		"$parent": "$smallValues",
 		"dbLogLevel": "tinyId",
 		"fileLogLevel": "tinyId",
-		"location": "path",
-		"$surrogateKey":["id"]
+		"location": "path?",
+		"$customInsertProc": true
 	},
 	"logApplicationInstances":
 	{
 		"id":{ "type": "uint32", "sequence": true },
 		"applicationId": "logApplications",
-		"end": "dateTime",
+		"endTime": "dateTime?",
 		"hostId": "logHosts",
-		"processId": "uint",
+		"processId": "uint64",
 		"start": "dateTime",
-		"$surrogateKey":["id"]
+		"$surrogateKey":["id"],
+		"$customInsertProc": true
 	},
 	"logFiles":
 	{
@@ -49,11 +51,13 @@
 		"id": "crc",
 		"applicationId": "logApplications",
 		"value": "path",
+		"$surrogateKey":["id"],
 		"$naturalKey":["applicationId","id"]
 	},
 	"logHosts":
 	{
-		"$parent": "$smallValues"
+		"$parent": "$smallValues",
+		"$customInsertProc": true
 	},
 	"logMessages":
 	{
@@ -66,22 +70,23 @@
 	"logVariables":
 	{
 		"logId": "logs",
-		"variable_index": "tinyUInt",
+		"variable_index": "uint8",
 		"value": { "length": 4095 },
-		"$surrogateKey":["logId","id"]
+		"$surrogateKey":["logId","variable_index"]
 	},
 	"logs":
 	{
-		"id": "crc",
+		"id": "bigId",
 		"applicationId": "logApplications",
 		"applicationInstanceId": "logApplicationInstances",
 		"fileId": "logFiles",
 		"functionId": "logFunctions",
 		"lineNumber": "uint16",
 		"messageId": "logMessages",
-		"severity": "tinyUint",
-		"threadId": "uint",
+		"severity": "uint8",
+		"threadId": "uint64",
 		"time": "dateTime",
-		"userId": "uint32"
+		"userId": "uint32",
+		"$surrogateKey":["id"]
 	}
 }

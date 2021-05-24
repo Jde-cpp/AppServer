@@ -1,5 +1,5 @@
 #pragma once
-#include "../../Framework/source/TypeDefs.h"
+#include <jde/TypeDefs.h>
 namespace Jde
 {
 	typedef uint ApplicationInstancePK;
