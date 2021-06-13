@@ -45,7 +45,7 @@ namespace Jde::ApplicationServer
 			Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, "No application strings loaded for {}"sv, "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 45), applicationId );
 			return;
 		}
-		auto pValue = make_shared<string>(value);
+		auto pValue = make_shared<string>( value.size() ? value : "{null}" );
 		Logging::Data::SaveString( applicationId, field, id, pValue );
 		switch( field )
 		{
