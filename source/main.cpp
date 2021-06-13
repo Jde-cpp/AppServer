@@ -4,42 +4,36 @@
 #include "LogClient.h"
 #include "LogData.h"
 #include "../../Framework/source/Settings.h"
-#include "../../Framework/source/DB/Database.h"
+#include "../../Framework/source/db/Database.h"
 
 #define var const auto
 
 namespace Jde::ApplicationServer
 {
-	int Run();
+	void Run();
 }
 int main( int argc, char** argv )
 {
 	using namespace Jde;
 	OSApp::Startup( argc, argv, "AppServer" );
-
-	//Jde::ApplicationServer::SettingsPtr = Jde::Settings::Global().SubContainer( "app-server" );
 	try
 	{
-		//std::thread{ []{ApplicationServer::Run();} }.detach();
 		ApplicationServer::Run();
+		IApplication::Pause();
 	}
-	catch( const Exception&  )
+	catch( const Exception& e )
 	{
-		return EXIT_FAILURE;
+		std::cout << "Exiting on error:  " << e.what() << std::endl;
 	}
-
-	IApplication::Pause();
-
 	IApplication::CleanUp();
 	return EXIT_SUCCESS;
 }
 
 namespace Jde::ApplicationServer
 {
-	int Run()
+	void Run()
 	{
-		//Threading::SetThreadDscrptn( "Startup" );
-		Logging::Data::SetDataSource( DB::DataSource(Settings::Global().Get<fs::path>("dbDriver"), Settings::Global().Get<string>("connectionString")) );
+		Logging::Data::SetDataSource( DB::DataSource() );
 		Logging::LogClient::CreateInstance();
 
 		constexpr PortType ReceivePort = 4321;
@@ -47,7 +41,5 @@ namespace Jde::ApplicationServer
 		var spWebSocket = Web::MyServer::CreateInstance( WebSocketPort );
 		IApplication::AddShutdown( spWebSocket );
 		IApplication::AddShutdown( Listener::Create( ReceivePort) );
-
-		return EXIT_SUCCESS;
 	}
 }

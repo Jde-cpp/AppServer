@@ -8,7 +8,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/multi_buffer.hpp>
-#include <boost/exception/diagnostic_information.hpp> 
+#include <boost/exception/diagnostic_information.hpp>
 //https://www.boost.org/doc/libs/1_71_0/libs/beast/example/websocket/server/sync/websocket_server_sync.cpp
 #include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/threading/Thread.h"
@@ -115,7 +115,7 @@ namespace Jde::WebSocket
 			{
 				auto code = se.code();
 				if( code == boost::beast::websocket::error::closed )
-					DBG0( "se.code()==websocket::error::closed"sv );
+					DBG( "se.code()==websocket::error::closed"sv );
 				else if( code.value()==104 )//reset by peer
 				{
 					DBG( "'{}' - closing '{}'"sv, se.code().message(), Id );
@@ -211,7 +211,7 @@ namespace Jde::WebSocket
 		}
 		catch( const boost::system::system_error& e )
 		{
-			CRITICAL0( e.code().message() );
+			CRITICAL( e.code().message() );
 			return;
 		}
 		//boost::asio::ip::tcp::acceptor acceptor{ ioc, {boost::asio::ip::tcp::v4(), (short unsigned int)_port} };
@@ -222,7 +222,7 @@ namespace Jde::WebSocket
 			try
 			{
 				_pAcceptor->accept( socket );// Blocking
-				TRACE0( "Accepted Connection."sv );
+				TRACE( "Accepted Connection."sv );
 				var id = ++_id;
 				sp<TFromServer> pServer = dynamic_pointer_cast<TFromServer>( shared_from_this() );
 				auto pSession = make_shared<TServerSession>( pServer, id, socket );//deadlock if included in _sessions.emplace
@@ -231,7 +231,7 @@ namespace Jde::WebSocket
 			}
 			catch( const boost::system::system_error& e )
 			{
-				DBG0( e.code().message() );
+				DBG( e.code().message() );
 			}
 		}
 	}

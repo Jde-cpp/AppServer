@@ -1,8 +1,8 @@
 {
-	"dbDriver": "Jde.DB.Odbc.dll",
-	"connectionString": "DSN=Jde_Log_Connection",
-	"metaDataPath": "../meta.json",
-	"logging": 
+	"dbDriver": "libJde.MySql.so",
+	"connectionString": "Jde_Log_Connection",
+	"metaDataPath": "../log-meta.json",
+	"logging":
 	{
 		"level": 1,
 		"path": "..",

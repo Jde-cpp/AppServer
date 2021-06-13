@@ -26,7 +26,7 @@ namespace Jde::ApplicationServer
 		}
 		catch( const std::system_error& e )
 		{
-			CRITICAL0( string(e.what()) );
+			CRITICAL( string(e.what()) );
 			THROW( Exception("Could not create listener:  '{}'", e.what()) );
 		}
 	}
@@ -178,7 +178,7 @@ namespace Jde::ApplicationServer
 			transmission.add_messages()->set_allocated_strings( pValues );
 		}
 		else
-			CRITICAL0( "!pStrings"sv );
+			CRITICAL( "!pStrings"sv );
 
 		transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
 		Write( transmission );

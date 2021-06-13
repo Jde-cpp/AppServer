@@ -78,7 +78,7 @@ namespace Jde::ApplicationServer::Web
 				else if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
 					Server().RemoveLogSubscription( Id, instanceId );
 				else if( value == FromClient::ERequest::Power )
-					WARN0( "unsupported request Power"sv );
+					WARN( "unsupported request Power"sv );
 				else
 					WARN( "unsupported request '{}'"sv, request.value() );
 			}

@@ -26,7 +26,7 @@ namespace Jde::ApplicationServer
 	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>
 	{
 		Session( basio::ip::tcp::socket& socket, IO::Sockets::SessionPK id )noexcept;
-		~Session(){DBG0("Session::~Session"sv);}
+		~Session(){DBG("Session::~Session"sv);}
 		void OnReceive( sp<ToServer> pValue )noexcept override;
 		void Start2()noexcept;
 		void WriteStrings()noexcept;
