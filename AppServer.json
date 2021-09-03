@@ -1,11 +1,13 @@
 {
-	"dbDriver": "libJde.MySql.so",
-	"connectionString": "Jde_Log_Connection",
-	"metaDataPath": "../log-meta.json",
+	"db":
+	{
+		"driver": "libJde.MySql.so",
+		"connectionString": "Jde_Log_Connection",
+		"meta": "../log-meta.json"
+	},
 	"logging":
 	{
-		"level": 1,
-		"path": "..",
-		"server":  false
+		"console":{},
+		"file":{ "path": ".." }
 	}
 }

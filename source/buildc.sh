@@ -23,6 +23,6 @@ if [ $clean -eq 1 ]; then
 	cmake -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
 	make clean;
 fi
-make -j7
+make -j
 cd - > /dev/null
 exit $?

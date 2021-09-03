@@ -8,17 +8,21 @@
 
 #define var const auto
 
-namespace Jde::ApplicationServer
+#ifndef _MSC_VER
+namespace Jde{  string IApplication::CompanyName()noexcept{ return "Jde-Cpp"; } }
+#endif
+
+namespace Jde
 {
 	void Run();
 }
 int main( int argc, char** argv )
 {
 	using namespace Jde;
-	OSApp::Startup( argc, argv, "AppServer" );
+	OSApp::Startup( argc, argv, "AppServer", "jde-cpp App Server." );
 	try
 	{
-		ApplicationServer::Run();
+		Run();
 		IApplication::Pause();
 	}
 	catch( const Exception& e )
@@ -29,17 +33,17 @@ int main( int argc, char** argv )
 	return EXIT_SUCCESS;
 }
 
-namespace Jde::ApplicationServer
+namespace Jde
 {
 	void Run()
 	{
 		Logging::Data::SetDataSource( DB::DataSource() );
 		Logging::LogClient::CreateInstance();
 
-		constexpr PortType ReceivePort = 4321;
+		//
 		constexpr uint WebSocketPort = 1967;
-		var spWebSocket = Web::MyServer::CreateInstance( WebSocketPort );
+		var spWebSocket = ApplicationServer::Web::MyServer::CreateInstance( WebSocketPort );
 		IApplication::AddShutdown( spWebSocket );
-		IApplication::AddShutdown( Listener::Create( ReceivePort) );
+		//IApplication::AddShutdown( ApplicationServer::Listener::Create( ReceivePort) );
 	}
 }

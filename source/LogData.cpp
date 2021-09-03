@@ -1,7 +1,7 @@
 #include "LogData.h"
-#pragma warning( disable : 4715) 
+#pragma warning( disable : 4715)
 #include <nlohmann/json.hpp>
-#pragma warning( default : 4715) 
+#pragma warning( default : 4715)
 
 #include "types/proto/FromServer.pb.h"
 #include "../../Framework/source/DateTime.h"
@@ -25,11 +25,16 @@ namespace Jde::Logging::Data
 	sp<DB::DBQueue> _pDbQueue;
 	void Configure()noexcept(false)
 	{
-		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
-		INFO( "db meta='{}'"sv, path.string() );
-		var j = json::parse( IO::FileUtilities::Load(path) );
-		if( auto p=_dataSource; p )
-			p->SchemaProc()->CreateSchema( j, path.parent_path() );
+		var p = Settings::TryGet<fs::path>( "db/meta" );
+		if( p )
+		{
+			INFO( "db meta='{}'"sv, p->string() );
+			var j = json::parse( IO::FileUtilities::Load(*p) );
+			if( auto ds=_dataSource; ds )
+				ds->SchemaProc()->CreateSchema( j, p->parent_path() );
+		}
+		else
+			INFO( "db/meta not specified" );
 	}
 
 	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept(false)
@@ -184,9 +189,9 @@ namespace Jde::Logging::Data
 
 		return pTraces;
 	}
-	Applications* LoadAllocatedApplications( ApplicationPK id )noexcept
+	up<ApplicationServer::Web::FromServer::Applications> LoadApplications( ApplicationPK id )noexcept
 	{
-		auto pApplications = new Applications();
+		auto pApplications = make_unique<Applications>();
 		auto fnctn = [&pApplications]( const DB::IRow& row )
 		{
 			auto pApplication = pApplications->add_values();
@@ -208,7 +213,8 @@ namespace Jde::Logging::Data
 		} );
 		return pApplications;
 	}
-	void PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
+
+	void PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept
 	{
 		var variableCount = std::min( (uint)5, variables.size() );
 		auto pParameters = make_shared<vector<DB::DataValue>>();
@@ -233,7 +239,7 @@ namespace Jde::Logging::Data
 		for( uint i=0; i<variableCount; ++i )
 		{
 			os << ",?";
-			pParameters->push_back( variables[i] );
+			pParameters->push_back( move(variables[i]) );
 		}
 		os << ")";
 		_pQueue->Push( os.str(), pParameters );

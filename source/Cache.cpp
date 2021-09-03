@@ -39,7 +39,7 @@ namespace Jde::ApplicationServer
 
 	void Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )
 	{
-		auto pStrings = _applicationStrings.Find( applicationId ); 
+		auto pStrings = _applicationStrings.Find( applicationId );
 		if( !pStrings )
 		{
 			Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, "No application strings loaded for {}"sv, "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 45), applicationId );
@@ -62,8 +62,8 @@ namespace Jde::ApplicationServer
 		// 	pStrings->MessagesPtr->Emplace( id, value );
 		// 	break;
 		default:
-			Logging::Log( Logging::MessageBase(ELogLevel::Error, "unknown field {}.", "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 65, IO::Crc::Calc32RunTime("unknown field {}."), IO::Crc::Calc32RunTime("C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp"), IO::Crc::Calc32RunTime(__func__)), field );
-			//ERR( "unknown field {}."sv, field );
+			//Logging::Log( Logging::MessageBase(ELogLevel::Error, "unknown field {}.", "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 65, IO::Crc::Calc32RunTime("unknown field {}."), IO::Crc::Calc32RunTime("C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp"), IO::Crc::Calc32RunTime(__func__)), field );
+			ERR( "unknown field {}.", field );
 		}
 	}
 

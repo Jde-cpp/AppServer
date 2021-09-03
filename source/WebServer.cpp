@@ -49,8 +49,8 @@ namespace Jde::ApplicationServer::Web
 		status.set_instanceid( (google::protobuf::uint32)_logClient.InstanceId );
 		status.set_hostname( IApplication::HostName() );
 		status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(IApplication::StartTime()) );
-		status.set_dbloglevel( (Web::FromServer::ELogLevel)GetServerSink()->GetLogLevel() );
-		status.set_fileloglevel( (Web::FromServer::ELogLevel)GetDefaultLogger()->level() );
+		status.set_dbloglevel( (Web::FromServer::ELogLevel)_serverLogLevel );
+		status.set_fileloglevel( (Web::FromServer::ELogLevel)_logger.level() );
 		status.set_memory( IApplication::MemorySize() );
 		status.add_values( fmt::format("Web Connections:  {}", SessionCount()) );
 	}
@@ -100,7 +100,7 @@ namespace Jde::ApplicationServer::Web
 		_listener.WebSubscribe( instanceId, (ELogLevel)minLevel );
 	}
 
-	ELogLevel MyServer::PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
+	ELogLevel MyServer::PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept
 	{
 		shared_lock l{ _logSubscriptionMutex };
 		auto minLevel = ELogLevel::None;

@@ -203,7 +203,7 @@ namespace Jde::WebSocket
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
 	void TServer<TFromServer,TFromClient,TServerSession>::Accept()noexcept
 	{
-		Threading::SetThreadDscrptn( "wsAcceptor" );
+		Threading::SetThreadDscrptn( "WebListener" );
 		boost::asio::io_context ioc{1};
 		try
 		{
@@ -211,7 +211,7 @@ namespace Jde::WebSocket
 		}
 		catch( const boost::system::system_error& e )
 		{
-			CRITICAL( e.code().message() );
+			LOGS( ELogLevel::Critical, e.code().message() );
 			return;
 		}
 		//boost::asio::ip::tcp::acceptor acceptor{ ioc, {boost::asio::ip::tcp::v4(), (short unsigned int)_port} };
@@ -231,7 +231,7 @@ namespace Jde::WebSocket
 			}
 			catch( const boost::system::system_error& e )
 			{
-				DBG( e.code().message() );
+				LOGS( ELogLevel::Debug, e.code().message() );
 			}
 		}
 	}

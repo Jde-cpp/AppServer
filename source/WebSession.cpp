@@ -38,11 +38,12 @@ namespace Jde::ApplicationServer::Web
 
 	void MySession::OnRead( sp<MyFromClient> pTransmission )noexcept
 	{
-		for( var& message : pTransmission->messages() )
+		for( uint i=0; i<pTransmission->messages_size(); ++i )
 		{
-			if( message.has_request() )
+			auto pMessage = pTransmission->mutable_messages( i );
+			if( pMessage->has_request() )
 			{
-				var& request = message.request();
+				var& request = pMessage->request();
 				if( request.value()==FromClient::ERequest::Statuses )
 					SendStatuses();
 				else if( request.value()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
@@ -52,29 +53,21 @@ namespace Jde::ApplicationServer::Web
 				}
 				else if( request.value() == FromClient::ERequest::Applications )
 				{
-					auto pApplications = Logging::Data::LoadAllocatedApplications();
-					MyFromServer transmission;
-					transmission.add_messages()->set_allocated_applications( pApplications );
+					auto pApplications = Logging::Data::LoadApplications();
 					DBG( "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
+					MyFromServer transmission; transmission.add_messages()->set_allocated_applications( pApplications.release() );
 					Write( transmission );
 				}
 				else
 					WARN( "unsupported request '{}'"sv, request.value() );
 			}
-			else if( message.has_requestid() )
+			else if( pMessage->has_requestid() )
 			{
-				var& request = message.requestid();
+				var& request = pMessage->requestid();
 				const ApplicationInstancePK instanceId = request.instanceid();
 				var value = (int)request.value();
 				if( value == -2 )//(int)(FromClient::ERequest::Power | FromClient::ERequest::Negate);
-				{
-					var pSession = _listener.FindSessionByInstance( instanceId );
-					if( pSession )
-					{
-						DBG( "({})killing proc id='{}'"sv, Id, pSession->ProcessId );
-						IApplication::Kill( pSession->ProcessId );
-					}
-				}
+					_listener.Kill( instanceId );
 				else if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
 					Server().RemoveLogSubscription( Id, instanceId );
 				else if( value == FromClient::ERequest::Power )
@@ -82,41 +75,39 @@ namespace Jde::ApplicationServer::Web
 				else
 					WARN( "unsupported request '{}'"sv, request.value() );
 			}
-			else if( message.has_logvalues() )
+			else if( pMessage->has_logvalues() )
 			{
-				var& values = message.logvalues();
+				var& values = pMessage->logvalues();
 				if( values.dbvalue()<ELogLevelStrings.size() && values.clientvalue()<ELogLevelStrings.size() )
 					DBG( "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
 				Logging::Proto::LogLevels levels;
 				_listener.SetLogLevel( values.instanceid(), (ELogLevel)values.dbvalue(), (ELogLevel)values.clientvalue() );
 			}
-			else if( message.has_requestlogs() )
+			else if( pMessage->has_requestlogs() )
 			{
-				var value = message.requestlogs();
+				var value = pMessage->requestlogs();
 				if( value.value()<ELogLevelStrings.size() )
 					DBG( "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, value.applicationid(), value.instanceid(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
 					std::thread{ [self=dynamic_pointer_cast<MySession>(shared_from_this()),value](){SendLogs(self,value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());} }.detach();
 			}
-			else if( message.has_custom() )
+			else if( pMessage->has_custom() )
 			{
-				var& custom = message.custom();
-				DBG( "({})received From Web custom reqId='{}' for application='{}'"sv, Id, custom.requestid(), custom.applicationid() );
-				auto pSession = _listener.FindApplication( custom.applicationid() );
-				const string message2 = custom.message();
-				if( pSession )
-					pSession->WriteCustom( (IO::Sockets::SessionPK)Id, custom.requestid(), message2 );
-				else
+				auto pCustom = pMessage->mutable_custom();
+				DBG( "({})received From Web custom reqId='{}' for application='{}'"sv, Id, pCustom->requestid(), pCustom->applicationid() );
+				try
 				{
-					auto pApps = sp<FromServer::Applications>{ Logging::Data::LoadAllocatedApplications(custom.applicationid()) };
-					var name = pApps->values_size() ? pApps->values(0).name() : std::to_string( custom.applicationid() );
-					WriteError( fmt::format("Application '{}' is not running", name), custom.requestid() );
+					_listener.WriteCustom( pCustom->applicationid(), pCustom->requestid(), move(*up<string>(pCustom->release_message())) );
+				}
+				catch( const Exception& e )
+				{
+					WriteError( e.what(), pCustom->requestid() );
 				}
 			}
-			else if( message.has_requeststrings() )
-				SendStrings( message.requeststrings() );
+			else if( pMessage->has_requeststrings() )
+				SendStrings( pMessage->requeststrings() );
 			else
-				ERR( "Unknown message:  {}"sv, (uint)message.Value_case() );
+				ERR( "Unknown message:  {}"sv, (uint)pMessage->Value_case() );
 		}
 	};
 

@@ -17,8 +17,10 @@ target_link_libraries(Jde.AppServer Jde)
 target_link_libraries(Jde.AppServer dl)
 target_link_libraries(Jde.AppServer protobuf)
 target_link_libraries(Jde.AppServer stdc++)
-target_link_libraries(Jde.AppServer boost_system)
-target_link_libraries(Jde.AppServer boost_thread)
+#target_link_libraries(Jde.AppServer boost_system)
+#target_link_libraries(Jde.AppServer boost_thread)
+#target_link_libraries(Jde.AppServer mysqlcppconn8)
+#target_link_libraries(Jde.AppServer Jde.MySql)
 #######################################################
 target_precompile_headers(Jde.AppServer
 	PRIVATE
