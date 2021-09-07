@@ -19,10 +19,12 @@ namespace Jde
 int main( int argc, char** argv )
 {
 	using namespace Jde;
-	OSApp::Startup( argc, argv, "AppServer", "jde-cpp App Server." );
 	try
 	{
-		Run();
+		OSApp::Startup( argc, argv, "AppServer", "jde-cpp App Server." );
+		Logging::Data::SetDataSource( DB::DataSource() );
+		Logging::LogClient::CreateInstance();
+
 		IApplication::Pause();
 	}
 	catch( const Exception& e )
@@ -33,17 +35,14 @@ int main( int argc, char** argv )
 	return EXIT_SUCCESS;
 }
 
-namespace Jde
-{
-	void Run()
-	{
-		Logging::Data::SetDataSource( DB::DataSource() );
-		Logging::LogClient::CreateInstance();
-
-		//
-		constexpr uint WebSocketPort = 1967;
-		var spWebSocket = ApplicationServer::Web::MyServer::CreateInstance( WebSocketPort );
-		IApplication::AddShutdown( spWebSocket );
-		//IApplication::AddShutdown( ApplicationServer::Listener::Create( ReceivePort) );
-	}
-}
+// namespace Jde
+// {
+// 	void Run()
+// 	{
+// 		//
+// 		//constexpr uint WebSocketPort = 1967;
+// 		//var spWebSocket = ApplicationServer::Web::MyServer::CreateInstance( WebSocketPort );
+// 		//IApplication::AddShutdown( spWebSocket );
+// 		//IApplication::AddShutdown( ApplicationServer::Listener::Create( ReceivePort) );
+// 	}
+// }

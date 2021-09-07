@@ -146,7 +146,6 @@ namespace Jde::Logging::Data
 
 		try
 		{
-			//constexpr sv whereFormat = "where{} time>now() - INTERVAL 1 DAY"sv;
 			vector<string> where;
 			if( pStart )
 				where.push_back( fmt::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );

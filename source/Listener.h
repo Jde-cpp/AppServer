@@ -60,11 +60,11 @@ namespace Jde::ApplicationServer
 		map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
 	};
 
-	struct Listener final : public IO::Sockets::ProtoServer
+	struct TcpListener final : public IO::Sockets::ProtoServer
 	{
-		Listener()noexcept(false);
+		TcpListener()noexcept(false);
 		//static shared_ptr<Listener> Create( PortType port )noexcept(false);
-		static Listener& GetInstance()noexcept;
+		static TcpListener& GetInstance()noexcept;
 		//static shared_ptr<Listener>& GetInstancePtr()noexcept;
 
 		up<IO::Sockets::ProtoSession> CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept override;
@@ -79,7 +79,7 @@ namespace Jde::ApplicationServer
 	private:
 		Session* FindApplication( ApplicationPK applicationId )noexcept;
 		Session* FindSessionByInstance( ApplicationInstancePK id )noexcept;
-		static shared_ptr<Listener> _pInstance;
+		//static shared_ptr<Listener> _pInstance;
 	};
 
 #define var const auto
@@ -97,7 +97,7 @@ namespace Jde::ApplicationServer
 			if( erase )
 				_customWebRequests.erase( pRequest );
 		}
-		if( var pSession = Web::MyServer::GetInstance()->Find(sessionId); pSession )
+		if( var pSession = Web::Server().Find(sessionId); pSession )
 			write( *pSession, webRequestId, move(message) );//pSession->WriteCustom( WebRequestId, message.message() );
 		else
 			DBG( "({})Could not find web session."sv, sessionId );

@@ -6,41 +6,36 @@
 #include "../../Framework/source/DateTime.h"
 
 #define var const auto
-#define _listener Listener::GetInstance()
+#define _listener TcpListener::GetInstance()
 
 namespace Jde::ApplicationServer::Web
 {
-	MySession::MySession( sp<MyServer> pServer, uint id, boost::asio::ip::tcp::socket& socket )noexcept(false):
-		Base( pServer, id, socket )
-	{}
+	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )noexcept(false):
+		base( server, id, move(socket) )
+	{
+		auto pAck = make_unique<Web::FromServer::Acknowledgement>();
+		pAck->set_id( (uint32)Id );
+		FromServer::Transmission t;
+		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
+		Write( t );
+		Server().UpdateStatus( Server() );
+	}
 
 	MySession::~MySession()
 	{
 		DBG( "~MySession( {} )"sv, Id );
 	}
 
-	void MySession::Start()noexcept
+	WebServer& MySession::Server()noexcept
 	{
-		Session::Start();
-		auto pAck = new Web::FromServer::Acknowledgement();
-		pAck->set_id( (uint32)Id );
-		MyFromServer transmission;
-		transmission.add_messages()->set_allocated_acknowledgement( pAck );
-		Write( transmission );
-		Server().UpdateStatus( Server() );
+		return dynamic_cast<WebServer&>( _server );
 	}
 
-
-	MyServer& MySession::Server()noexcept
+	void MySession::OnRead( FromClient::Transmission t )noexcept
 	{
-		return dynamic_cast<MyServer&>( *_pServer );
-	}
-
-	void MySession::OnRead( sp<MyFromClient> pTransmission )noexcept
-	{
-		for( uint i=0; i<pTransmission->messages_size(); ++i )
+		for( uint i=0; i<t.messages_size(); ++i )
 		{
-			auto pMessage = pTransmission->mutable_messages( i );
+			auto pMessage = t.mutable_messages( i );
 			if( pMessage->has_request() )
 			{
 				var& request = pMessage->request();
@@ -55,7 +50,7 @@ namespace Jde::ApplicationServer::Web
 				{
 					auto pApplications = Logging::Data::LoadApplications();
 					DBG( "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
-					MyFromServer transmission; transmission.add_messages()->set_allocated_applications( pApplications.release() );
+					FromServer::Transmission transmission; transmission.add_messages()->set_allocated_applications( pApplications.release() );
 					Write( transmission );
 				}
 				else
@@ -89,7 +84,10 @@ namespace Jde::ApplicationServer::Web
 				if( value.value()<ELogLevelStrings.size() )
 					DBG( "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, value.applicationid(), value.instanceid(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
-					std::thread{ [self=dynamic_pointer_cast<MySession>(shared_from_this()),value](){SendLogs(self,value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());} }.detach();
+					std::thread{ [self=dynamic_pointer_cast<MySession>(shared_from_this()),value]()
+					{
+						SendLogs(self,value.applicationid(), value.instanceid(), (ELogLevel)value.value(), value.start(), value.limit());
+					}}.detach();
 			}
 			else if( pMessage->has_custom() )
 			{
@@ -120,13 +118,11 @@ namespace Jde::ApplicationServer::Web
 			session.SetStatus( *pStatuses->add_values() );
 		};
 		_listener.ForEachSession( fncn );
-		MyFromServer transmission;
-		transmission.add_messages()->set_allocated_statuses( pStatuses );
-		if( Write(transmission) )
-		{
-			DBG( "({})Add status subscription."sv, Id );
-			Server().AddStatusSession( Id );
-		}
+		FromServer::Transmission t;
+		t.add_messages()->set_allocated_statuses( pStatuses );
+		Try( [&t,this]{Write(t);} );
+		DBG( "({})Add status subscription."sv, Id );
+		Server().AddStatusSession( Id );
 	}
 	void MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept
 	{
@@ -137,7 +133,7 @@ namespace Jde::ApplicationServer::Web
 		{
 			pTraces->set_applicationid( (google::protobuf::uint32)applicationId );
 			DBG( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
-			MyFromServer transmission;
+			FromServer::Transmission transmission;
 			transmission.add_messages()->set_allocated_traces( pTraces.release() );
 			self->Write( transmission );
 		}
@@ -181,7 +177,7 @@ namespace Jde::ApplicationServer::Web
 			}
 		}
 
-		MyFromServer transmission;
+		FromServer::Transmission transmission;
 		for( var& [id,strings] : values )
 		{
 			auto pStrings = new FromServer::ApplicationStrings();
@@ -200,14 +196,14 @@ namespace Jde::ApplicationServer::Web
 		var pCustom = new FromServer::Custom();
 		pCustom->set_requestid( clientId );
 		pCustom->set_message( message );
-		MyFromServer transmission; transmission.add_messages()->set_allocated_custom( pCustom );
+		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_custom( pCustom );
 		Write( transmission );
 	}
 	void MySession::WriteComplete( uint32 clientId )noexcept
 	{
 		var pCustom = new FromServer::Complete();
 		pCustom->set_requestid( clientId );
-		MyFromServer transmission; transmission.add_messages()->set_allocated_complete( pCustom );
+		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_complete( pCustom );
 		Write( transmission );
 	}
 
@@ -217,15 +213,12 @@ namespace Jde::ApplicationServer::Web
 		var pError = new FromServer::ErrorMessage();
 		pError->set_requestid( requestId );
 		pError->set_message( msg );
-		MyFromServer transmission; transmission.add_messages()->set_allocated_error( pError );
+		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_error( pError );
 		Write( transmission );
 	}
-	bool MySession::Write( const MyFromServer& transmission  )noexcept
+	void MySession::Write( const FromServer::Transmission& t  )noexcept(false)
 	{
-		var pData = TryToBuffer( transmission );
-		if( pData )
-			Write2( *pData );
-		return pData!=nullptr;
+		base::Write( IO::Proto::ToString(t) );
 	}
 	void MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
 	{
@@ -245,7 +238,7 @@ namespace Jde::ApplicationServer::Web
 		for( var& variable : variables )
 			pTrace->add_variables( variable );
 
-		MyFromServer transmission;
+		FromServer::Transmission transmission;
 		transmission.add_messages()->set_allocated_traces( pTraces );
 		Write( transmission );
 	}

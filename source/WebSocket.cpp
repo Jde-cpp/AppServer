@@ -8,7 +8,7 @@ namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.h
 
 namespace Jde::WebSocket
 {
-	Server::Server( uint16 port )noexcept:
+	Server::Server( PortType port )noexcept:
 		_port{ port }
 	{
 	}
@@ -20,10 +20,10 @@ namespace Jde::WebSocket
 	}
 
 //auto pSession = make_shared<websocket::stream<tcp::socket>>( std::move(socket) );
-	Session::Session( sp<Server> pServer, uint id, tcp::socket& socket )noexcept(false):
+	Session::Session(Server& server, SessionPK id, tcp::socket&& socket )noexcept(false):
 		Id{ id },
 		_stream{ websocket::stream<tcp::socket>{std::move(socket)} },
-		_pServer{ pServer }
+		_server{ server }
 	{
 		_stream.binary( true );
 		_stream.accept();
@@ -50,7 +50,7 @@ namespace Jde::WebSocket
 	void Session::Disconnect()noexcept
 	{
 		_connected = false;
-		_pServer->RemoveSession( Id );
+		_server.RemoveSession( Id );
 	}
 
 	VectorPtr<google::protobuf::uint8> Session::TryToBuffer( const google::protobuf::MessageLite& msg )noexcept

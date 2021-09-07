@@ -13,19 +13,20 @@
 #include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/threading/Thread.h"
 #include "../../Framework/source/threading/InterruptibleThread.h"
+#include "../../Framework/source/io/sockets/Socket.h"
 //------------------------------------------------------------------------------
 namespace boost::asio::ip{ class tcp; }
 namespace Jde::Threading{ struct InterruptibleThread; }
-//TODORefactor Move WebSocket to Framework
+
 namespace Jde::WebSocket
 {
 	struct Server;
-	typedef uint SessionPK;
-//using namespace boost::beast::websocket;
-	class Session
+	using SessionPK=IO::Sockets::SessionPK;
+	namespace net = boost::asio;
+	using tcp = net::ip::tcp;
+	struct Session
 	{
-	public:
-		Session( sp<Server> pServer, uint id, boost::asio::ip::tcp::socket& socket )noexcept(false);//boost::system::system_error
+		Session( Server& server, SessionPK id, tcp::socket&& socket )noexcept(false);//boost::system::system_error
 		virtual ~Session()=default;
 
 		//virtual void OnConnect()noexcept=0;
@@ -35,10 +36,10 @@ namespace Jde::WebSocket
 	protected:
 		virtual void Start()noexcept;
 		void Disconnect()noexcept;
-		typedef boost::beast::websocket::stream<boost::asio::ip::tcp::socket> Stream;
+		typedef boost::beast::websocket::stream<tcp::socket> Stream;
 		Stream _stream;
 		sp<Threading::InterruptibleThread> _pThread;
-		sp<Server> _pServer;
+		Server& _server;
 	private:
 		virtual void Run()noexcept=0;
 		void SendAck()noexcept;
@@ -48,8 +49,8 @@ namespace Jde::WebSocket
 	template<typename TFromServer, typename TFromClient>
 	struct TSession : Session, public std::enable_shared_from_this<TSession<TFromServer,TFromClient>>
 	{
-		TSession( sp<Server> pServer, uint id, boost::asio::ip::tcp::socket& socket )noexcept(false):
-			Session{ pServer, id, socket }
+		TSession( Server& server, SessionPK id, tcp::socket&& socket )noexcept(false):
+			Session{ server, id, move(socket) }
 		{}
 		virtual ~TSession()=default;
 		void Write( const TFromServer& message )noexcept(false);
@@ -137,15 +138,16 @@ namespace Jde::WebSocket
 		}
 		IApplication::RemoveThread( _pThread );
 	}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 	struct Server : std::enable_shared_from_this<Server>
 	{
-		Server( uint16 port )noexcept;
+		Server( PortType port )noexcept;
 		void StartAccepting()noexcept;
 		virtual uint SessionCount()const noexcept=0;//{ return _sessions.size(); }
 		virtual void RemoveSession( SessionPK id )noexcept=0;
 	protected:
-		uint16 _port;
+		PortType _port;
 		std::atomic<SessionPK> _id{0};
 	private:
 		virtual void Accept()=0;
@@ -156,7 +158,7 @@ namespace Jde::WebSocket
 	template<typename TFromServer, typename TFromClient, typename TServerSession>
 	struct TServer : Server, public IShutdown
 	{
-		TServer( uint16 port )noexcept:
+		TServer( PortType port )noexcept:
 			Server{port}
 		{
 			StartAccepting();
@@ -169,7 +171,7 @@ namespace Jde::WebSocket
 	protected:
 		Collections::UnorderedMap<SessionPK,TServerSession> _sessions;
 		atomic<bool> _shutdown{false};
-		sp<boost::asio::ip::tcp::acceptor> _pAcceptor;
+		sp<tcp::acceptor> _pAcceptor;
 	private:
 		void Accept()noexcept override;
 	};
@@ -207,25 +209,25 @@ namespace Jde::WebSocket
 		boost::asio::io_context ioc{1};
 		try
 		{
-			_pAcceptor = sp<boost::asio::ip::tcp::acceptor>( new boost::asio::ip::tcp::acceptor{ioc, {boost::asio::ip::tcp::v4(), (short unsigned int)_port}} );
+			_pAcceptor = sp<tcp::acceptor>( new tcp::acceptor{ioc, {tcp::v4(), (short unsigned int)_port}} );
 		}
 		catch( const boost::system::system_error& e )
 		{
 			LOGS( ELogLevel::Critical, e.code().message() );
 			return;
 		}
-		//boost::asio::ip::tcp::acceptor acceptor{ ioc, {boost::asio::ip::tcp::v4(), (short unsigned int)_port} };
+		//tcp::acceptor acceptor{ ioc, {tcp::v4(), (short unsigned int)_port} };
 		INFO( "Accepting web sockets on port {}."sv, _port );
 		while( !Threading::GetThreadInterruptFlag().IsSet() )
 		{
-			boost::asio::ip::tcp::socket socket{ioc};
+			tcp::socket socket{ioc};
 			try
 			{
 				_pAcceptor->accept( socket );// Blocking
 				TRACE( "Accepted Connection."sv );
 				var id = ++_id;
 				sp<TFromServer> pServer = dynamic_pointer_cast<TFromServer>( shared_from_this() );
-				auto pSession = make_shared<TServerSession>( pServer, id, socket );//deadlock if included in _sessions.emplace
+				auto pSession = make_shared<TServerSession>( pServer, id, move(socket) );//deadlock if included in _sessions.emplace
 				pSession->Start();
 				_sessions.emplace( id, pSession );
 			}
@@ -238,8 +240,8 @@ namespace Jde::WebSocket
 }
 namespace Jde::ApplicationServer::Web
 {
-	typedef FromServer::Transmission MyFromServer;
-	typedef FromClient::Transmission MyFromClient;
-	class MyServer;
+	//typedef FromServer::Transmission MyFromServer;
+	//typedef FromClient::Transmission MyFromClient;
+	struct WebServer;
 }
 #undef var

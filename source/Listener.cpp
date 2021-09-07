@@ -9,13 +9,13 @@
 #define var const auto
 #define _logClient Logging::LogClient::Instance()
 
-#define _webServer (*Web::MyServer::GetInstance())
+#define _webServer Web::Server()
 #define _webLevelUint static_cast<uint>((Jde::ELogLevel)_webLevel)
 namespace Jde::ApplicationServer
 {
 
-	Listener _listener;
-	Listener& Listener::GetInstance()noexcept{ return _listener; }
+	TcpListener _listener;
+	TcpListener& TcpListener::GetInstance()noexcept{ return _listener; }
 	//shared_ptr<Listener> Listener::_pInstance{nullptr};
 /*	shared_ptr<Listener> Listener::Create( PortType port )noexcept(false)
 	{
@@ -36,19 +36,19 @@ namespace Jde::ApplicationServer
 		return _pInstance;
 	}
 */
-	Listener::Listener()noexcept(false)://multiple listeners on same port
-		IO::Sockets::ProtoServer{ "TcpListener", "tcpListner", ServerSinkDefaultPort }
+	TcpListener::TcpListener()noexcept(false)://multiple listeners on same port
+		IO::Sockets::ProtoServer{ Settings::TryGet<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }
 	{
 		Accept();
 	}
 
 
-	up<IO::Sockets::ProtoSession> Listener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept
+	up<IO::Sockets::ProtoSession> TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept
 	{
 		return make_unique<Session>( move(socket), id );
 	}
 
-	uint Listener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )noexcept
+	uint TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )noexcept
 	{
 		shared_lock l{ _mutex };
 		for( var& [id,p] : _sessions )
@@ -79,18 +79,18 @@ namespace Jde::ApplicationServer
 		return dynamic_pointer_cast<Session>( pSession );
 	}
 	*/
-	Session* Listener::FindSessionByInstance( ApplicationInstancePK id )noexcept
+	Session* TcpListener::FindSessionByInstance( ApplicationInstancePK id )noexcept
 	{
 		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->InstanceId==id;} );
 		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
 	}
-	Session* Listener::FindApplication( ApplicationPK id )noexcept
+	Session* TcpListener::FindApplication( ApplicationPK id )noexcept
 	{
 		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->ApplicationId==id;} );
 		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
 	}
 
-	void Listener::Kill( ApplicationInstancePK id )noexcept
+	void TcpListener::Kill( ApplicationInstancePK id )noexcept
 	{
 		shared_lock l{ _mutex };
 		if( auto p = FindSessionByInstance(id); p )
@@ -99,7 +99,7 @@ namespace Jde::ApplicationServer
 			WARN( "({})Could not find instance to kill."sv, id );
 	}
 
-	void Listener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept
+	void TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept
 	{
 		shared_lock l{ _mutex };
 		if( auto p = FindApplication(id); p )
@@ -111,14 +111,14 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	void Listener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept
+	void TcpListener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept
 	{
 		if( instanceId==_logClient.InstanceId )
 		{
 			_logger.set_level( (spdlog::level::level_enum)clientLevel );
 			if( _pServerSink )
 				_serverLogLevel = dbLevel;
-			Web::MyServer::GetInstance()->UpdateStatus( *Web::MyServer::GetInstance() );
+			Web::Server().UpdateStatus( Web::Server() );
 		}
 		else
 		{
@@ -128,7 +128,7 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	void Listener::WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept
+	void TcpListener::WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept
 	{
 		if( applicationId==_logClient.ApplicationId )
 			_logClient.WebSubscribe( level );
@@ -214,10 +214,8 @@ namespace Jde::ApplicationServer
 	void Session::OnDisconnect()noexcept
 	{
 		StartTime = TimePoint{};
-		auto pInstance = Web::MyServer::GetInstance();
-		if( pInstance )
-			pInstance->UpdateStatus( *this );
-		Listener::GetInstance().RemoveSession( Id );
+		Web::Server().UpdateStatus( *this );
+		TcpListener::GetInstance().RemoveSession( Id );
 	}
 
 	void Session::WebSubscribe( ELogLevel level )noexcept
@@ -253,7 +251,7 @@ namespace Jde::ApplicationServer
 	{
 		try
 		{
-			CHECK( transmission.messages_size() );
+			CHECK( t.messages_size() );
 			for( uint i=0; i<transmission.messages_size(); ++i )
 			{
 				auto pMessage = transmission.mutable_messages( i );
@@ -270,11 +268,11 @@ namespace Jde::ApplicationServer
 					if( level>=(uint)_dbLevel )
 						Logging::Data::PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), sendWeb ? variables : move(variables) );
 					if( sendWeb )
-						_webLevel = Web::MyServer::GetInstance()->PushMessage( 0, ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), move(variables) );
+						_webLevel = Web::Server().PushMessage( 0, ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), move(variables) );
 				}
 				else if( pMessage->has_string() )
 				{
-					CONTINUE_IF( !ApplicationId || !InstanceId, "sent string but have no instance." );
+					CONTINUE_IF( !ApplicationId || !InstanceId, "sent string but have no instance.  ApplicationId='{}' InstanceId='{}'", ApplicationId, InstanceId );
 					auto pStrings = pMessage->mutable_string();
 					Cache::Add( ApplicationId, pStrings->field(), pStrings->id(), move(pStrings->value()) );
 				}
@@ -286,8 +284,7 @@ namespace Jde::ApplicationServer
 					for( auto i=0; i<status.details_size(); ++i )
 						os << move(*status.mutable_details(i)) << endl;
 					Status = os.str();
-					if( auto pInstance = Web::MyServer::GetInstance(); pInstance )
-						pInstance->UpdateStatus( *this );
+					Web::Server().UpdateStatus( *this );
 				}
 				else if( pMessage->has_custom() )
 				{

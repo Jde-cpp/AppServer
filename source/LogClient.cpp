@@ -34,20 +34,21 @@ namespace Jde::Logging
 		//   = *LoadFiles(applicationId);
 		//  = *(applicationId);
 	}
-	void LogClient::Log( Logging::Messages::Message&& message )noexcept
+	void LogClient::Log( Logging::Messages::Message& message )noexcept
 	{
-		Log( dynamic_cast<Logging::MessageBase&&>(message), move(message.Variables) );
+		Log( dynamic_cast<Logging::MessageBase&>(message), message.Variables );
 	}
-	void LogClient::Log( Logging::MessageBase&& msg )noexcept
+	void LogClient::Log( const Logging::MessageBase& msg )noexcept
 	{
-		Log( move(msg), vector<string>{} );
+		vector<string> v;
+		Log( msg, v );
 	}
 	mutex _messageMutex;//if 1st function save, 2nd will skip to insert and get fk error.
-	void LogClient::Log( Logging::MessageBase msg, vector<string> values )noexcept
+	void LogClient::Log( const Logging::MessageBase& msg, vector<string>& values )noexcept
 	{
 #ifndef TESTING
 		if( msg.Level>=_webLevel )
-			ApplicationServer::Web::MyServer::GetInstance()->PushMessage( 0, ApplicationId, InstanceId, Clock::now(), msg.Level, (uint32)msg.MessageId, (uint32)msg.FileId, (uint32)msg.FunctionId, (uint32)msg.LineNumber, (uint32)msg.UserId, msg.ThreadId, vector<string>{values} );
+			ApplicationServer::Web::Server().PushMessage( 0, ApplicationId, InstanceId, Clock::now(), msg.Level, (uint32)msg.MessageId, (uint32)msg.FileId, (uint32)msg.FunctionId, (uint32)msg.LineNumber, (uint32)msg.UserId, msg.ThreadId, vector<string>{values} );
 #endif
 		unique_lock<mutex> l{ _messageMutex };
 		if( ShouldSendMessage(msg.MessageId) )

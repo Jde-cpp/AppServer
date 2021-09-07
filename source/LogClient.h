@@ -10,9 +10,9 @@ namespace Jde::Logging
 		LogClient( ApplicationPK applicationId, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )noexcept(false);
 		static void CreateInstance()noexcept(false);
 		static LogClient& Instance()noexcept{ return (LogClient&)*_pServerSink; }
-		void Log( Logging::Messages::Message&& message )noexcept override;
-		void Log( Logging::MessageBase&& messageBase )noexcept override;
-		void Log( Logging::MessageBase messageBase, vector<string> values )noexcept override;
+		void Log( Logging::Messages::Message& message )noexcept override;
+		void Log( const Logging::MessageBase& messageBase )noexcept override;
+		void Log( const Logging::MessageBase& messageBase, vector<string>& values )noexcept override;
 
 		void WebSubscribe( ELogLevel level )noexcept{ _webLevel = level; }//(ELogLevel)std::min((uint)level, (uint)_webLevel);}
 
