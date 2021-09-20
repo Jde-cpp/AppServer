@@ -67,37 +67,47 @@ namespace Jde::Logging::Data
 		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
 	}
 
-	Collections::UnorderedMapPtr<uint32,string> Fetch( sv sql, ApplicationPK applicationId )noexcept(false)
+	Collections::UnorderedMap<uint32,string> Fetch( sv sql, ApplicationPK applicationId )noexcept(false)
 	{
-		auto pMap = make_shared<Collections::UnorderedMap<uint32,string>>();
-		auto fnctn = [&pMap]( const DB::IRow& row )
+		Collections::UnorderedMap<uint32,string> map;
+		_dataSource->Select( sql, [&map]( const DB::IRow& row )
 		{
-			pMap->emplace( row.GetUInt32(0), make_shared<string>(row.GetString(1)) );
-		};
-		_dataSource->Select( sql, fnctn, {applicationId} );
-		return pMap;
+			map.emplace( row.GetUInt32(0), make_shared<string>(row.GetString(1)) );
+		}, {applicationId} );
+		return map;
 	}
 
-	Collections::UnorderedMapPtr<uint32,string> LoadFiles( ApplicationPK applicationId )noexcept(false)
+	Collections::UnorderedMap<uint32,string> LoadFiles( ApplicationPK applicationId )noexcept(false)
 	{
 		return Fetch( "select id, value from log_files where application_id=?", applicationId );
 	}
-	Collections::UnorderedMapPtr<uint32,string> LoadFunctions( ApplicationPK applicationId )noexcept(false)
+	Collections::UnorderedMap<uint32,string> LoadFunctions( ApplicationPK applicationId )noexcept(false)
 	{
 		return Fetch( "select id, value from log_functions where application_id=?", applicationId );
 	}
-	Collections::UnorderedMapPtr<uint32,string> LoadMessages( ApplicationPK applicationId )noexcept(false)
+	Collections::UnorderedMap<uint32,string> LoadMessages( ApplicationPK applicationId )noexcept(false)
 	{
-		return Fetch( "select id, value from log_messages where application_id=?", applicationId );
+		return Fetch( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id where application_id=?", applicationId );
+	}
+	unordered_set<uint32> LoadMessages()noexcept(false)
+	{
+		unordered_set<uint32> y;
+		_dataSource->Select( "select log_messages.id from log_messages", [&y]( const DB::IRow& row )
+		{
+			y.emplace( row.GetUInt32(0) );
+		} );
+		return y;
 	}
 	#define _pQueue if( auto p = _pDbQueue; p )p
 	void SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept
 	{
 		sv table = "";
+		sv frmt = "insert into {}(application_id,id,value)values(?,?,?)";
 		switch( field )
 		{
 		case Proto::EFields::MessageId:
 			table = "log_messages"sv;
+			frmt = "insert into {}(id,value)values(?,?)";
 			break;
 		case Proto::EFields::FileId:
 			table = "log_files"sv;
@@ -108,13 +118,12 @@ namespace Jde::Logging::Data
 		default:
 			ERR( "unknown field '{}'."sv, field );
 			return;
-		// case Proto::EFields::ThreadId:
-		// 	pStrings->MessagesPtr->Emplace( id, value );
-		// 	break;
+
 		}
-		var sql = fmt::format( "insert into {}(application_id,id,value)values(?,?,?);", table );
+		var sql = fmt::format( fmt::runtime(frmt), table );
 		auto pParameters = make_shared<vector<DB::DataValue>>();  pParameters->reserve(3);
-		pParameters->push_back( applicationId );
+		if( field!=Proto::EFields::MessageId )
+			pParameters->push_back( applicationId );
 		pParameters->push_back( static_cast<uint>(id) );
 		pParameters->push_back( pValue );
 		_pQueue->Push( sql, pParameters, false );
@@ -127,7 +136,7 @@ namespace Jde::Logging::Data
 		auto fnctn = [&pTraces, &mapTraces]( const DB::IRow& row )
 		{
 			auto pTrace = pTraces->add_values();
-			//pTrace->set_instanceid( instanceId );
+
 			uint i=0;
 			var id = row.GetUInt32(i++);
 			pTrace->set_id( id );

@@ -14,25 +14,22 @@ namespace Jde::Logging
 		auto p = make_unique<LogClient>( applicationId, applicationInstanceId, dbLogLevel );
 		SetServerSink( move(p) );
 	}
-	//LogClient* _pDummy = CreateInstance(); need db
 
-	LogClient::LogClient( ApplicationPK applicationId, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )noexcept(false):
-		//IServerSink{serverLevel},
+	LogClient::LogClient( ApplicationPK id, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )noexcept(false):
 		InstanceId{applicationInstanceId},
-		ApplicationId{applicationId}
+		ApplicationId{id}
 	{
 		SetServerLevel( serverLevel );
-		auto addMessages =[]( const auto& map, auto& set )
+		auto addMessages =[]( var& map, auto& set )
 		{
 			std::function<void(const uint32&, const string&)> fnctn = [&set](const uint32& key, const string&) {set.emplace(key);};
 			map.ForEach( fnctn );
 		};
-		addMessages( *Data::LoadMessages(applicationId), _messagesSent );
-		addMessages( *Data::LoadFiles(applicationId), _filesSent );
-		addMessages( *Data::LoadFunctions(applicationId), _functionsSent );
+		addMessages( Data::LoadMessages(id), _messagesSent );
+		addMessages( Data::LoadFiles(id), _filesSent );
+		addMessages( Data::LoadFunctions(id), _functionsSent );
 
-		//   = *LoadFiles(applicationId);
-		//  = *(applicationId);
+
 	}
 	void LogClient::Log( Logging::Messages::Message& message )noexcept
 	{

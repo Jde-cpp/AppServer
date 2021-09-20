@@ -129,14 +129,12 @@ namespace Jde::ApplicationServer::Web
 		std::optional<TimePoint> time = start ? Clock::from_time_t(start) : std::optional<TimePoint>{};
 		auto pTraces = Logging::Data::LoadEntries( applicationId, instanceId, level, time, limit );
 		pTraces->add_values();//Signify end.
-		//if( pTraces->values_size() )
-		{
-			pTraces->set_applicationid( (google::protobuf::uint32)applicationId );
-			DBG( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
-			FromServer::Transmission transmission;
-			transmission.add_messages()->set_allocated_traces( pTraces.release() );
-			self->Write( transmission );
-		}
+
+		pTraces->set_applicationid( (google::protobuf::uint32)applicationId );
+		DBG( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
+		FromServer::Transmission transmission;
+		transmission.add_messages()->set_allocated_traces( pTraces.release() );
+		self->Write( transmission );
 	}
 	void MySession::SendStrings( const FromClient::RequestStrings& request )noexcept
 	{
@@ -146,7 +144,7 @@ namespace Jde::ApplicationServer::Web
 		for( auto i=0; i<request.values_size(); ++i )
 		{
 			var& value = request.values( i );
-			auto pStrings = Cache::GetApplicationStrings( value.applicationid() );
+			auto pStrings = Cache::AppStrings( value.applicationid() );
 			if( !pStrings )
 				pStrings = Cache::Load( value.applicationid() );//todo wrap in try statement.
 			sp<string> pString;
@@ -156,8 +154,7 @@ namespace Jde::ApplicationServer::Web
 				pString = pStrings->Get( Logging::EFields::File, value.value() );
 			else if( value.type()==FromClient::EStringRequest::Function )
 				pString = pStrings->Get( Logging::EFields::Function, value.value() );
-			//else if( value.type()==FromClient::EStringRequest::Thread )
-			//	pString = pStrings->Get( Logging::EFields::ThreadId, value.value() );
+
 			else if( value.type()==FromClient::EStringRequest::User )
 				pString = pStrings->Get( Logging::EFields::User, value.value() );
 			if( pString )

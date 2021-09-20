@@ -1,4 +1,4 @@
-﻿﻿#DELIMITER $$
+#DELIMITER $$
 CREATE PROCEDURE log_message_insert_out( _application_id int unsigned, _application_instance_id int unsigned, _fileId int unsigned, _functionId int unsigned, _lineNumber smallint unsigned, _messageId int unsigned, _level tinyint, _threadId bigint unsigned, _time char(30),  _userId int unsigned, out _id int unsigned )
 begin
 	INSERT INTO logs(application_id,application_instance_id,file_id,function_id,line_number,message_id,severity,thread_id,time,user_id)

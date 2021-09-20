@@ -16,26 +16,7 @@ namespace Jde::ApplicationServer
 
 	TcpListener _listener;
 	TcpListener& TcpListener::GetInstance()noexcept{ return _listener; }
-	//shared_ptr<Listener> Listener::_pInstance{nullptr};
-/*	shared_ptr<Listener> Listener::Create( PortType port )noexcept(false)
-	{
-		ASSERT( _pInstance==nullptr );
-		try
-		{
-			return _pInstance = shared_ptr<Listener>( new Listener(port) );
-		}
-		catch( const std::system_error& e )
-		{
-			CRITICAL( string(e.what()) );
-			THROW( Exception("Could not create listener:  '{}'", e.what()) );
-		}
-	}
-	shared_ptr<Listener>& Listener::GetInstancePtr()noexcept
-	{
-		ASSERT( _pInstance!=nullptr );
-		return _pInstance;
-	}
-*/
+
 	TcpListener::TcpListener()noexcept(false)://multiple listeners on same port
 		IO::Sockets::ProtoServer{ Settings::TryGet<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }
 	{
@@ -55,30 +36,7 @@ namespace Jde::ApplicationServer
 			f( id, (const ApplicationServer::Session&)*p );
 		return _sessions.size();
 	}
-/*	sp<Session> Listener::FindSession( IO::Sockets::SessionPK id )noexcept
-	{
-		std::function<bool(const IO::Sockets::ProtoSession&)> fnctn = [id]( var& session )
-		{
-			return dynamic_cast<const Session&>(session).ProcessId==id;
-		};
-		auto pSession = _sessions.FindFirst( fnctn );
-		if( !pSession )
-			WARN( "Could not find session '{}'."sv, id );
-		return dynamic_pointer_cast<Session>( pSession );
-	}
-*/
-/*	sp<Session> Listener::FindSessionByInstance( ApplicationInstancePK id )noexcept
-	{
-		std::function<bool(const IO::Sockets::ProtoSession&)> fnctn = [id]( var& session )
-		{
-			return dynamic_cast<const Session&>(session).InstanceId==id;
-		};
-		auto pSession = _sessions.FindFirst( fnctn );
-		if( !pSession )
-			WARN( "Could not find instance '{}'."sv, id );
-		return dynamic_pointer_cast<Session>( pSession );
-	}
-	*/
+
 	Session* TcpListener::FindSessionByInstance( ApplicationInstancePK id )noexcept
 	{
 		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->InstanceId==id;} );
@@ -152,19 +110,19 @@ namespace Jde::ApplicationServer
 		auto pAck = make_unique<Logging::Proto::Acknowledgement>();
 		pAck->set_instanceid( Id );
 
-		Logging::Proto::FromServer transmission;
-		transmission.add_messages()->set_allocated_acknowledgement( pAck.release() );
+		Logging::Proto::FromServer t;
+		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
 		LOG( _logLevel, "({})Sending Ack", Id );
-		Write( transmission );
+		Write( t );
 	}
 
 	void Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept
 	{
 		_dbLevel = dbLogLevel;
 		_fileLogLevel = fileLogLevel;
-		Logging::Proto::FromServer transmission;
-		transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
-		Write( transmission );
+		Logging::Proto::FromServer t;
+		t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
+		Write( t );
 	}
 	Logging::Proto::LogLevels* Session::AllocatedLogLevels()noexcept
 	{
@@ -176,25 +134,21 @@ namespace Jde::ApplicationServer
 
 	void Session::WriteStrings()noexcept
 	{
-		Logging::Proto::FromServer transmission;
-		var pStrings = Cache::GetApplicationStrings( ApplicationId );
-		if( pStrings )
+		Logging::Proto::FromServer t;
+		if( var pStrings = Cache::AppStrings(ApplicationId); pStrings )
 		{
-			auto pValues = new Logging::Proto::Strings();
-			std::function<void(const uint32&, const string&)> fnctn = [&pValues](const uint32& id, const string&)->void{pValues->add_files(id);};
-			pStrings->FilesPtr->ForEach( fnctn );
-			std::function<void(const uint32&, const string&)> fnctn2 = [&pValues](const uint32& id, const string&)->void{pValues->add_functions(id);};
-			pStrings->FunctionsPtr->ForEach( fnctn2 );
-			std::function<void(const uint32&, const string&)> messageFnctn = [&pValues](const uint32& id, const string&)->void{pValues->add_messages(id);};
-			pStrings->MessagesPtr->ForEach( messageFnctn );
+			auto pValues = make_unique<Logging::Proto::Strings>();
+			pStrings->Files.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_files(id);} );
+			pStrings->Functions.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_functions(id);} );
+			pStrings->Messages.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_messages(id);} );
 
-			transmission.add_messages()->set_allocated_strings( pValues );
+			t.add_messages()->set_allocated_strings( pValues.release() );
 		}
 		else
 			CRITICAL( "!pStrings"sv );
 
-		transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
-		Write( transmission );
+		t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
+		Write( t );
 	}
 //send status update...
 	void Session::SetStatus( Web::FromServer::Status& status )const noexcept
@@ -224,15 +178,15 @@ namespace Jde::ApplicationServer
 		_webLevel = level;
 		if( currentLevel!=std::min((uint)_dbLevel, _webLevelUint) )
 		{
-			Logging::Proto::FromServer transmission;
-			transmission.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
-			Write( transmission );
+			Logging::Proto::FromServer t;
+			t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
+			Write( t );
 		}
 	}
 
 	void Session::WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )noexcept
 	{
-		Logging::Proto::FromServer transmission;
+		Logging::Proto::FromServer t;
 
 		const RequestId requestId = ++_requestId;
 		{
@@ -243,18 +197,18 @@ namespace Jde::ApplicationServer
 		pCustom->set_requestid( (uint32)requestId );
 		pCustom->set_message( move(message) );
 		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, Name, requestId, webClientId, webRequestId );
-		transmission.add_messages()->set_allocated_custom( pCustom );
-		Write( transmission );
+		t.add_messages()->set_allocated_custom( pCustom );
+		Write( t );
 	}
 
-	void Session::OnReceive( Logging::Proto::ToServer&& transmission )noexcept
+	void Session::OnReceive( Logging::Proto::ToServer&& t )noexcept
 	{
 		try
 		{
 			CHECK( t.messages_size() );
-			for( uint i=0; i<transmission.messages_size(); ++i )
+			for( uint i=0; i<t.messages_size(); ++i )
 			{
-				auto pMessage = transmission.mutable_messages( i );
+				auto pMessage = t.mutable_messages( i );
 				if( pMessage->has_message() )//todo push multiple in one shot
 				{
 					CONTINUE_IF( !ApplicationId || !InstanceId, "sent message but have no instance." );
@@ -305,7 +259,7 @@ namespace Jde::ApplicationServer
 					ProcessId = instance.processid();
 					StartTime = Clock::from_time_t( instance.starttime() );
 					var [applicationId,instanceId, dbLogLevel, fileLogLevel] = Logging::Data::AddInstance( Name, HostName, ProcessId );
-					DBG( "Adding application ({}){}@{}"sv, ProcessId, Name, HostName );
+					DBG( "({})Adding application app={}@{} pid={}", Id, Name, HostName, ProcessId );
 					InstanceId = instanceId; ApplicationId = applicationId; _dbLevel = dbLogLevel; _fileLogLevel = fileLogLevel;
 					Cache::Load( ApplicationId );
 					WriteStrings();

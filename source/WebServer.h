@@ -11,20 +11,19 @@ namespace Jde::ApplicationServer::Web
 		using base=WebSocket::TListener<FromServer::Transmission,MySession>;
 		WebServer( PortType port )noexcept;
 
-		//static sp<MyServer> CreateInstance( uint16 port )noexcept;
 		ⓣ UpdateStatus( const T& app )noexcept->void;
-		void SendStatuses( up<FromServer::Statuses> pAllocated )noexcept(false);
-		void SetStatus( FromServer::Status& status )const noexcept;
-		void AddStatusSession( WebSocket::SessionPK id )noexcept{ _statusSessions.emplace(id); }
-		void RemoveStatusSession( WebSocket::SessionPK id )noexcept{ _statusSessions.erase(id); }
-		void RemoveSession( WebSocket::SessionPK id )noexcept override;
-		bool AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level )noexcept;
-		void RemoveLogSubscription( WebSocket::SessionPK sessionId, ApplicationInstancePK instanceId )noexcept;
-		ELogLevel PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept;
+		α OnStopAccept()const noexcept->void override{ INFO("WebServer stop accepting"); };
+		α SendStatuses( up<FromServer::Statuses> pAllocated )noexcept(false)->void;
+		α SetStatus( FromServer::Status& status )const noexcept->void;
+		α AddStatusSession( WebSocket::SessionPK id )noexcept{ _statusSessions.emplace(id); }
+		α RemoveStatusSession( WebSocket::SessionPK id )noexcept{ _statusSessions.erase(id); }
+		α RemoveSession( WebSocket::SessionPK id )noexcept->void override;
+		α AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level )noexcept->bool;
+		α RemoveLogSubscription( WebSocket::SessionPK sessionId, ApplicationInstancePK instanceId )noexcept->void;
+		α PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept->ELogLevel;
 	private:
 		UnorderedSet<WebSocket::SessionPK> _statusSessions;
 		map<ApplicationPK,map<WebSocket::SessionPK,ELogLevel>> _logSubscriptions; shared_mutex _logSubscriptionMutex;
-		//static sp<MyServer> _spInstance;
 	};
 	WebServer& Server()noexcept;
 

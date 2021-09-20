@@ -16,32 +16,29 @@ namespace Jde::WebSocket
 	namespace websocket = beast::websocket;
 	namespace net = boost::asio;
 	using tcp = net::ip::tcp;
-	//using SessionPK=IO::Sockets::SessionPK;
 	using namespace Jde::IO::Sockets;
 #pragma endregion
-	// struct ISession
-	// {};
 
-	struct WebListener : IO::Sockets::IServerSocket, std::enable_shared_from_this<WebListener>
+	struct WebListener /*abstract*/ : IO::Sockets::IServerSocket, std::enable_shared_from_this<WebListener>
 	{
-		WebListener( PortType port, net::io_context& ioc )noexcept(false);
+		WebListener( PortType port )noexcept(false);
 		static ELogLevel LogLevel()noexcept{ return _logLevel; }
 		virtual sp<ISession> CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept=0;
-	protected:
-		tcp::acceptor _acceptor;
 	private:
+		virtual α OnStopAccept()const noexcept->void=0;
 		void DoAccept()noexcept;
 		void OnAccept( beast::error_code ec, tcp::socket socket )noexcept;
 		atomic<bool> _shutdown{false};
-
-		net::io_context& _ioc;
+		sp<IOContextThread> _pContextThread;
 		static ELogLevel _logLevel;
+	protected:
+		tcp::acceptor _acceptor;
 	};
 
 	template<class TFromServer, class TServerSession>
 	struct TListener : WebListener, IShutdown
 	{
-		TListener( PortType port )noexcept: WebListener{ port, IOContextThread::GetContext() }
+		TListener( PortType port )noexcept: WebListener{ port }
 		{}
 
 		void Push( IO::Sockets::SessionPK sessionId, TFromServer&& m )noexcept;
@@ -59,11 +56,9 @@ namespace Jde::WebSocket
 				return {};
 		}
 	protected:
-		//Collections::UnorderedMap<SessionPK,TServerSession> _sessions;
 		atomic<bool> _shutdown{false};
 		sp<tcp::acceptor> _pAcceptor;
-	private:
-		//void Accept()noexcept override;
+
 	};
 
 	struct Session : IO::Sockets::ISession, std::enable_shared_from_this<Session>
@@ -92,15 +87,13 @@ namespace Jde::WebSocket
 		TSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept(false):
 			Session{ server, id, move(socket) }
 		{}
-		//virtual ~TSession()=default;
+
 
 		void OnRead( const char* p, uint size )noexcept;
 		virtual void OnRead( TFromClient transmission )noexcept=0;
 		void Write( TFromServer&& message )noexcept(false);
 		void Write( string data )noexcept;
-		//void Read( sp<TFromClient> pTransmission )noexcept override;
-	//private:
-	//	void Run()noexcept override;
+
 	};
 
 #define $ template<class TFromServer, class TServerSession> auto TListener<TFromServer,TServerSession>

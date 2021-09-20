@@ -1,8 +1,4 @@
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-	//"set substitute-path /build/glibc-negH51/glibc-2.27 /home/duffyj/code/libraries/glibc-2.27"
 	"version": "0.2.0",
 	"configurations": [
 		{
@@ -17,7 +13,7 @@
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
-			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"/home/duffyj/code/libraries/glibc-2.27" },
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "build"
 		},
 		{
@@ -32,8 +28,8 @@
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
-			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"/home/duffyj/code/libraries/glibc-2.27" },
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "release"
-		}		
+		}
 	]
 }

@@ -1,18 +1,11 @@
 #pragma once
 #include "WebServer.h"
 	#include "../../Framework/source/io/sockets/ProtoServer.h"
-//namespace IO
-//{
-//	class IncomingMessage;
-//	namespace Sockets{ class Session; }
-//}
-//using IO::Sockets::Session;
+
 
 namespace Jde::ApplicationServer
 {
-	//namespace Messages{ struct Application; struct Message; }
 
-	//class WebSocket;
 	using Logging::Proto::ToServer;
 	using Logging::Proto::FromServer;
 	namespace Web
@@ -21,12 +14,11 @@ namespace Jde::ApplicationServer
 		namespace FromServer{ class Status; }
 	}
 	namespace basio=boost::asio;
-	//typedef IO::Sockets::ISession<ToServer> SessionType;
 
 	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>
 	{
 		Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept;
-		~Session(){DBG("Session::~Session"sv);}
+		~Session(){DBG("({})~Session - {}", Id, Name);}
 		void OnReceive( ToServer&& pValue )noexcept override;
 		void Start2()noexcept;
 		void WriteStrings()noexcept;
@@ -63,9 +55,9 @@ namespace Jde::ApplicationServer
 	struct TcpListener final : public IO::Sockets::ProtoServer
 	{
 		TcpListener()noexcept(false);
-		//static shared_ptr<Listener> Create( PortType port )noexcept(false);
+
 		static TcpListener& GetInstance()noexcept;
-		//static shared_ptr<Listener>& GetInstancePtr()noexcept;
+
 
 		up<IO::Sockets::ProtoSession> CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept override;
 
@@ -73,13 +65,13 @@ namespace Jde::ApplicationServer
 		void SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept;
 		void WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept;
 
-		//sp<Session> FindSession( IO::Sockets::SessionPK id )noexcept;
+
 		void Kill( ApplicationInstancePK id )noexcept;
 		void WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept;
 	private:
 		Session* FindApplication( ApplicationPK applicationId )noexcept;
 		Session* FindSessionByInstance( ApplicationInstancePK id )noexcept;
-		//static shared_ptr<Listener> _pInstance;
+
 	};
 
 #define var const auto
@@ -98,7 +90,7 @@ namespace Jde::ApplicationServer
 				_customWebRequests.erase( pRequest );
 		}
 		if( var pSession = Web::Server().Find(sessionId); pSession )
-			write( *pSession, webRequestId, move(message) );//pSession->WriteCustom( WebRequestId, message.message() );
+			write( *pSession, webRequestId, move(message) );
 		else
 			DBG( "({})Could not find web session."sv, sessionId );
 	}
