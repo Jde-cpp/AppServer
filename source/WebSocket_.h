@@ -1,4 +1,5 @@
 #pragma once
+/*
 //#include "../framework/threading/Interrupt.h"
 // #include "../framework/collections/Queue.h"
 #include "types/proto/FromServer.pb.h"
@@ -63,9 +64,8 @@ namespace Jde::WebSocket
 	template<typename TFromServer, typename TFromClient>
 	void TSession<TFromServer,TFromClient>::Write( const TFromServer& message )noexcept(false)
 	{
-		var pData = TryToBuffer( message );
-		if( pData )
-			Write( *pData );
+		if( var p = TryToBuffer( message ); p )
+			Write( *p );
 	}
 	template<typename TFromServer, typename TFromClient>
 	void TSession<TFromServer,TFromClient>::Write2( const vector<google::protobuf::uint8>& data )noexcept(false)
@@ -245,3 +245,4 @@ namespace Jde::ApplicationServer::Web
 	struct WebServer;
 }
 #undef var
+*/

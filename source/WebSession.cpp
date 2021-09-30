@@ -12,26 +12,34 @@ namespace Jde::ApplicationServer::Web
 {
 	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )noexcept(false):
 		base( server, id, move(socket) )
-	{
-		auto pAck = make_unique<Web::FromServer::Acknowledgement>();
-		pAck->set_id( (uint32)Id );
-		FromServer::Transmission t;
-		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
-		Write( t );
-		Server().UpdateStatus( Server() );
-	}
+	{}
 
 	MySession::~MySession()
 	{
 		DBG( "~MySession( {} )"sv, Id );
 	}
 
-	WebServer& MySession::Server()noexcept
+	α MySession::Run()noexcept->void
+	{
+		base::Run();
+		DBG( "MySession::Run()" );
+		Server().UpdateStatus( Server() );
+	}
+	α MySession::OnAccept( beast::error_code ec )noexcept->void
+	{
+		auto pAck = make_unique<Web::FromServer::Acknowledgement>();
+		pAck->set_id( (uint32)Id );
+		FromServer::Transmission t;
+		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
+		Write( t );
+	}
+	
+	α MySession::Server()noexcept->WebServer&
 	{
 		return dynamic_cast<WebServer&>( _server );
 	}
 
-	void MySession::OnRead( FromClient::Transmission t )noexcept
+	α MySession::OnRead( FromClient::Transmission t )noexcept->void
 	{
 		for( uint i=0; i<t.messages_size(); ++i )
 		{
@@ -109,7 +117,7 @@ namespace Jde::ApplicationServer::Web
 		}
 	};
 
-	void MySession::SendStatuses()noexcept
+	α MySession::SendStatuses()noexcept->void
 	{
 		auto pStatuses = new FromServer::Statuses();
 		Server().SetStatus( *pStatuses->add_values() );
@@ -124,7 +132,7 @@ namespace Jde::ApplicationServer::Web
 		DBG( "({})Add status subscription."sv, Id );
 		Server().AddStatusSession( Id );
 	}
-	void MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept
+	α MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept->void
 	{
 		std::optional<TimePoint> time = start ? Clock::from_time_t(start) : std::optional<TimePoint>{};
 		auto pTraces = Logging::Data::LoadEntries( applicationId, instanceId, level, time, limit );
@@ -136,7 +144,7 @@ namespace Jde::ApplicationServer::Web
 		transmission.add_messages()->set_allocated_traces( pTraces.release() );
 		self->Write( transmission );
 	}
-	void MySession::SendStrings( const FromClient::RequestStrings& request )noexcept
+	α MySession::SendStrings( const FromClient::RequestStrings& request )noexcept->void
 	{
 		var reqId = request.requestid();
 		TRACE( "({}) requeststrings count='{}'"sv, Id, request.values_size() );
@@ -188,7 +196,7 @@ namespace Jde::ApplicationServer::Web
 		transmission.add_messages()->set_allocated_strings( pStrings );//finished.
 		Write( transmission );
 	}
-	void MySession::WriteCustom( uint32 clientId, const string& message )noexcept
+	α MySession::WriteCustom( uint32 clientId, const string& message )noexcept->void
 	{
 		var pCustom = new FromServer::Custom();
 		pCustom->set_requestid( clientId );
@@ -196,7 +204,7 @@ namespace Jde::ApplicationServer::Web
 		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_custom( pCustom );
 		Write( transmission );
 	}
-	void MySession::WriteComplete( uint32 clientId )noexcept
+	α MySession::WriteComplete( uint32 clientId )noexcept->void
 	{
 		var pCustom = new FromServer::Complete();
 		pCustom->set_requestid( clientId );
@@ -204,7 +212,7 @@ namespace Jde::ApplicationServer::Web
 		Write( transmission );
 	}
 
-	void MySession::WriteError( string&& msg, uint32 requestId )noexcept
+	α MySession::WriteError( string&& msg, uint32 requestId )noexcept->void
 	{
 		DBG( "({})WriteError( '{}', '{}' )"sv, Id, requestId, msg );
 		var pError = new FromServer::ErrorMessage();
@@ -213,11 +221,11 @@ namespace Jde::ApplicationServer::Web
 		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_error( pError );
 		Write( transmission );
 	}
-	void MySession::Write( const FromServer::Transmission& t  )noexcept(false)
+	α MySession::Write( const FromServer::Transmission& t  )noexcept(false)->void
 	{
 		base::Write( IO::Proto::ToString(t) );
 	}
-	void MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept
+	α MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept->void
 	{
 		auto pTraces = new FromServer::Traces();
 		pTraces->set_applicationid( (google::protobuf::uint32)applicationId );

@@ -7,10 +7,10 @@
 #include "../../Framework/source/io/sockets/Socket.h"
 #include "../../Framework/source/io/ProtoUtilities.h"
 #include "../../Framework/source/collections/UnorderedMap.h"
+#define var const auto
 
 namespace Jde::WebSocket
 {
-#define var const auto
 	namespace beast = boost::beast;
 	namespace http = beast::http;
 	namespace websocket = beast::websocket;
@@ -22,10 +22,10 @@ namespace Jde::WebSocket
 	struct WebListener /*abstract*/ : IO::Sockets::IServerSocket, std::enable_shared_from_this<WebListener>
 	{
 		WebListener( PortType port )noexcept(false);
+		~WebListener(){ _acceptor.close(); DBG("~WebListener"); }
 		static ELogLevel LogLevel()noexcept{ return _logLevel; }
 		virtual sp<ISession> CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept=0;
 	private:
-		virtual α OnStopAccept()const noexcept->void=0;
 		void DoAccept()noexcept;
 		void OnAccept( beast::error_code ec, tcp::socket socket )noexcept;
 		atomic<bool> _shutdown{false};
@@ -42,7 +42,7 @@ namespace Jde::WebSocket
 		{}
 
 		void Push( IO::Sockets::SessionPK sessionId, TFromServer&& m )noexcept;
-		sp<ISession> CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept override{ return make_shared<TServerSession>(server, id, move(socket)); }
+		sp<ISession> CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept override{ auto p = make_shared<TServerSession>(server, id, move(socket)); p->Run(); return p; }
 		auto Shutdown()noexcept->void override;
 		sp<TServerSession> Find( IO::Sockets::SessionPK id )noexcept
 		{
@@ -63,21 +63,21 @@ namespace Jde::WebSocket
 
 	struct Session : IO::Sockets::ISession, std::enable_shared_from_this<Session>
 	{
-		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):ISession{id}, _ws{std::move(socket)}, _server{server}{ Run(); }
-		virtual void Close()noexcept{};
+		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):ISession{id}, _ws{std::move(socket)}, _server{server}{}
+		virtual α Close()noexcept->void{};
+		virtual α Run()noexcept->void;
 	protected:
-		void Disconnect()noexcept{ /*_connected = false;*/ _server.RemoveSession( Id ); }
+		α Disconnect()noexcept{ /*_connected = false;*/ _server.RemoveSession( Id ); }
 
 		websocket::stream<beast::tcp_stream> _ws;
 		WebListener& _server;
 	private:
-		void Run()noexcept;
-		void OnRun()noexcept;
-		void OnAccept( beast::error_code ec )noexcept;
-		void DoRead()noexcept;
-		void OnNetRead( beast::error_code ec, std::size_t bytes_transferred )noexcept;
-		virtual void OnRead( const char* p, uint size )noexcept=0;
-		void OnWrite( beast::error_code ec, std::size_t bytes_transferred )noexcept;
+		α OnRun()noexcept->void;
+		virtual α OnAccept( beast::error_code ec )noexcept->void;
+		α DoRead()noexcept->void;
+		α OnNetRead( beast::error_code ec, std::size_t bytes_transferred )noexcept->void;
+		virtual α OnRead( const char* p, uint size )noexcept->void=0;
+		α OnWrite( beast::error_code ec, std::size_t bytes_transferred )noexcept->void;
 
 		beast::flat_buffer _buffer;
 	};
@@ -117,7 +117,7 @@ namespace Jde::WebSocket
 	}
 	$::Write( string data )noexcept->void
 	{
-		LOG( LogLevel(), "WebSocket::Write '{}'"sv, data.size() );
+		LOG( LogLevel(), "TSession::Write '{}'"sv, data.size() );
 		_ws.async_write( boost::asio::buffer((const void*)data.data(), data.size()), [ this, d=move(data) ]( beast::error_code ec, uint bytes_transferred )
 		{
 			if( ec || d.size()!=bytes_transferred )
@@ -131,8 +131,8 @@ namespace Jde::WebSocket
 				{
 					DBGX( "Error closing:  '{}'"sv, boost::diagnostic_information(&e2) );
 				}
+				Disconnect();
 			}
-			Disconnect();
 		} );
 	}
 

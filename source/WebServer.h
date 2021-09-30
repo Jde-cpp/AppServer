@@ -12,7 +12,6 @@ namespace Jde::ApplicationServer::Web
 		WebServer( PortType port )noexcept;
 
 		ⓣ UpdateStatus( const T& app )noexcept->void;
-		α OnStopAccept()const noexcept->void override{ INFO("WebServer stop accepting"); };
 		α SendStatuses( up<FromServer::Statuses> pAllocated )noexcept(false)->void;
 		α SetStatus( FromServer::Status& status )const noexcept->void;
 		α AddStatusSession( WebSocket::SessionPK id )noexcept{ _statusSessions.emplace(id); }
