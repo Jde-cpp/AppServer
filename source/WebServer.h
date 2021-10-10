@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 #include "WebSocketAsync.h"
 #include "WebSession.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
-#include "types/proto/FromServer.pb.h"
+#include <jde/log/types/proto/FromServer.pb.h>
 
 namespace Jde::ApplicationServer::Web
 {
@@ -24,7 +24,7 @@ namespace Jde::ApplicationServer::Web
 		UnorderedSet<WebSocket::SessionPK> _statusSessions;
 		map<ApplicationPK,map<WebSocket::SessionPK,ELogLevel>> _logSubscriptions; shared_mutex _logSubscriptionMutex;
 	};
-	WebServer& Server()noexcept;
+	α Server()noexcept->WebServer&;
 
 	ⓣ WebServer::UpdateStatus( const T& app )noexcept->void
 	{

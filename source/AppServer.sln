@@ -17,6 +17,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppServer", "AppServer.vcxp
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests.AppServer", "..\tests\Tests.AppServer.vcxproj", "{AF6B1166-2EFC-4E3A-945C-5FCE6E45C169}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B3DBDB2D-1109-4C38-A34D-E69D94A6CB93} = {B3DBDB2D-1109-4C38-A34D-E69D94A6CB93}
+		{7FC3CC33-B345-423E-99B6-5D499E531FBF} = {7FC3CC33-B345-423E-99B6-5D499E531FBF}
+		{B80EC089-F567-4E1E-B3CC-06091482DDA7} = {B80EC089-F567-4E1E-B3CC-06091482DDA7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

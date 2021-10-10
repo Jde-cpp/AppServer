@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
 #include "TypeDefs.h"

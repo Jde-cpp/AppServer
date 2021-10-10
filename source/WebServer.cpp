@@ -1,4 +1,4 @@
-#include "WebServer.h"
+﻿#include "WebServer.h"
 #include "LogClient.h"
 #include "Listener.h"
 
@@ -8,7 +8,7 @@
 namespace Jde::ApplicationServer::Web
 {
 	WebServer _instance{ Settings::TryGet<PortType>("web/port").value_or(1967) };
-	WebServer& Server()noexcept{ return _instance; }
+	α Server()noexcept->WebServer&{ return _instance; }
 
 	// sp<WebServer> WebServer::CreateInstance( uint16 port )noexcept
 	// {
@@ -20,7 +20,7 @@ namespace Jde::ApplicationServer::Web
 		base{ port }
 	{}
 
-	void WebServer::SendStatuses( up<FromServer::Statuses> pAllocated )noexcept(false)
+	α WebServer::SendStatuses( up<FromServer::Statuses> pAllocated )noexcept(false)->void
 	{
 		FromServer::Transmission t;
 		t.add_messages()->set_allocated_statuses( pAllocated.release() );
@@ -38,24 +38,24 @@ namespace Jde::ApplicationServer::Web
 				_statusSessions.erase( id );
 		}
 	}
-	void WebServer::SetStatus( FromServer::Status& status )const noexcept
+	α WebServer::SetStatus( FromServer::Status& status )const noexcept->void
 	{
 		status.set_applicationid( (google::protobuf::uint32)_logClient.ApplicationId );
 		status.set_instanceid( (google::protobuf::uint32)_logClient.InstanceId );
 		status.set_hostname( IApplication::HostName() );
 		status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(IApplication::StartTime()) );
-		status.set_dbloglevel( (Web::FromServer::ELogLevel)_serverLogLevel );
-		status.set_fileloglevel( (Web::FromServer::ELogLevel)_logger.level() );
+		status.set_dbloglevel( (Web::FromServer::ELogLevel)Logging::ServerLevel() );
+		status.set_fileloglevel( (Web::FromServer::ELogLevel)Logging::Default().level() );
 		status.set_memory( IApplication::MemorySize() );
 		status.add_values( fmt::format("Web Connections:  {}", SessionCount()) );
 	}
-	void WebServer::RemoveSession( WebSocket::SessionPK id )noexcept
+	α WebServer::RemoveSession( WebSocket::SessionPK id )noexcept->void
 	{
 		_statusSessions.erase( id );
 		base::RemoveSession( id );
 	}
 
-	bool WebServer::AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK /*instanceId*/, ELogLevel level )noexcept
+	α WebServer::AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK /*instanceId*/, ELogLevel level )noexcept->bool
 	{
 		bool newSubscription;
 		uint minLevel = (uint)ELogLevel::None;
@@ -70,7 +70,7 @@ namespace Jde::ApplicationServer::Web
 
 		return newSubscription;
 	}
-	void WebServer::RemoveLogSubscription( WebSocket::SessionPK sessionId, ApplicationInstancePK instanceId )noexcept
+	α WebServer::RemoveLogSubscription( WebSocket::SessionPK sessionId, ApplicationInstancePK instanceId )noexcept->void
 	{
 		uint minLevel = (uint)ELogLevel::None;
 		{

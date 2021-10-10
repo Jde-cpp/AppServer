@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 #include "WebSocketAsync.h"
 #include "../../Framework/source/io/sockets/Socket.h"
-#include "types/proto/FromServer.pb.h"
-#include "types/proto/FromClient.pb.h"
+#include <jde/log/types/proto/FromServer.pb.h>
+#include <jde/log/types/proto/FromClient.pb.h>
 
 namespace Jde::ApplicationServer::Web
 {

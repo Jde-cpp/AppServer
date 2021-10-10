@@ -1,4 +1,4 @@
-#include "Listener.h"
+﻿#include "Listener.h"
 #include "LogData.h"
 #include "WebServer.h"
 #include "Cache.h"
@@ -48,7 +48,7 @@ namespace Jde::ApplicationServer
 		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
 	}
 
-	void TcpListener::Kill( ApplicationInstancePK id )noexcept
+	α TcpListener::Kill( ApplicationInstancePK id )noexcept->void
 	{
 		shared_lock l{ _mutex };
 		if( auto p = FindSessionByInstance(id); p )
@@ -57,7 +57,7 @@ namespace Jde::ApplicationServer
 			WARN( "({})Could not find instance to kill."sv, id );
 	}
 
-	void TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept
+	α TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept->void
 	{
 		shared_lock l{ _mutex };
 		if( auto p = FindApplication(id); p )
@@ -69,13 +69,13 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	void TcpListener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept
+	α TcpListener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept->void
 	{
 		if( instanceId==_logClient.InstanceId )
 		{
-			_logger.set_level( (spdlog::level::level_enum)clientLevel );
-			if( _pServerSink )
-				_serverLogLevel = dbLevel;
+			Logging::Default().set_level( (spdlog::level::level_enum)clientLevel );
+			if( Logging::Server() )
+				Logging::SetServerLevel( dbLevel );
 			Web::Server().UpdateStatus( Web::Server() );
 		}
 		else
@@ -86,7 +86,7 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	void TcpListener::WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept
+	α TcpListener::WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept->void
 	{
 		if( applicationId==_logClient.ApplicationId )
 			_logClient.WebSubscribe( level );
@@ -105,7 +105,7 @@ namespace Jde::ApplicationServer
 		Start2();//0x7fffe0004760
 	}
 
-	void Session::Start2()noexcept
+	α Session::Start2()noexcept->void
 	{
 		auto pAck = make_unique<Logging::Proto::Acknowledgement>();
 		pAck->set_instanceid( Id );
@@ -116,7 +116,7 @@ namespace Jde::ApplicationServer
 		Write( t );
 	}
 
-	void Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept
+	α Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept->void
 	{
 		_dbLevel = dbLogLevel;
 		_fileLogLevel = fileLogLevel;
@@ -132,7 +132,7 @@ namespace Jde::ApplicationServer
 		return pValues;
 	}
 
-	void Session::WriteStrings()noexcept
+	α Session::WriteStrings()noexcept->void
 	{
 		Logging::Proto::FromServer t;
 		if( var pStrings = Cache::AppStrings(ApplicationId); pStrings )
@@ -151,7 +151,7 @@ namespace Jde::ApplicationServer
 		Write( t );
 	}
 //send status update...
-	void Session::SetStatus( Web::FromServer::Status& status )const noexcept
+	α Session::SetStatus( Web::FromServer::Status& status )const noexcept->void
 	{
 		status.set_applicationid( (uint32)ApplicationId );
 		status.set_instanceid( (uint32)InstanceId );
@@ -165,14 +165,14 @@ namespace Jde::ApplicationServer
 		for( var& statusDescription : statuses )
 			status.add_values( statusDescription );
 	}
-	void Session::OnDisconnect()noexcept
+	α Session::OnDisconnect()noexcept->void
 	{
 		StartTime = TimePoint{};
 		Web::Server().UpdateStatus( *this );
 		TcpListener::GetInstance().RemoveSession( Id );
 	}
 
-	void Session::WebSubscribe( ELogLevel level )noexcept
+	α Session::WebSubscribe( ELogLevel level )noexcept->void
 	{
 		var currentLevel = std::min( (uint)_dbLevel, static_cast<uint>((Jde::ELogLevel)_webLevel) );
 		_webLevel = level;
@@ -184,7 +184,7 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	void Session::WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )noexcept
+	α Session::WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )noexcept->void
 	{
 		Logging::Proto::FromServer t;
 
@@ -201,12 +201,12 @@ namespace Jde::ApplicationServer
 		Write( t );
 	}
 
-	void Session::OnReceive( Logging::Proto::ToServer&& t )noexcept
+	α Session::OnReceive( Logging::Proto::ToServer&& t )noexcept->void
 	{
 		try
 		{
 			CHECK( t.messages_size() );
-			for( uint i=0; i<t.messages_size(); ++i )
+			for( int i=0; i<t.messages_size(); ++i )
 			{
 				auto pMessage = t.mutable_messages( i );
 				if( pMessage->has_message() )//todo push multiple in one shot
@@ -216,8 +216,8 @@ namespace Jde::ApplicationServer
 					const Jde::TimePoint time = TimePoint{} + std::chrono::seconds{ message.time().seconds() } + std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::nanoseconds{ message.time().nanos() });
 					var level = (uint)message.level();
 					vector<string> variables; variables.reserve( message.variables_size() );
-					for( int i=0; i<message.variables_size(); ++i )
-						variables.push_back( move(*message.mutable_variables(i)) );
+					for( int i2=0; i2<message.variables_size(); ++i2 )
+						variables.push_back( move(*message.mutable_variables(i2)) );
 					bool sendWeb = level>=_webLevelUint;
 					if( level>=(uint)_dbLevel )
 						Logging::Data::PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), sendWeb ? variables : move(variables) );
@@ -235,8 +235,8 @@ namespace Jde::ApplicationServer
 					auto& status = *pMessage->mutable_status();
 					Memory = status.memory();
 					ostringstream os;
-					for( auto i=0; i<status.details_size(); ++i )
-						os << move(*status.mutable_details(i)) << endl;
+					for( α i2=0; i2<status.details_size(); ++i2 )
+						os << move(*status.mutable_details(i2)) << endl;
 					Status = os.str();
 					Web::Server().UpdateStatus( *this );
 				}

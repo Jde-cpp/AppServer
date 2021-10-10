@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #pragma region Defines
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
@@ -23,11 +23,11 @@ namespace Jde::WebSocket
 	{
 		WebListener( PortType port )noexcept(false);
 		~WebListener(){ _acceptor.close(); DBG("~WebListener"); }
-		static ELogLevel LogLevel()noexcept{ return _logLevel; }
-		virtual sp<ISession> CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept=0;
+		Ω LogLevel()noexcept{ return _logLevel; }
+		β CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept->sp<ISession> =0;
 	private:
-		void DoAccept()noexcept;
-		void OnAccept( beast::error_code ec, tcp::socket socket )noexcept;
+		α DoAccept()noexcept->void;
+		α OnAccept( beast::error_code ec, tcp::socket socket )noexcept->void;
 		atomic<bool> _shutdown{false};
 		sp<IOContextThread> _pContextThread;
 		static ELogLevel _logLevel;
@@ -36,36 +36,28 @@ namespace Jde::WebSocket
 	};
 
 	template<class TFromServer, class TServerSession>
-	struct TListener : WebListener, IShutdown
+	struct TListener /*abstract*/ : WebListener, IShutdown
 	{
-		TListener( PortType port )noexcept: WebListener{ port }
-		{}
-
-		void Push( IO::Sockets::SessionPK sessionId, TFromServer&& m )noexcept;
-		sp<ISession> CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept override{ auto p = make_shared<TServerSession>(server, id, move(socket)); p->Run(); return p; }
-		auto Shutdown()noexcept->void override;
-		sp<TServerSession> Find( IO::Sockets::SessionPK id )noexcept
+		TListener( PortType port )noexcept: WebListener{ port } {}
+		~TListener()=0;
+		α Push( IO::Sockets::SessionPK sessionId, TFromServer&& m )noexcept->void;
+		α CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept->sp<ISession> override{ auto p = make_shared<TServerSession>(server, id, move(socket)); p->Run(); return p; }
+		α Shutdown()noexcept->void override;
+		α Find( IO::Sockets::SessionPK id )noexcept->sp<TServerSession>
 		{
-			shared_lock l{_sessionMutex};
-			if( auto p=_sessions.find(id); p!=_sessions.end() )
-			{
-				sp<ISession> p2 = p->second;
-				return static_pointer_cast<TServerSession>( p2 );
-			}
-			else
-				return {};
+			shared_lock l{ _sessionMutex };
+			return _sessions.find(id)==_sessions.end() ? sp<TServerSession>{} : static_pointer_cast<TServerSession>( _sessions.find(id)->second );
 		}
 	protected:
 		atomic<bool> _shutdown{false};
 		sp<tcp::acceptor> _pAcceptor;
-
 	};
 
-	struct Session : IO::Sockets::ISession, std::enable_shared_from_this<Session>
+	struct Session /*abstract*/: IO::Sockets::ISession, std::enable_shared_from_this<Session>
 	{
 		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):ISession{id}, _ws{std::move(socket)}, _server{server}{}
-		virtual α Close()noexcept->void{};
-		virtual α Run()noexcept->void;
+		β Close()noexcept->void{};
+		β Run()noexcept->void;
 	protected:
 		α Disconnect()noexcept{ /*_connected = false;*/ _server.RemoveSession( Id ); }
 
@@ -73,28 +65,28 @@ namespace Jde::WebSocket
 		WebListener& _server;
 	private:
 		α OnRun()noexcept->void;
-		virtual α OnAccept( beast::error_code ec )noexcept->void;
+		β OnAccept( beast::error_code ec )noexcept->void;
 		α DoRead()noexcept->void;
 		α OnNetRead( beast::error_code ec, std::size_t bytes_transferred )noexcept->void;
-		virtual α OnRead( const char* p, uint size )noexcept->void=0;
+		β OnRead( const char* p, uint size )noexcept->void=0;
 		α OnWrite( beast::error_code ec, std::size_t bytes_transferred )noexcept->void;
 
 		beast::flat_buffer _buffer;
 	};
 	template<class TFromServer, class TFromClient>
-	struct TSession : Session//, public std::enable_shared_from_this<TSession<TFromServer,TFromClient>>
+	struct TSession /*abstract*/ : Session//, public std::enable_shared_from_this<TSession<TFromServer,TFromClient>>
 	{
-		TSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept(false):
-			Session{ server, id, move(socket) }
-		{}
+		TSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept(false) : Session{ server, id, move(socket) }{}
 
-
-		void OnRead( const char* p, uint size )noexcept;
-		virtual void OnRead( TFromClient transmission )noexcept=0;
-		void Write( TFromServer&& message )noexcept(false);
-		void Write( string data )noexcept;
-
+		α OnRead( const char* p, uint size )noexcept->void;
+		β OnRead( TFromClient transmission )noexcept->void = 0;
+		α Write( TFromServer&& message )noexcept(false)->void;;
+		α Write( string data )noexcept->void;;
 	};
+
+	template<class TFromServer, class TServerSession>
+	TListener<TFromServer,TServerSession>::~TListener()
+	{}
 
 #define $ template<class TFromServer, class TServerSession> auto TListener<TFromServer,TServerSession>
 	$::Shutdown()noexcept->void
@@ -109,7 +101,7 @@ namespace Jde::WebSocket
 #define $ template<class TFromServer, class TFromClient> auto TSession<TFromServer,TFromClient>
 	$::OnRead( const char* p, uint size )noexcept->void
 	{
-		Try( [&]{ OnRead( IO::Proto::Deserialize<TFromClient>( (const google::protobuf::uint8*)p, size) ); } );
+		Try( [&]{ OnRead( IO::Proto::Deserialize<TFromClient>( (const google::protobuf::uint8*)p, (int)size) ); } );
 	}
 	$::Write( TFromServer&& message )noexcept(false)->void
 	{

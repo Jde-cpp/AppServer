@@ -1,4 +1,4 @@
-#include "LogClient.h"
+﻿#include "LogClient.h"
 #include "LogData.h"
 #ifndef TESTING
 	#include "WebServer.h"
@@ -7,12 +7,12 @@
 #define var const auto
 namespace Jde::Logging
 {
-	void LogClient::CreateInstance()noexcept(false)
+	α LogClient::CreateInstance()noexcept(false)->void
 	{
-		ASSERT( !_pServerSink );
+		ASSERT( !Logging::Server() );
 		var [applicationId, applicationInstanceId, dbLogLevel, fileLogLevel] = Logging::Data::AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
 		auto p = make_unique<LogClient>( applicationId, applicationInstanceId, dbLogLevel );
-		SetServerSink( move(p) );
+		Logging::SetServer( move(p) );
 	}
 
 	LogClient::LogClient( ApplicationPK id, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )noexcept(false):
@@ -31,17 +31,17 @@ namespace Jde::Logging
 
 
 	}
-	void LogClient::Log( Logging::Messages::Message& message )noexcept
+	α LogClient::Log( Logging::Messages::Message& message )noexcept->void
 	{
 		Log( dynamic_cast<Logging::MessageBase&>(message), message.Variables );
 	}
-	void LogClient::Log( const Logging::MessageBase& msg )noexcept
+	α LogClient::Log( const Logging::MessageBase& msg )noexcept->void
 	{
 		vector<string> v;
 		Log( msg, v );
 	}
 	mutex _messageMutex;//if 1st function save, 2nd will skip to insert and get fk error.
-	void LogClient::Log( const Logging::MessageBase& msg, vector<string>& values )noexcept
+	α LogClient::Log( const Logging::MessageBase& msg, vector<string>& values )noexcept->void
 	{
 #ifndef TESTING
 		if( msg.Level>=_webLevel )

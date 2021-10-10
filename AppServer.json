@@ -1,9 +1,11 @@
 {
 	"db":
 	{
-		"driver": "libJde.MySql.so",
-		"connectionString": "Jde_Log_Connection",
-		"meta": "../log-meta.json"
+		"driver": "Jde.DB.Odbc.dll",
+		"driverx": "libJde.MySql.so",
+		"connectionString": "DSN=Jde_Log_Connection",
+		"meta": "../meta.json",
+		"metax": "../log-meta.json"
 	},
 	"logging":
 	{

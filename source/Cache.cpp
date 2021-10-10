@@ -1,4 +1,4 @@
-#include "Cache.h"
+﻿#include "Cache.h"
 #include "LogData.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
 
@@ -33,7 +33,7 @@ namespace Jde::ApplicationServer
 		return result.first.second;
 	}
 
-	void Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )
+	α Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )->void
 	{
 		auto pStrings = _applicationStrings.Find( applicationId );
 		if( !pStrings )
@@ -60,7 +60,7 @@ namespace Jde::ApplicationServer
 	}
 
 
-	void Cache::AddThread( uint sessionId, uint threadId, sv thread )
+	α Cache::AddThread( uint sessionId, uint threadId, sv thread )->void
 	{
 		function<void(UnorderedMap<uint,string>&)> afterInsert = [threadId, thread](UnorderedMap<uint,string>& value){ value.Set( threadId, make_shared<string>(thread) ); };
 		_instanceThreads.Insert( afterInsert, sessionId, shared_ptr<UnorderedMap<uint,string>>{ new UnorderedMap<uint,string>() } );
@@ -73,7 +73,7 @@ namespace Jde::ApplicationServer
 
 
 
-	shared_ptr<string> ApplicationStrings::Get( Logging::EFields field, uint id )noexcept
+	α ApplicationStrings::Get( Logging::EFields field, uint id )noexcept->shared_ptr<string>
 	{
 		shared_ptr<string> pString;
 		switch( field )

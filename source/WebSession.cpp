@@ -1,4 +1,4 @@
-#include "Cache.h"
+﻿#include "Cache.h"
 #include "WebSession.h"
 #include "WebServer.h"
 #include "Listener.h"
@@ -25,7 +25,7 @@ namespace Jde::ApplicationServer::Web
 		DBG( "MySession::Run()" );
 		Server().UpdateStatus( Server() );
 	}
-	α MySession::OnAccept( beast::error_code ec )noexcept->void
+	α MySession::OnAccept( beast::error_code /*ec*/)noexcept->void
 	{
 		auto pAck = make_unique<Web::FromServer::Acknowledgement>();
 		pAck->set_id( (uint32)Id );
@@ -41,7 +41,7 @@ namespace Jde::ApplicationServer::Web
 
 	α MySession::OnRead( FromClient::Transmission t )noexcept->void
 	{
-		for( uint i=0; i<t.messages_size(); ++i )
+		for( α i=0; i<t.messages_size(); ++i )
 		{
 			auto pMessage = t.mutable_messages( i );
 			if( pMessage->has_request() )

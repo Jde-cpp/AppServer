@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 #pragma warning( default : 4715)
 
-#include "types/proto/FromServer.pb.h"
+#include <jde/log/types/proto/FromServer.pb.h>
 #include "../../Framework/source/DateTime.h"
 #include "../../Framework/source/db/Database.h"
 #include "../../Framework/source/db/DataSource.h"

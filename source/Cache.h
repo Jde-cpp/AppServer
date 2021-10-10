@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
@@ -18,8 +18,8 @@ namespace Jde::ApplicationServer
 		UnorderedMap<uint32,string> Messages;
 		UnorderedMapPtr<uint32,string> ThreadsPtr;
 		UnorderedMapPtr<uint32,string> UsersPtr;
-		void Add( const Messages::Message& message )noexcept;
-		shared_ptr<string> Get( Logging::EFields field, uint id )noexcept;
+		α Add( const Messages::Message& message )noexcept->void;
+		α Get( Logging::EFields field, uint id )noexcept->shared_ptr<string>;
 	};
 
 	namespace Cache
