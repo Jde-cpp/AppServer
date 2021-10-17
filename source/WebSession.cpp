@@ -33,7 +33,7 @@ namespace Jde::ApplicationServer::Web
 		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
 		Write( t );
 	}
-	
+
 	α MySession::Server()noexcept->WebServer&
 	{
 		return dynamic_cast<WebServer&>( _server );
@@ -223,7 +223,7 @@ namespace Jde::ApplicationServer::Web
 	}
 	α MySession::Write( const FromServer::Transmission& t  )noexcept(false)->void
 	{
-		base::Write( IO::Proto::ToString(t) );
+		base::Write( make_unique<string>(IO::Proto::ToString(t)) );
 	}
 	α MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept->void
 	{

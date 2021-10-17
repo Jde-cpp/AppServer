@@ -55,7 +55,7 @@ namespace Jde::WebSocket
 
 	struct Session /*abstract*/: IO::Sockets::ISession, std::enable_shared_from_this<Session>
 	{
-		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):ISession{id}, _ws{std::move(socket)}, _server{server}{}
+		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):ISession{id}, _ws{std::move(socket)}, _server{server}{ _ws.binary( true ); }
 		β Close()noexcept->void{};
 		β Run()noexcept->void;
 	protected:
@@ -81,7 +81,7 @@ namespace Jde::WebSocket
 		α OnRead( const char* p, uint size )noexcept->void;
 		β OnRead( TFromClient transmission )noexcept->void = 0;
 		α Write( TFromServer&& message )noexcept(false)->void;;
-		α Write( string data )noexcept->void;;
+		α Write( up<string> data )noexcept->void;;
 	};
 
 	template<class TFromServer, class TServerSession>
@@ -107,12 +107,12 @@ namespace Jde::WebSocket
 	{
 		Write( IO::Proto::ToString(message) );
 	}
-	$::Write( string data )noexcept->void
+	$::Write( up<string> pData )noexcept->void
 	{
-		LOG( LogLevel(), "TSession::Write '{}'"sv, data.size() );
-		_ws.async_write( boost::asio::buffer((const void*)data.data(), data.size()), [ this, d=move(data) ]( beast::error_code ec, uint bytes_transferred )
+		var b = net::buffer( (const void*)pData->data(), pData->size() );
+		_ws.async_write( b, [ this, b, p=move(pData) ]( beast::error_code ec, uint bytes_transferred )
 		{
-			if( ec || d.size()!=bytes_transferred )
+			if( ec || p->size()!=bytes_transferred )
 			{
 				DBGX( "Error writing to Session:  '{}'"sv, boost::diagnostic_information(ec) );
 				try

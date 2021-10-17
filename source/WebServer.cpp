@@ -32,7 +32,7 @@ namespace Jde::ApplicationServer::Web
 			if( auto pSession = _sessions.find(id); pSession!=_sessions.end() )
 			{
 				sp<IO::Sockets::ISession> p = pSession->second;
-				static_pointer_cast<MySession::base>( p )->Write( data );
+				static_pointer_cast<MySession::base>( p )->Write( make_unique<string>(move(data)) );
 			}
 			else
 				_statusSessions.erase( id );
