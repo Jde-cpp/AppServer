@@ -105,7 +105,7 @@ namespace Jde::ApplicationServer::Web
 				{
 					_listener.WriteCustom( pCustom->applicationid(), pCustom->requestid(), move(*up<string>(pCustom->release_message())) );
 				}
-				catch( const Exception& e )
+				catch( const IException& e )
 				{
 					WriteError( e.what(), pCustom->requestid() );
 				}

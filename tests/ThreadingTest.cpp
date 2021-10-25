@@ -57,7 +57,7 @@ namespace Jde
 					else if( iVariable==5 )
 						params.push_back( std::to_string(std::rand()) );
 				}
-				Logging::MessageBase msg{ ELogLevel::Debug, message, file, function, __LINE__ };
+				Logging::MessageBase msg{ message, ELogLevel::Debug, file, function, __LINE__ };
 				Logging::LogClient::Instance().Log( msg, params );
 				std::this_thread::yield();
 			}

@@ -267,9 +267,7 @@ namespace Jde::ApplicationServer
 				}
 			}
 		}
-		catch( const Exception& e )//parsing errors
-		{
-			e.Log();
-		}
+		catch( const IException& e )//parsing errors
+		{}
 	}
 }

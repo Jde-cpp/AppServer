@@ -27,22 +27,10 @@ int main( int argc, char** argv )
 
 		IApplication::Pause();
 	}
-	catch( const Exception& e )
+	catch( const IException& e )
 	{
 		std::cout << "Exiting on error:  " << e.what() << std::endl;
 	}
 	IApplication::CleanUp();
 	return EXIT_SUCCESS;
 }
-
-// namespace Jde
-// {
-// 	void Run()
-// 	{
-// 		//
-// 		//constexpr uint WebSocketPort = 1967;
-// 		//var spWebSocket = ApplicationServer::Web::MyServer::CreateInstance( WebSocketPort );
-// 		//IApplication::AddShutdown( spWebSocket );
-// 		//IApplication::AddShutdown( ApplicationServer::Listener::Create( ReceivePort) );
-// 	}
-// }
