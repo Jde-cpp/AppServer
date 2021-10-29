@@ -11,80 +11,96 @@
 		"tinyId": "uint8",
 		"crc": "uint32"
 	},
+	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql"],
 	"$smallValues":
 	{
-		"id":{ "type": "smallId", "sequence": true },
-		"name": "name",
-		"$surrogateKey":["id"],
-		"$naturalKey":["name"]
+		"columns": [
+			{ "name": "id", "type": "smallId", "sequence": true },
+			{ "name": "name" }
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["name"]
 	},
-	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql"],
 	"logApplications":
 	{
-		"$parent": "$smallValues",
-		"dbLogLevel": "tinyId",
-		"fileLogLevel": "tinyId",
-		"location": "path?",
-		"$customInsertProc": true
+		"parent": "$smallValues",
+		"columns": [
+			{ "name": "dbLogLevel", "type": "tinyId" },
+			{ "name": "fileLogLevel", "type": "tinyId" },
+			{ "name": "location", "type": "path?" }
+		],
+		"customInsertProc": true
 	},
 	"logApplicationInstances":
 	{
-		"id":{ "type": "uint32", "sequence": true },
-		"applicationId": "logApplications",
-		"endTime": "dateTime?",
-		"hostId": "logHosts",
-		"processId": "uint64",
-		"start": "dateTime",
-		"$surrogateKey":["id"],
-		"$customInsertProc": true
+		"columns": [
+			{ "name": "id", "type": "uint32", "sequence": true },
+			{ "name": "applicationId", "type": "logApplications" },
+			{ "name": "endTime", "type": "dateTime?" },
+			{ "name": "hostId", "type": "logHosts" },
+			{ "name": "processId", "type": "uint64" },
+			{ "name": "start", "type": "dateTime" }
+		],
+		"surrogateKey":["id"],
+		"customInsertProc": true
 	},
 	"logFiles":
 	{
-		"id": "crc",
-		"applicationId": "logApplications",
-		"value": "path",
-		"$surrogateKey":["id"],
-		"$naturalKey":["applicationId","id"]
+		"columns": [
+			{ "name": "id", "type": "crc" },
+			{ "name": "applicationId", "type": "logApplications" },
+			{ "name": "value", "type": "path" }
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["applicationId","id"]
 	},
 	"logFunctions":
 	{
-		"id": "crc",
-		"applicationId": "logApplications",
-		"value": "path",
-		"$surrogateKey":["id"],
-		"$naturalKey":["applicationId","id"]
+		"columns": [
+			{ "name": "id", "type": "crc" },
+			{ "name": "applicationId", "type": "logApplications" },
+			{ "name": "value", "type": "path" }
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["applicationId","id"]
 	},
 	"logHosts":
 	{
-		"$parent": "$smallValues",
-		"$customInsertProc": true
+		"parent": "$smallValues",
+		"customInsertProc": true
 	},
 	"logMessages":
 	{
-		"id": "crc",
-		"value": { "length": 4095 },
-		"$surrogateKey":["id"]
+		"columns": [
+			{ "name": "id", "type": "crc" },
+			{ "name": "value", "length": 4095 }
+		],
+		"surrogateKey":["id"]
 	},
 	"logVariables":
 	{
-		"logId": "logs",
-		"variable_index": "uint8",
-		"value": { "length": 4095 },
-		"$surrogateKey":["logId","variable_index"]
+		"columns": [
+			{ "name": "logId", "type": "logs" },
+			{ "name": "variable_index", "type": "uint8" },
+			{ "name": "value", "length": 4095 }
+		],
+		"surrogateKey":["logId","variable_index"]
 	},
 	"logs":
 	{
-		"id": "bigId",
-		"applicationId": "logApplications",
-		"applicationInstanceId": "logApplicationInstances",
-		"fileId": "logFiles",
-		"functionId": "logFunctions",
-		"lineNumber": "uint16",
-		"messageId": "logMessages",
-		"severity": "uint8",
-		"threadId": "uint64",
-		"time": "dateTime",
-		"userId": "uint32",
-		"$surrogateKey":["id"]
+		"columns": [
+			{ "name": "id", "type": "bigId" },
+			{ "name": "applicationId", "type": "logApplications" },
+			{ "name": "applicationInstanceId", "type": "logApplicationInstances" },
+			{ "name": "fileId", "type": "logFiles" },
+			{ "name": "functionId", "type": "logFunctions" },
+			{ "name": "lineNumber", "type": "uint16" },
+			{ "name": "messageId", "type": "logMessages" },
+			{ "name": "severity", "type": "uint8" },
+			{ "name": "threadId", "type": "uint64" },
+			{ "name": "time", "type": "dateTime" },
+			{ "name": "userId", "type": "uint32" }
+		],
+		"surrogateKey":["id"]
 	}
 }

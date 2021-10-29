@@ -37,10 +37,7 @@ namespace Jde::ApplicationServer
 	{
 		auto pStrings = _applicationStrings.Find( applicationId );
 		if( !pStrings )
-		{
-			Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, "No application strings loaded for {}"sv, "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 45), applicationId );
-			return;
-		}
+			return DBG( "No application strings loaded for {}", applicationId );
 		auto pValue = make_shared<string>( value.size() ? value : "{null}" );
 		Logging::Data::SaveString( applicationId, field, id, pValue );
 		switch( field )
@@ -91,8 +88,7 @@ namespace Jde::ApplicationServer
 			pString = UsersPtr->Find( (uint32)id );
 		break;
 		default:
-			//WARN( "requested string for field '{}'"sv, field );
-			Logging::Log( Logging::MessageBase(ELogLevel::Warning, "requested string for field '{}'"sv, "C:\\Users\\duffyj\\source\\repos\\jde\\AppServer\\source\\Cache.cpp", __func__, 184), field );
+			WARN( "requested string for field '{}'", field );
 		}
 		return pString;
 	}
