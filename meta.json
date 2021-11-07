@@ -16,7 +16,7 @@
 	{
 		"columns": [
 			{ "name": "id", "type": "smallId", "sequence": true },
-			{ "name": "name" }
+			{ "name": "name", "type": "name" }
 		],
 		"surrogateKey":["id"],
 		"naturalKey":["name"]
