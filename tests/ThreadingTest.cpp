@@ -9,13 +9,11 @@ namespace Jde
 	class ThreadingTest : public ::testing::Test
 	{
 	protected:
-		ThreadingTest() {/*You can do set-up work for each test here.*/}
-	~ThreadingTest() override{/*You can do clean-up work that doesn't throw exceptions here.*/}
+		ThreadingTest() {}
+	~ThreadingTest() override{}
 
-	void SetUp() override {/*Code here will be called immediately after the constructor (right before each test).*/}
-	void TearDown() override {/*Code here will be called immediately after each test (right before the destructor).*/}
-
-	/* Class members declared here can be used by all tests in the test suite*/
+	void SetUp() override {}
+	void TearDown() override {}
 	};
 
 	TEST_F( ThreadingTest, Main )
@@ -57,7 +55,7 @@ namespace Jde
 					else if( iVariable==5 )
 						params.push_back( std::to_string(std::rand()) );
 				}
-				Logging::MessageBase msg{ message, ELogLevel::Debug, file, function, __LINE__ };
+				Logging::Message msg{ ELogLevel::Debug, message };
 				Logging::LogClient::Instance().Log( msg, params );
 				std::this_thread::yield();
 			}

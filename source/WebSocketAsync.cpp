@@ -26,12 +26,12 @@ namespace Jde::WebSocket
 		}
 	}
 
-#define CHECK_EC(ec, ...) if( ec ){ CodeException x(ec __VA_OPT__(,) __VA_ARGS__); LOG_EX(x); return; }
+#define CHECK_EC(ec, ...) if( ec ){ CodeException x(ec __VA_OPT__(,) __VA_ARGS__); return; }
 	void WebListener::DoAccept()noexcept
 	{
 		_acceptor.async_accept( net::make_strand(_pContextThread->Context()), [this]( beast::error_code ec, tcp::socket socket )noexcept
 		{
-			if( ec.value()==125 && IApplication::ShuttingDown() )
+			if( /*ec.value() == 125 &&*/ IApplication::ShuttingDown() )
 				return INFO("Webserver shutdown");
 			CHECK_EC( ec );
 			var id = ++_id;
@@ -70,7 +70,7 @@ namespace Jde::WebSocket
 		 _ws.async_read( _buffer, [this]( beast::error_code ec, uint bytes_transferred )noexcept
 		{
 			boost::ignore_unused( bytes_transferred );
-			CHECK_EC( ec, ec == websocket::error::closed ? LogLevel() : ELogLevel::Error );
+			CHECK_EC( ec, ec == websocket::error::closed ? LogLevel().Level : ELogLevel::Error );
 			OnRead( (char*)_buffer.data().data(), _buffer.size() );
 			DoRead();
 		} );
@@ -82,7 +82,7 @@ namespace Jde::WebSocket
 		boost::ignore_unused(bytes_transferred);
 		try
 		{
-			THROW_IFX( ec, CodeException(ec, ec == websocket::error::closed ? LogLevel() : ELogLevel::Error) );
+			THROW_IFX( ec, CodeException(ec, ec == websocket::error::closed ? LogLevel().Level : ELogLevel::Error) );
 		}
 		catch( const CodeException& )
 		{}

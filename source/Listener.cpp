@@ -112,7 +112,7 @@ namespace Jde::ApplicationServer
 
 		Logging::Proto::FromServer t;
 		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
-		LOG( _logLevel, "({})Sending Ack", Id );
+		LOG( "({})Sending Ack", Id );
 		Write( t );
 	}
 
@@ -150,7 +150,7 @@ namespace Jde::ApplicationServer
 		t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
 		Write( t );
 	}
-//send status update...
+
 	α Session::SetStatus( Web::FromServer::Status& status )const noexcept->void
 	{
 		status.set_applicationid( (uint32)ApplicationId );
@@ -267,7 +267,7 @@ namespace Jde::ApplicationServer
 				}
 			}
 		}
-		catch( const IException& e )//parsing errors
+		catch( const IException& )
 		{}
 	}
 }
