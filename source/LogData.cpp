@@ -23,7 +23,7 @@ namespace Jde::Logging::Data
 	using ApplicationServer::Web::FromServer::Applications;
 	sp<DB::IDataSource> _dataSource;
 	sp<DB::DBQueue> _pDbQueue;
-	void Configure()noexcept(false)
+	α Configure()noexcept(false)->void
 	{
 		var p = Settings::TryGet<fs::path>( "db/meta" );
 		if( p )
@@ -37,7 +37,7 @@ namespace Jde::Logging::Data
 			INFO( "db/meta not specified" );
 	}
 
-	void SetDataSource( sp<DB::IDataSource> dataSource )noexcept(false)
+	α SetDataSource( sp<DB::IDataSource> dataSource )noexcept(false)->void
 	{
 		TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
 		_dataSource = dataSource;
@@ -50,7 +50,7 @@ namespace Jde::Logging::Data
 
 		Configure();
 	}
-	std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel> AddInstance( sv applicationName, sv hostName, uint processId )noexcept(false)
+	α AddInstance( sv applicationName, sv hostName, uint processId )noexcept(false)->std::tuple<ApplicationPK, ApplicationInstancePK,ELogLevel,ELogLevel>
 	{
 		ApplicationPK applicationId;
 		ApplicationInstancePK applicationInstanceId;
@@ -67,7 +67,7 @@ namespace Jde::Logging::Data
 		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
 	}
 
-	Collections::UnorderedMap<uint32,string> Fetch( sv sql, ApplicationPK applicationId )noexcept(false)
+	α Fetch( sv sql, ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
 		Collections::UnorderedMap<uint32,string> map;
 		_dataSource->Select( sql, [&map]( const DB::IRow& row )
@@ -77,19 +77,19 @@ namespace Jde::Logging::Data
 		return map;
 	}
 
-	Collections::UnorderedMap<uint32,string> LoadFiles( ApplicationPK applicationId )noexcept(false)
+	α LoadFiles( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
 		return Fetch( "select id, value from log_files where application_id=?", applicationId );
 	}
-	Collections::UnorderedMap<uint32,string> LoadFunctions( ApplicationPK applicationId )noexcept(false)
+	α LoadFunctions( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
 		return Fetch( "select id, value from log_functions where application_id=?", applicationId );
 	}
-	Collections::UnorderedMap<uint32,string> LoadMessages( ApplicationPK applicationId )noexcept(false)
+	α LoadMessages( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
 		return Fetch( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id where application_id=?", applicationId );
 	}
-	unordered_set<uint32> LoadMessages()noexcept(false)
+	α LoadMessages()noexcept(false)->unordered_set<uint32>
 	{
 		unordered_set<uint32> y;
 		_dataSource->Select( "select log_messages.id from log_messages", [&y]( const DB::IRow& row )
@@ -99,7 +99,7 @@ namespace Jde::Logging::Data
 		return y;
 	}
 	#define _pQueue if( auto p = _pDbQueue; p )p
-	void SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept
+	α SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept->void
 	{
 		sv table = "";
 		sv frmt = "insert into {}(application_id,id,value)values(?,?,?)";
@@ -129,7 +129,7 @@ namespace Jde::Logging::Data
 		_pQueue->Push( sql, pParameters, false );
 	}
 
-	unique_ptr<Traces> LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel /*level*/, const std::optional<TimePoint>& pStart, uint limit )noexcept
+	α LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel /*level*/, const std::optional<TimePoint>& pStart, uint limit )noexcept->up<Traces>
 	{
 		auto pTraces = make_unique<Traces>();
 		map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
@@ -197,7 +197,7 @@ namespace Jde::Logging::Data
 
 		return pTraces;
 	}
-	up<ApplicationServer::Web::FromServer::Applications> LoadApplications( ApplicationPK id )noexcept
+	α LoadApplications( ApplicationPK id )noexcept->up<ApplicationServer::Web::FromServer::Applications>
 	{
 		auto pApplications = make_unique<Applications>();
 		auto fnctn = [&pApplications]( const DB::IRow& row )
@@ -222,7 +222,7 @@ namespace Jde::Logging::Data
 		return pApplications;
 	}
 
-	void PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept
+	α PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept->void
 	{
 		var variableCount = std::min( (uint)5, variables.size() );
 		auto pParameters = make_shared<vector<DB::DataValue>>();

@@ -15,7 +15,7 @@ namespace Jde::Logging::Data
 	α SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue )noexcept->void;
 
 	α LoadApplications( ApplicationPK pk=0 )noexcept->up<ApplicationServer::Web::FromServer::Applications>;
-	α LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& start, uint limit )noexcept->unique_ptr<ApplicationServer::Web::FromServer::Traces>;
+	α LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& start, uint limit )noexcept->up<ApplicationServer::Web::FromServer::Traces>;
 	α LoadFiles( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>;
 	α LoadFunctions( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>;
 	α LoadMessages( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>;

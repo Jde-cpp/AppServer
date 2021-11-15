@@ -14,7 +14,7 @@ namespace Jde::ApplicationServer
 	}
 	UnorderedSet<uint32> _messages;
 	α Cache::Messages()noexcept->const UnorderedSet<uint32>&{ return _messages; }
-	α Cache::AddSession( uint id, shared_ptr<Messages::Application> pApplication )->void{ _sessions.emplace( id, pApplication ); }
+	α Cache::AddSession( uint id, sp<Messages::Application> pApplication )->void{ _sessions.emplace( id, pApplication ); }
 	α Cache::AppStrings( ApplicationPK applicationId )noexcept->sp<ApplicationStrings>{ return _applicationStrings.Find(applicationId); };
 	α Cache::Load( ApplicationPK applicationId )noexcept(false)->sp<ApplicationStrings>
 	{
@@ -60,7 +60,7 @@ namespace Jde::ApplicationServer
 	α Cache::AddThread( uint sessionId, uint threadId, sv thread )->void
 	{
 		function<void(UnorderedMap<uint,string>&)> afterInsert = [threadId, thread](UnorderedMap<uint,string>& value){ value.Set( threadId, make_shared<string>(thread) ); };
-		_instanceThreads.Insert( afterInsert, sessionId, shared_ptr<UnorderedMap<uint,string>>{ new UnorderedMap<uint,string>() } );
+		_instanceThreads.Insert( afterInsert, sessionId, sp<UnorderedMap<uint,string>>{ new UnorderedMap<uint,string>() } );
 	}
 
 	α Cache::ForEachApplication( std::function<void(const uint&,const Messages::Application&)> func )->uint
@@ -70,9 +70,9 @@ namespace Jde::ApplicationServer
 
 
 
-	α ApplicationStrings::Get( Logging::EFields field, uint id )noexcept->shared_ptr<string>
+	α ApplicationStrings::Get( Logging::EFields field, uint id )noexcept->sp<string>
 	{
-		shared_ptr<string> pString;
+		sp<string> pString;
 		switch( field )
 		{
 		case Logging::EFields::Message:
