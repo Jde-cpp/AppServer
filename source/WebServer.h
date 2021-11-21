@@ -22,7 +22,7 @@ namespace Jde::ApplicationServer::Web
 		α PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept->ELogLevel;
 	private:
 		UnorderedSet<WebSocket::SessionPK> _statusSessions;
-		map<ApplicationPK,map<WebSocket::SessionPK,ELogLevel>> _logSubscriptions; shared_mutex _logSubscriptionMutex;
+		flat_map<ApplicationPK,flat_map<WebSocket::SessionPK,ELogLevel>> _logSubscriptions; shared_mutex _logSubscriptionMutex;
 	};
 	α Server()noexcept->WebServer&;
 

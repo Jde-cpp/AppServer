@@ -10,28 +10,30 @@
 
 namespace Jde::ApplicationServer::Web
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "webRequests" );
+
 	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )noexcept(false):
 		base( server, id, move(socket) )
 	{}
 
 	MySession::~MySession()
 	{
-		DBG( "~MySession( {} )"sv, Id );
+		LOG( "({})~MySession()"sv, Id );
 	}
 
 	α MySession::Run()noexcept->void
 	{
 		base::Run();
-		DBG( "MySession::Run()" );
+		LOG( "({})MySession::Run()"sv, Id );
 		Server().UpdateStatus( Server() );
 	}
-	α MySession::OnAccept( beast::error_code /*ec*/)noexcept->void
+	α MySession::OnAccept( beast::error_code ec )noexcept->void
 	{
-		auto pAck = make_unique<Web::FromServer::Acknowledgement>();
-		pAck->set_id( (uint32)Id );
-		FromServer::Transmission t;
-		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
+		LOG( "({})MySession::OnAccept()"sv, Id );
+		auto pAck{ mu<Web::FromServer::Acknowledgement>() }; pAck->set_id( (uint32)Id );
+		FromServer::Transmission t; t.add_messages()->set_allocated_acknowledgement( pAck.release() );
 		Write( t );
+		base::OnAccept( ec );
 	}
 
 	α MySession::Server()noexcept->WebServer&
@@ -52,12 +54,12 @@ namespace Jde::ApplicationServer::Web
 				else if( request.value()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
 				{
 					Server().RemoveStatusSession( Id );
-					DBG( "({})Remove status subscription."sv, Id );
+					LOG( "({})Remove status subscription."sv, Id );
 				}
 				else if( request.value() == FromClient::ERequest::Applications )
 				{
 					auto pApplications = Logging::Data::LoadApplications();
-					DBG( "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
+					LOG( "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
 					FromServer::Transmission transmission; transmission.add_messages()->set_allocated_applications( pApplications.release() );
 					Write( transmission );
 				}

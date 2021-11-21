@@ -4,9 +4,10 @@
 #include <boost/asio.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <jde/App.h>
+#include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/io/sockets/Socket.h"
 #include "../../Framework/source/io/ProtoUtilities.h"
-#include "../../Framework/source/collections/UnorderedMap.h"
+#include "../../Framework/source/threading/Mutex.h"
 #define var const auto
 
 namespace Jde::WebSocket
@@ -23,14 +24,12 @@ namespace Jde::WebSocket
 	{
 		WebListener( PortType port )noexcept(false);
 		~WebListener(){ _acceptor.close(); DBG("~WebListener"); }
-		Ω LogLevel()noexcept{ return _logLevel; }
 		β CreateSession( WebListener& server, SessionPK id, tcp::socket&& socket )noexcept->sp<ISession> =0;
 	private:
 		α DoAccept()noexcept->void;
 		α OnAccept( beast::error_code ec, tcp::socket socket )noexcept->void;
 		atomic<bool> _shutdown{false};
 		sp<IOContextThread> _pContextThread;
-		static ELogLevel _logLevel;
 	protected:
 		tcp::acceptor _acceptor;
 	};
@@ -60,12 +59,12 @@ namespace Jde::WebSocket
 		β Run()noexcept->void;
 	protected:
 		α Disconnect()noexcept{ /*_connected = false;*/ _server.RemoveSession( Id ); }
+		β OnAccept( beast::error_code ec )noexcept->void;
 
 		websocket::stream<beast::tcp_stream> _ws;
 		WebListener& _server;
 	private:
 		α OnRun()noexcept->void;
-		β OnAccept( beast::error_code ec )noexcept->void;
 		α DoRead()noexcept->void;
 		α OnNetRead( beast::error_code ec, std::size_t bytes_transferred )noexcept->void;
 		β OnRead( const char* p, uint size )noexcept->void=0;
@@ -80,8 +79,10 @@ namespace Jde::WebSocket
 
 		α OnRead( const char* p, uint size )noexcept->void;
 		β OnRead( TFromClient transmission )noexcept->void = 0;
-		α Write( TFromServer&& message )noexcept(false)->void;;
-		α Write( up<string> data )noexcept->void;;
+		α Write( TFromServer&& message )noexcept(false)->void;
+		α Write( up<string> data )noexcept->Task2;
+	private:
+		CoLock _writeLock;
 	};
 
 	template<class TFromServer, class TServerSession>
@@ -107,11 +108,15 @@ namespace Jde::WebSocket
 	{
 		Write( IO::Proto::ToString(message) );
 	}
-	$::Write( up<string> pData )noexcept->void
+	$::Write( up<string> pData )noexcept->Task2
 	{
 		var b = net::buffer( (const void*)pData->data(), pData->size() );
-		_ws.async_write( b, [ this, b, p=move(pData) ]( beast::error_code ec, uint bytes_transferred )
+		auto result = co_await _writeLock.Lock();
+		auto l_ = result. template Get<CoGuard>();
+
+		_ws.async_write( b, [ this, b, l=move(l_), p=move(pData) ]( beast::error_code ec, uint bytes_transferred )mutable
 		{
+			l = nullptr;
 			if( ec || p->size()!=bytes_transferred )
 			{
 				DBGX( "Error writing to Session:  '{}'"sv, boost::diagnostic_information(ec) );

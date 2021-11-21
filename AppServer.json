@@ -9,7 +9,7 @@
 	},
 	"logging":
 	{
-		"tags": ["threads"],
+		"tags": ["threads", "webRequests", "locks"],
 		"console":{},
 		"file":{ "path": ".." }
 	}

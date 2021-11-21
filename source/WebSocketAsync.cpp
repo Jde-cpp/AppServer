@@ -4,7 +4,7 @@
 #define var const auto
 namespace Jde::WebSocket
 {
-	ELogLevel WebListener::_logLevel{ ELogLevel::Debug };
+	static const LogTag& _logLevel = Logging::TagLevel( "webRequests" );
 
 	WebListener::WebListener( PortType port )noexcept(false):
 		IServerSocket{ port },
@@ -44,13 +44,13 @@ namespace Jde::WebSocket
 
 	void Session::Run()noexcept
 	{
-		DBG( "Session::Run()" );
+		LOG( "({})Session::Run()", Id );
 		net::dispatch( _ws.get_executor(), beast::bind_front_handler(&Session::OnRun, shared_from_this()) );
 	}
 
 	void Session::OnRun()noexcept
 	{
-		DBG( "Session::OnRun()" );
+		LOG( "({})Session::OnRun()", Id );
 		_ws.set_option( websocket::stream_base::timeout::suggested(beast::role_type::server) );
 		_ws.set_option( websocket::stream_base::decorator([]( websocket::response_type& res )
 		{
@@ -60,26 +60,27 @@ namespace Jde::WebSocket
 	}
 	void Session::OnAccept( beast::error_code ec )noexcept
 	{
-		DBG( "Session::OnAccept()" );
+		LOG( "({})Session::OnAccept()", Id );
 		CHECK_EC( ec );
 		DoRead();
 	}
 	void Session::DoRead()noexcept
 	{
-		DBG( "Session::DoRead()" );
-		 _ws.async_read( _buffer, [this]( beast::error_code ec, uint bytes_transferred )noexcept
+		LOG( "({})Session::DoRead()", Id );
+		 _ws.async_read( _buffer, [this]( beast::error_code ec, uint c )noexcept
 		{
-			boost::ignore_unused( bytes_transferred );
+			boost::ignore_unused( c );
 			CHECK_EC( ec, ec == websocket::error::closed ? LogLevel().Level : ELogLevel::Error );
+			LOG( "({})Session::DoRead({})", Id, c );
 			OnRead( (char*)_buffer.data().data(), _buffer.size() );
 			DoRead();
 		} );
 	}
 
 
-	void Session::OnWrite( beast::error_code ec, std::size_t bytes_transferred )noexcept
+	void Session::OnWrite( beast::error_code ec, uint c )noexcept
 	{
-		boost::ignore_unused(bytes_transferred);
+		boost::ignore_unused( c );
 		try
 		{
 			THROW_IFX( ec, CodeException(ec, ec == websocket::error::closed ? LogLevel().Level : ELogLevel::Error) );

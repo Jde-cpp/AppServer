@@ -43,7 +43,7 @@ namespace Jde::Logging::Data
 		_dataSource = dataSource;
 		function<void()> clean =  [](){ DBG( "LogData::_dataSource = nullptr;"sv ); _dataSource = nullptr;  };
 		DB::ShutdownClean( clean );
-		_pDbQueue = make_shared<DB::DBQueue>( dataSource );
+		_pDbQueue = ms<DB::DBQueue>( dataSource );
 		IApplication::AddShutdown( _pDbQueue );
 		IApplication::AddShutdownFunction( [](){_pDbQueue=nullptr;} );
 
@@ -67,12 +67,12 @@ namespace Jde::Logging::Data
 		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
 	}
 
-	α Fetch( sv sql, ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
+	α Fetch( string sql, ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
 		Collections::UnorderedMap<uint32,string> map;
-		_dataSource->Select( sql, [&map]( const DB::IRow& row )
+		_dataSource->Select( move(sql), [&map]( const DB::IRow& row )
 		{
-			map.emplace( row.GetUInt32(0), make_shared<string>(row.GetString(1)) );
+			map.emplace( row.GetUInt32(0), ms<string>(row.GetString(1)) );
 		}, {applicationId} );
 		return map;
 	}
@@ -120,8 +120,8 @@ namespace Jde::Logging::Data
 			return;
 
 		}
-		var sql = fmt::format( fmt::runtime(frmt), table );
-		auto pParameters = make_shared<vector<DB::DataValue>>();  pParameters->reserve(3);
+		var sql = format( fmt::runtime(frmt), table );
+		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
 		if( field!=Proto::EFields::MessageId )
 			pParameters->push_back( applicationId );
 		pParameters->push_back( static_cast<uint>(id) );
@@ -131,8 +131,8 @@ namespace Jde::Logging::Data
 
 	α LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel /*level*/, const std::optional<TimePoint>& pStart, uint limit )noexcept->up<Traces>
 	{
-		auto pTraces = make_unique<Traces>();
-		map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
+		auto pTraces = mu<Traces>();
+		flat_map<LogPK,ApplicationServer::Web::FromServer::TraceMessage*> mapTraces;
 		auto fnctn = [&pTraces, &mapTraces]( const DB::IRow& row )
 		{
 			auto pTrace = pTraces->add_values();
@@ -147,7 +147,7 @@ namespace Jde::Logging::Data
 			pTrace->set_messageid( row.GetUInt32(i++) );
 			pTrace->set_level( (ApplicationServer::Web::FromServer::ELogLevel)row.GetUInt16(i++) );
 			pTrace->set_threadid( row.GetUInt32(i++) );
-			var time = Chrono::MillisecondsSinceEpoch( row.GetDateTime(i++) );
+			var time = Chrono::MillisecondsSinceEpoch( row.GetTimePoint(i++) );
 			pTrace->set_time( time );
 			pTrace->set_userid( row.GetUInt32(i++) );
 			mapTraces.emplace( id, pTrace );
@@ -157,8 +157,8 @@ namespace Jde::Logging::Data
 		{
 			vector<string> where;
 			if( pStart )
-				where.push_back( fmt::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
-			std::vector<DB::DataValue> parameters;
+				where.push_back( format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
+			std::vector<DB::object> parameters;
 			if( applicationId>0 )
 			{
 				where.push_back( "application_id=?" );
@@ -173,7 +173,7 @@ namespace Jde::Logging::Data
 			constexpr sv sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
 			auto whereString = Str::AddSeparators( where, " and " );
 			var orderDirection = pStart ? "asc"sv : "desc"sv;
-			_dataSource->Select( fmt::format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
+			_dataSource->Select( format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
 			if( mapTraces.size() )
 			{
 				auto fnctn2 = [&mapTraces]( const DB::IRow& row )
@@ -189,7 +189,7 @@ namespace Jde::Logging::Data
 					whereString += " and logs.id>=?";
 					parameters.push_back( mapTraces.begin()->first );
 				}
-				_dataSource->Select( fmt::format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn2, parameters );
+				_dataSource->Select( format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn2, parameters );
 			}
 		}
 		catch(const std::exception& /*e*/)
@@ -199,7 +199,7 @@ namespace Jde::Logging::Data
 	}
 	α LoadApplications( ApplicationPK id )noexcept->up<ApplicationServer::Web::FromServer::Applications>
 	{
-		auto pApplications = make_unique<Applications>();
+		auto pApplications = mu<Applications>();
 		auto fnctn = [&pApplications]( const DB::IRow& row )
 		{
 			auto pApplication = pApplications->add_values();
@@ -215,9 +215,9 @@ namespace Jde::Logging::Data
 		Try( [&]()
 		{
 			if( id )
-				_dataSource->Select( fmt::format("{} where id=?", sql), fnctn, {id} );
+				_dataSource->Select( format("{} where id=?", sql), fnctn, {id} );
 			else
-				_dataSource->Select( sql, fnctn, {} );
+				_dataSource->Select( string{sql}, fnctn, {} );
 		} );
 		return pApplications;
 	}
@@ -225,8 +225,7 @@ namespace Jde::Logging::Data
 	α PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept->void
 	{
 		var variableCount = std::min( (uint)5, variables.size() );
-		auto pParameters = make_shared<vector<DB::DataValue>>();
-		pParameters->reserve( 10+variableCount );
+		auto pParameters = ms<vector<DB::object>>(); pParameters->reserve( 10+variableCount );
 		pParameters->push_back( applicationId );
 		pParameters->push_back( instanceId );
 		pParameters->push_back( (uint)fileId );

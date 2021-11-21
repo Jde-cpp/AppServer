@@ -61,7 +61,7 @@ namespace Jde::ApplicationServer::Web
 		uint minLevel = (uint)ELogLevel::None;
 		{
 			unique_lock l{ _logSubscriptionMutex };
-			auto& sessions = _logSubscriptions.try_emplace( applicationId, map<WebSocket::SessionPK,ELogLevel>{} ).first->second;
+			auto& sessions = _logSubscriptions.try_emplace( applicationId, flat_map<WebSocket::SessionPK,ELogLevel>{} ).first->second;
 			newSubscription = sessions.try_emplace( sessionId, level ).second;
 			for( var& subscriber : sessions )
 				minLevel = std::min(minLevel, (uint)subscriber.second );
@@ -104,7 +104,7 @@ namespace Jde::ApplicationServer::Web
 			return minLevel;
 
 		WebSocket::SessionPK brokenSession{ 0 };
-		for( var [sessionId,sessionLevel] : pSessions->second )
+		for( var& [sessionId,sessionLevel] : pSessions->second )
 		{
 			if( level<sessionLevel )
 				continue;

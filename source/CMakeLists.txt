@@ -5,7 +5,7 @@ include(SetUpConfigurations)
 #######################################################
 link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
 
-add_executable( Jde.AppServer main.cpp Listener.cpp Sender.cpp Cache.cpp LogData.cpp LogClient.cpp
+add_executable( Jde.AppServer main.cpp Listener.cpp Cache.cpp LogData.cpp LogClient.cpp
 			WebServer.cpp WebSession.cpp WebSocketAsync.cpp
 		#WebSocket.cpp
 			types/proto/FromClient.pb.cc types/proto/FromServer.pb.cc )
