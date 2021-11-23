@@ -47,9 +47,6 @@
     <ClCompile Include="Listener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sender.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LogData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
