@@ -1,4 +1,4 @@
-#include "LogData.h"
+﻿#include "LogData.h"
 #pragma warning( disable : 4715)
 #include <nlohmann/json.hpp>
 #pragma warning( default : 4715)
@@ -9,7 +9,6 @@
 #include "../../Framework/source/db/DataSource.h"
 #include "../../Framework/source/db/DBQueue.h"
 #include "../../Framework/source/db/Row.h"
-//#include "../../Framework/source/"
 #include <jde/Str.h>
 #include <jde/io/File.h>
 #include "../../Framework/source/Settings.h"
