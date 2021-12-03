@@ -8,7 +8,7 @@
 #define var const auto
 namespace Jde
 {
-	shared_ptr<Settings::Container> SettingsPtr;
+	sp<Settings::Container> SettingsPtr;
  	void Startup( int argc, char **argv )noexcept
 	{
 		var sv2 = "Tests.AppServer"sv;
@@ -16,7 +16,7 @@ namespace Jde
 		OSApp::Startup( argc, argv, appName, "Test app" );
 
 		Jde::Threading::SetThreadDscrptn( "Main" );
-		Logging::Data::SetDataSource( DB::DataSource(Settings::Global().Get<fs::path>("dbDriver"), Settings::Global().Get<string>("connectionString")) );
+		Logging::Data::SetDataSource( DB::DataSource() );
 		Logging::LogClient::CreateInstance();
 	}
 }
@@ -35,7 +35,6 @@ int main(int argc, char **argv)
 	::testing::GTEST_FLAG(filter) = "ThreadingTest.*";//SaveToFile
 	result = RUN_ALL_TESTS();
 
-	Jde::IApplication::Instance().Pause();
 	Jde::IApplication::CleanUp();
 
 	return result;
