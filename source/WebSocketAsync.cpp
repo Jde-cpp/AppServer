@@ -5,7 +5,7 @@
 namespace Jde::WebSocket
 {
 	static const LogTag& _logLevel = Logging::TagLevel( "webRequests" );
-
+	const LogTag& Session::_logLevel = Logging::TagLevel( "net" );;
 	WebListener::WebListener( PortType port )noexcept(false):
 		IServerSocket{ port },
 		_pContextThread{ IOContextThread::Instance() },
@@ -76,7 +76,6 @@ namespace Jde::WebSocket
 			DoRead();
 		} );
 	}
-
 
 	void Session::OnWrite( beast::error_code ec, uint c )noexcept
 	{

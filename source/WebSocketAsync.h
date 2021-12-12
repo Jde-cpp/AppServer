@@ -63,6 +63,7 @@ namespace Jde::WebSocket
 
 		websocket::stream<beast::tcp_stream> _ws;
 		WebListener& _server;
+		static const LogTag& _logLevel;
 	private:
 		α OnRun()noexcept->void;
 		α DoRead()noexcept->void;

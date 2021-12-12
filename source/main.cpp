@@ -22,7 +22,7 @@ int main( int argc, char** argv )
 	try
 	{
 		OSApp::Startup( argc, argv, "AppServer", "jde-cpp App Server." );
-		Logging::Data::SetDataSource( DB::DataSource() );
+		Logging::Data::SetDataSource( DB::DataSourcePtr() );
 		Logging::LogClient::CreateInstance();
 
 		IApplication::Pause();
@@ -31,6 +31,6 @@ int main( int argc, char** argv )
 	{
 		std::cout << "Exiting on error:  " << e.what() << std::endl;
 	}
-	IApplication::CleanUp();
+	IApplication::Cleanup();
 	return EXIT_SUCCESS;
 }

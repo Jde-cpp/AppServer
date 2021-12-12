@@ -68,28 +68,19 @@ namespace Jde::ApplicationServer
 		return ((const UnorderedMap<uint,Messages::Application>&)_sessions).ForEach( (decltype(func))func );
 	}
 
-
-
-	α ApplicationStrings::Get( Logging::EFields field, uint id )noexcept->sp<string>
+	α ApplicationStrings::Get( Logging::EFields field, Logging::MessageBase::ID id )noexcept->sp<string>
 	{
 		sp<string> pString;
-		switch( field )
-		{
-		case Logging::EFields::Message:
-			pString = Messages.Find( (uint32)id );
-		break;
-		case Logging::EFields::File:
-			pString = Files.Find( (uint32)id );
-		break;
-		case Logging::EFields::Function:
-			pString = Functions.Find( (uint32)id );
-		break;
-		case Logging::EFields::User:
-			pString = UsersPtr->Find( (uint32)id );
-		break;
-		default:
+		if( field==Logging::EFields::Message )
+			pString = Messages.Find( id );
+		else if( field==Logging::EFields::File )
+			pString = Files.Find( id );
+		else if( field==Logging::EFields::Function )
+			pString = Functions.Find( id );
+		else if( field==Logging::EFields::User )
+			pString = UsersPtr->Find( id );
+		else
 			WARN( "requested string for field '{}'", field );
-		}
 		return pString;
 	}
 }

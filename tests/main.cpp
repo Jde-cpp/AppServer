@@ -15,7 +15,7 @@ namespace Jde
 		string appName{ sv2 };
 		OSApp::Startup( argc, argv, appName, "Test app" );
 
-		Jde::Threading::SetThreadDscrptn( "Main" );
+		Threading::SetThreadDscrptn( "Main" );
 		Logging::Data::SetDataSource( DB::DataSource() );
 		Logging::LogClient::CreateInstance();
 	}
@@ -26,16 +26,16 @@ constexpr auto ms = std::make_shared<T>;
 
 int main(int argc, char **argv)
 {
-	 _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	using namespace Jde;
  	::testing::InitGoogleTest( &argc, argv );
 
-	Jde::Startup( argc, argv );
+	Startup( argc, argv );
 
-	auto result = EXIT_FAILURE;
-	::testing::GTEST_FLAG(filter) = "ThreadingTest.*";//SaveToFile
-	result = RUN_ALL_TESTS();
+	::testing::GTEST_FLAG( filter ) = Settings::TryGet<string>( "testing/tests" ).value_or( "*" );
+	auto result = RUN_ALL_TESTS();
 
-	Jde::IApplication::CleanUp();
+	IApplication::Shutdown();
+	IApplication::Cleanup();
 
 	return result;
 }

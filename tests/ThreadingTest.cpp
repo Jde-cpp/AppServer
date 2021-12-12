@@ -18,8 +18,8 @@ namespace Jde
 
 	TEST_F( ThreadingTest, Main )
 	{
-		static constexpr sv file="ThreadingTest.cpp";
-		static constexpr sv function = "Main";
+		//static constexpr sv file="ThreadingTest.cpp";
+		//static constexpr sv function = "Main";
 
 		auto threadRun = []( uint iThread )
 		{
@@ -60,10 +60,10 @@ namespace Jde
 				std::this_thread::yield();
 			}
 		};
-		
-		vector<std::jthread> threads;
+
+		vector<jthread> threads;
 		for( uint i=0;i<1; ++i )
-			threads.push_back( std::jthread{ [i,threadRun]{threadRun(i);} } );
+			threads.push_back( jthread{ [i,threadRun]{threadRun(i);} } );
 		for( auto& t : threads )
 			t.join();
 		DBG( "Exit"sv );

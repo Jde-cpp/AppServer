@@ -1,5 +1,5 @@
 {
-	"window.title": "Tests",
+	"window.title": "AppTests",
 	"files.associations": {
 		"filesystem": "cpp",
 		"cctype": "cpp",

@@ -49,3 +49,6 @@ source/*.i
 source/stdafx.h
 tests/.bin/*
 source/packages/*
+tests/.vscode/launch.json
+tests/.vscode/tasks.json
+tests/.vscode/settings.json

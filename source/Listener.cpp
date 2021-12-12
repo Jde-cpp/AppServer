@@ -24,12 +24,12 @@ namespace Jde::ApplicationServer
 	}
 
 
-	up<IO::Sockets::ProtoSession> TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept
+	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept->up<IO::Sockets::ProtoSession>
 	{
 		return make_unique<Session>( move(socket), id );
 	}
 
-	uint TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )noexcept
+	α TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )noexcept->uint
 	{
 		shared_lock l{ _mutex };
 		for( var& [id,p] : _sessions )
@@ -37,12 +37,12 @@ namespace Jde::ApplicationServer
 		return _sessions.size();
 	}
 
-	Session* TcpListener::FindSessionByInstance( ApplicationInstancePK id )noexcept
+	α TcpListener::FindSessionByInstance( ApplicationInstancePK id )noexcept->Session*
 	{
 		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->InstanceId==id;} );
 		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
 	}
-	Session* TcpListener::FindApplication( ApplicationPK id )noexcept
+	α TcpListener::FindApplication( ApplicationPK id )noexcept->Session*
 	{
 		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->ApplicationId==id;} );
 		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
@@ -57,7 +57,7 @@ namespace Jde::ApplicationServer
 			WARN( "({})Could not find instance to kill."sv, id );
 	}
 
-	α TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept->void
+	α TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept(false)->void
 	{
 		shared_lock l{ _mutex };
 		if( auto p = FindApplication(id); p )
@@ -124,7 +124,7 @@ namespace Jde::ApplicationServer
 		t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
 		Write( t );
 	}
-	Logging::Proto::LogLevels* Session::AllocatedLogLevels()noexcept
+	α Session::AllocatedLogLevels()noexcept->Logging::Proto::LogLevels*
 	{
 		auto pValues = new Logging::Proto::LogLevels();
 		pValues->set_server( (Logging::Proto::ELogLevel)std::min((uint)_dbLevel, _webLevelUint) );

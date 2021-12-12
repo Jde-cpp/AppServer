@@ -13,7 +13,7 @@ namespace Jde::ApplicationServer
 		ApplicationStrings( ApplicationPK id ):Id{id}
 		{}
 		α Add( const Messages::Message& message )noexcept->void;
-		α Get( Logging::EFields field, uint id )noexcept->sp<string>;
+		α Get( Logging::EFields field, Logging::MessageBase::ID id )noexcept->sp<string>;
 
 		ApplicationPK Id;
 		UnorderedMap<uint32,string> Files;
