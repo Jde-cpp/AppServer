@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "WebServer.h"
 #include "../../Framework/source/io/sockets/ProtoServer.h"
 
@@ -36,18 +36,17 @@ namespace Jde::ApplicationServer
 		string Status;
 		TimePoint StartTime;
 		uint Memory{0};
-		typedef IO::Sockets::TProtoSession<ToServer,FromServer> Base;
-		typedef uint WebRequestId; //
+		using base=IO::Sockets::TProtoSession<ToServer,FromServer>;
+		using WebRequestId=uint; //
 		α WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )noexcept->void;
 	private:
 		α OnDisconnect()noexcept->void override;
-		template<class T> using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
-		template<class T>
-		α SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )noexcept->void;
+		Τ using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
+		ⓣ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )noexcept->void;
 		ELogLevel _dbLevel;
 		atomic<ELogLevel> _webLevel{ELogLevel::None};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
-		typedef uint RequestId;
+		using RequestId=uint;
 		atomic<RequestId> _requestId{0};
 		map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
 	};
@@ -59,9 +58,9 @@ namespace Jde::ApplicationServer
 		static TcpListener& GetInstance()noexcept;
 
 
-		up<IO::Sockets::ProtoSession> CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept override;
+		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept->up<IO::Sockets::ProtoSession> override;
 
-		uint ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )noexcept;
+		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )noexcept->uint;
 		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept->void;
 		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept->void;
 
@@ -75,8 +74,7 @@ namespace Jde::ApplicationServer
 	};
 
 #define var const auto
-	template<class T>
-	α Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )noexcept->void
+	ⓣ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )noexcept->void
 	{
 		WebRequestId webRequestId;
 		const RequestId reqId = message.requestid();

@@ -7,6 +7,7 @@
 #include "../../Framework/source/DateTime.h"
 #include "../../Framework/source/db/Database.h"
 #include "../../Framework/source/db/DataSource.h"
+#include "../../Framework/source/db/Syntax.h"
 #include "../../Framework/source/db/DBQueue.h"
 #include "../../Framework/source/db/Row.h"
 #include <jde/Str.h>
@@ -119,7 +120,7 @@ namespace Jde::Logging
 		pParameters->push_back( pValue );
 		_pQueue->Push( sql, pParameters, false, sl );
 	}
-
+#define _syntax DB::DefaultSyntax()
 	α Data::LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel /*level*/, const std::optional<TimePoint>& pStart, uint limit )noexcept->up<Traces>
 	{
 		auto pTraces = mu<Traces>();
@@ -149,22 +150,23 @@ namespace Jde::Logging
 			vector<string> where;
 			if( pStart )
 				where.push_back( format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
-			std::vector<DB::object> parameters;
+			std::vector<DB::object> params;
 			if( applicationId>0 )
 			{
 				where.push_back( "application_id=?" );
-				parameters.push_back( applicationId );
+				params.push_back( applicationId );
 			}
 			if( instanceId>0 )
 			{
 				where.push_back( "application_instance_id=?" );
-				parameters.push_back( instanceId );
+				params.push_back( instanceId );
 			}
 
-			constexpr sv sql = "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, UNIX_TIMESTAMP(time), user_id from logs"sv;
-			auto whereString = Str::AddSeparators( where, " and " );
+			var sql = format( "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, {}, user_id from logs", _syntax.DateTimeSelect("time") );
+			auto whereString = where.size() ? format( " where {}", Str::AddSeparators(where, " and ") ) : string{};
 			var orderDirection = pStart ? "asc"sv : "desc"sv;
-			_dataSource->Select( format("{} where {} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, parameters );
+			_dataSource->Select( _syntax.Limit(format("{}{} order by id {}", sql, whereString, orderDirection), limit), fnctn, params );
+			//_dataSource->Select( _syntax.Limit( format("{}{} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, params );
 			if( mapTraces.size() )
 			{
 				auto fnctn2 = [&mapTraces]( const DB::IRow& row )
@@ -174,13 +176,13 @@ namespace Jde::Logging
 					if( pTrace!=mapTraces.end() )
 						*pTrace->second->add_variables() = row.GetString( 1 );
 				};
-				constexpr sv variables = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
+				constexpr sv variableSql = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
 				if( whereString.size() && mapTraces.size()==limit )
 				{
 					whereString += " and logs.id>=?";
-					parameters.push_back( mapTraces.begin()->first );
+					params.push_back( mapTraces.begin()->first );
 				}
-				_dataSource->Select( format("{} where {} order by log_id {}, variable_index", variables, whereString, orderDirection), fnctn2, parameters );
+				_dataSource->Select( format("{}{} order by log_id {}, variable_index", variableSql, whereString, orderDirection), fnctn2, params );
 			}
 		}
 		catch(const std::exception& /*e*/)

@@ -16,13 +16,10 @@ namespace Jde
 		OSApp::Startup( argc, argv, appName, "Test app" );
 
 		Threading::SetThreadDscrptn( "Main" );
-		Logging::Data::SetDataSource( DB::DataSource() );
+		Logging::Data::SetDataSource( DB::DataSourcePtr() );
 		Logging::LogClient::CreateInstance();
 	}
 }
-template<class T> using sp = std::shared_ptr<T>;
-template<typename T>
-constexpr auto ms = std::make_shared<T>;
 
 int main(int argc, char **argv)
 {
