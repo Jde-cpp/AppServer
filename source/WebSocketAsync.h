@@ -81,7 +81,7 @@ namespace Jde::WebSocket
 		α OnRead( const char* p, uint size )noexcept->void;
 		β OnRead( TFromClient transmission )noexcept->void = 0;
 		α Write( TFromServer&& message )noexcept(false)->void;
-		α Write( up<string> data )noexcept->Task2;
+		α Write( up<string> data )noexcept->Task;
 	private:
 		CoLock _writeLock;
 	};
@@ -109,11 +109,11 @@ namespace Jde::WebSocket
 	{
 		Write( IO::Proto::ToString(message) );
 	}
-	$::Write( up<string> pData )noexcept->Task2
+	$::Write( up<string> pData )noexcept->Task
 	{
 		var b = net::buffer( (const void*)pData->data(), pData->size() );
 		auto result = co_await _writeLock.Lock();
-		auto l_ = result. template Get<CoGuard>();
+		auto l_ = result. template UP<CoGuard>();
 
 		_ws.async_write( b, [ this, b, l=move(l_), p=move(pData) ]( beast::error_code ec, uint bytes_transferred )mutable
 		{
