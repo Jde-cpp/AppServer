@@ -62,6 +62,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\AppServer.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemDefinitionGroup />
@@ -89,7 +90,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>gtestd.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);../../Public/stage/$(Configuration);..\source\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.4\lib\native\v140\windesktop\msvcstl\static\rt-dyn\x64\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);../../Public/stage/$(Configuration);..\source\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.4\lib\native\v140\windesktop\msvcstl\static\rt-dyn\x64\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -113,8 +114,8 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);../../Public/stage/$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtest.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);../../Public/stage/$(Configuration);..\source\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.4\lib\native\v140\windesktop\msvcstl\static\rt-dyn\x64\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

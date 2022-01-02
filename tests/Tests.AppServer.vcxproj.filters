@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\AppServer.json" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="AppServer">
