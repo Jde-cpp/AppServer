@@ -7,14 +7,8 @@
 #define _logClient Logging::LogClient::Instance()
 namespace Jde::ApplicationServer::Web
 {
-	WebServer _instance{ Settings::TryGet<PortType>("web/port").value_or(1967) };
+	WebServer _instance{ Settings::Get<PortType>("web/port").value_or(1967) };
 	α Server()noexcept->WebServer&{ return _instance; }
-
-	// sp<WebServer> WebServer::CreateInstance( uint16 port )noexcept
-	// {
-	// 	ASSERT( !_spInstance );
-	// 	return _spInstance = sp<WebServer>( new WebServer(port) );
-	// }
 
 	WebServer::WebServer( PortType port )noexcept:
 		base{ port }
@@ -95,7 +89,7 @@ namespace Jde::ApplicationServer::Web
 		_listener.WebSubscribe( instanceId, (ELogLevel)minLevel );
 	}
 
-	ELogLevel WebServer::PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept
+	α WebServer::PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )noexcept->ELogLevel
 	{
 		unique_lock l{ _logSubscriptionMutex };
 		auto minLevel{ ELogLevel::None };

@@ -25,7 +25,7 @@ namespace Jde::Logging
 	sp<DB::DBQueue> _pDbQueue;
 	α Configure()noexcept(false)->void
 	{
-		var p = Settings::TryGet<fs::path>( "db/meta" );
+		var p = Settings::Get<fs::path>( "db/meta" );
 		if( p )
 		{
 			INFO( "db meta='{}'"sv, p->string() );
@@ -109,7 +109,7 @@ namespace Jde::Logging
 			table = "log_files"sv;
 		else if( field==Proto::EFields::FunctionId )
 			table = "log_functions"sv;
-		else 
+		else
 			return ERR( "unknown field '{}'."sv, field );
 
 		var sql = format( fmt::runtime(frmt), table );

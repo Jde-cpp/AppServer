@@ -18,7 +18,7 @@ namespace Jde::ApplicationServer
 	TcpListener& TcpListener::GetInstance()noexcept{ return _listener; }
 
 	TcpListener::TcpListener()noexcept(false)://multiple listeners on same port
-		IO::Sockets::ProtoServer{ Settings::TryGet<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }
+		IO::Sockets::ProtoServer{ Settings::Get<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }
 	{
 		Accept();
 	}
