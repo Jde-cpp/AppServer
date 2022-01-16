@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
 	Startup( argc, argv );
 
-	::testing::GTEST_FLAG( filter ) = Settings::TryGet<string>( "testing/tests" ).value_or( "*" );
+	::testing::GTEST_FLAG( filter ) = Settings::Get<string>( "testing/tests" ).value_or( "*" );
 	auto result = RUN_ALL_TESTS();
 
 	IApplication::Shutdown();
