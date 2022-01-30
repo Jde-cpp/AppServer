@@ -10,9 +10,14 @@
 	},
 	"logging":
 	{
-		"tags": ["threads", "locks"],
+		"tags": [ "app-requests", "threads", "_locks" ],
 		"console":{},
-		"file":{ "path": ".." }
+		"file":{ "path": ".." },
+		"breakLevel": "Warning"
+	},
+	"net": 
+	{
+		"ip": "v6"
 	},
 	"testing":
 	{

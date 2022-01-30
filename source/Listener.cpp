@@ -113,7 +113,7 @@ namespace Jde::ApplicationServer
 		Logging::Proto::FromServer t;
 		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
 		LOG( "({})Sending Ack", Id );
-		Write( t );
+		Write( move(t) );
 	}
 
 	α Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept->void
