@@ -20,7 +20,7 @@ namespace Jde::ApplicationServer
 	{
 		static mutex loadMutex;
 		std::lock_guard l{loadMutex};
-		auto result = _applicationStrings.emplace( applicationId, make_shared<ApplicationStrings>(applicationId) );
+		auto result = _applicationStrings.emplace( applicationId, ms<ApplicationStrings>(applicationId) );
 		if( result.second )
 		{
 			auto& strings = *result.first.second;
@@ -35,31 +35,24 @@ namespace Jde::ApplicationServer
 
 	α Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )->void
 	{
-		auto pStrings = _applicationStrings.Find( applicationId );
-		if( !pStrings )
-			return DBG( "No application strings loaded for {}", applicationId );
-		auto pValue = make_shared<string>( value.size() ? value : "{null}" );
-		Logging::Data::SaveString( applicationId, field, id, pValue );
-		switch( field )
-		{
-		case Logging::Proto::EFields::MessageId:
-			_messages.emplace( id );
-			break;
-		case Logging::Proto::EFields::FileId:
-			pStrings->Files.emplace( id, pValue );
-			break;
-		case Logging::Proto::EFields::FunctionId:
-			pStrings->Functions.emplace( id, pValue );
-			break;
-		default:
+		auto pStrings = _applicationStrings.Find( applicationId ); if( !pStrings ) return DBG( "No application strings loaded for {}", applicationId );
+		auto pValue = ms<string>( value.size() ? value : "{null}" );
+		bool save = false;
+		if( field==Logging::Proto::EFields::MessageId )
+			save = _messages.emplace( id );
+		else if( field==Logging::Proto::EFields::FileId )
+			save = pStrings->Files.emplace( id, pValue ).second;
+		else if( field==Logging::Proto::EFields::FunctionId )
+			save = pStrings->Functions.emplace( id, pValue ).second;
+		else
 			ERR( "unknown field {}.", field );
-		}
+		if( save )
+			Logging::Data::SaveString( applicationId, field, id, pValue );
 	}
-
 
 	α Cache::AddThread( uint sessionId, uint threadId, sv thread )->void
 	{
-		function<void(UnorderedMap<uint,string>&)> afterInsert = [threadId, thread](UnorderedMap<uint,string>& value){ value.Set( threadId, make_shared<string>(thread) ); };
+		function<void(UnorderedMap<uint,string>&)> afterInsert = [threadId, thread](UnorderedMap<uint,string>& value){ value.Set( threadId, ms<string>(thread) ); };
 		_instanceThreads.Insert( afterInsert, sessionId, sp<UnorderedMap<uint,string>>{ new UnorderedMap<uint,string>() } );
 	}
 

@@ -9,7 +9,7 @@
 			"args": ["-c"],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}/../../bin/debug",
-			"environment": [],
+			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }],
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],

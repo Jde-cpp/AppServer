@@ -23,7 +23,7 @@ namespace Jde::ApplicationServer
 		α Start2()noexcept->void;
 		α WriteStrings()noexcept->void;
 		α SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept->void;
-		α AllocatedLogLevels()noexcept->Logging::Proto::LogLevels*;
+		α LogLevels()noexcept->up<Logging::Proto::LogLevels>;
 		α DbLogLevel()const noexcept->ELogLevel{ return _dbLevel; }
 		α FileLogLevel()const noexcept->ELogLevel{ return _fileLogLevel; }
 		α SetStatus( Web::FromServer::Status& status )const noexcept->void;

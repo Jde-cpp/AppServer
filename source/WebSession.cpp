@@ -54,12 +54,12 @@ namespace Jde::ApplicationServer::Web
 				else if( request.value()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
 				{
 					Server().RemoveStatusSession( Id );
-					LOG( "({})Remove status subscription."sv, Id );
+					LOGT( Web::_logLevel, "({})Remove status subscription."sv, Id );
 				}
 				else if( request.value() == FromClient::ERequest::Applications )
 				{
 					auto pApplications = Logging::Data::LoadApplications();
-					LOG( "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
+					LOGT( Web::_logLevel, "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
 					FromServer::Transmission transmission; transmission.add_messages()->set_allocated_applications( pApplications.release() );
 					Write( transmission );
 				}
@@ -84,7 +84,7 @@ namespace Jde::ApplicationServer::Web
 			{
 				var& values = pMessage->logvalues();
 				if( values.dbvalue()<ELogLevelStrings.size() && values.clientvalue()<ELogLevelStrings.size() )
-					LOG( "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
+					LOGT( Web::_logLevel, "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instanceid(), ELogLevelStrings[values.dbvalue()], ELogLevelStrings[values.clientvalue()] );
 				Logging::Proto::LogLevels levels;
 				_listener.SetLogLevel( values.instanceid(), (ELogLevel)values.dbvalue(), (ELogLevel)values.clientvalue() );
 			}
@@ -92,7 +92,7 @@ namespace Jde::ApplicationServer::Web
 			{
 				var value = pMessage->requestlogs();
 				if( value.value()<ELogLevelStrings.size() )
-					LOG( "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
+					LOGT( Web::_logLevel, "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.applicationid(), value.instanceid(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, value.applicationid(), value.instanceid(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
 					std::thread{ [self=dynamic_pointer_cast<MySession>(shared_from_this()),value]()
 					{
@@ -102,7 +102,7 @@ namespace Jde::ApplicationServer::Web
 			else if( pMessage->has_custom() )
 			{
 				auto pCustom = pMessage->mutable_custom();
-				LOG( "({})received From Web custom reqId='{}' for application='{}'"sv, Id, pCustom->requestid(), pCustom->applicationid() );
+				LOGT( Web::_logLevel, "({})received From Web custom reqId='{}' for application='{}'"sv, Id, pCustom->requestid(), pCustom->applicationid() );
 				try
 				{
 					_listener.WriteCustom( pCustom->applicationid(), pCustom->requestid(), move(*up<string>(pCustom->release_message())) );

@@ -121,12 +121,12 @@ namespace Jde::ApplicationServer
 		_dbLevel = dbLogLevel;
 		_fileLogLevel = fileLogLevel;
 		Logging::Proto::FromServer t;
-		t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
+		t.add_messages()->set_allocated_loglevels( LogLevels().release() );
 		Write( t );
 	}
-	α Session::AllocatedLogLevels()noexcept->Logging::Proto::LogLevels*
+	α Session::LogLevels()noexcept->up<Logging::Proto::LogLevels>
 	{
-		auto pValues = new Logging::Proto::LogLevels();
+		auto pValues = mu<Logging::Proto::LogLevels>();
 		pValues->set_server( (Logging::Proto::ELogLevel)std::min((uint)_dbLevel, _webLevelUint) );
 		pValues->set_client( static_cast<Logging::Proto::ELogLevel>((Jde::ELogLevel)_fileLogLevel) );
 		return pValues;
@@ -147,7 +147,7 @@ namespace Jde::ApplicationServer
 		else
 			CRITICAL( "!pStrings"sv );
 
-		t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
+		//t.add_messages()->set_allocated_loglevels( LogLevels() );
 		Write( t );
 	}
 
@@ -179,7 +179,7 @@ namespace Jde::ApplicationServer
 		if( currentLevel!=std::min((uint)_dbLevel, _webLevelUint) )
 		{
 			Logging::Proto::FromServer t;
-			t.add_messages()->set_allocated_loglevels( AllocatedLogLevels() );
+			t.add_messages()->set_allocated_loglevels( LogLevels().release() );
 			Write( t );
 		}
 	}
@@ -254,13 +254,13 @@ namespace Jde::ApplicationServer
 				else if( pMessage->has_instance() )
 				{
 					auto& instance = *pMessage->mutable_instance();
-					Name = move( instance.applicationname() );
-					HostName = move( instance.hostname() );
-					ProcessId = instance.processid();
-					StartTime = Clock::from_time_t( instance.starttime() );
-					var [applicationId,instanceId, dbLogLevel, fileLogLevel] = Logging::Data::AddInstance( Name, HostName, ProcessId );
+					Name = move( instance.application() );
+					HostName = move( instance.host() );
+					ProcessId = instance.pid();
+					StartTime = Clock::from_time_t( instance.start_time() );
+					var [applicationId,instanceId, dbLogLevel_, fileLogLevel_] = Logging::Data::AddInstance( Name, HostName, ProcessId );//TODO don't use db for level
 					DBG( "({})Adding application app={}@{} pid={}", Id, Name, HostName, ProcessId );
-					InstanceId = instanceId; ApplicationId = applicationId; _dbLevel = dbLogLevel; _fileLogLevel = fileLogLevel;
+					InstanceId = instanceId; ApplicationId = applicationId;// _dbLevel = dbLogLevel; _fileLogLevel = fileLogLevel;
 					Cache::Load( ApplicationId );
 					WriteStrings();
 					break;

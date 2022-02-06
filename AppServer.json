@@ -1,21 +1,22 @@
 {
 	"db":
 	{
-		"driver": "Jde.DB.Odbc.dll",
+		"driver": "$(JDE_DB_DRIVER)",
 		"driverx": "libJde.MySql.so",
-		"connectionStringx": "Jde_Log_Connection",
-		"connectionString": "DSN=Jde_Log_Connection",
-		"meta": "../meta.json",
-		"metax": "../log-meta.json"
+		"driver2": "Jde.DB.Odbc.dll",
+		"connectionString": "$(Jde_Log_Connection)",
+		"connectionStringx": "DSN=Jde_Log_Connection",
+		"metax": "../meta.json",
+		"meta": "../log-meta.json"
 	},
 	"logging":
 	{
-		"tags": [ "app-requests", "threads", "_locks" ],
+		"tags": [ "app-requests", "threads", "_locks", "settings", "sql" ],
 		"console":{},
 		"file":{ "path": ".." },
 		"breakLevel": "Warning"
 	},
-	"net": 
+	"net":
 	{
 		"ip": "v6"
 	},
