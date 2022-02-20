@@ -61,8 +61,7 @@
 			{ "name": "applicationId", "type": "logApplications" },
 			{ "name": "value", "type": "path" }
 		],
-		"surrogateKey":["id"],
-		"naturalKey":["applicationId","id"]
+		"surrogateKey":["applicationId","id"]
 	},
 	"logHosts":
 	{
