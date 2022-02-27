@@ -9,41 +9,43 @@ namespace Jde::ApplicationServer
 	namespace Cache
 	{
 		UnorderedMap<uint,Messages::Application> _sessions;
-		UnorderedMap<ApplicationPK,ApplicationStrings> _applicationStrings;
+		ApplicationStrings _applicationStrings;
 		UnorderedMap<uint,UnorderedMap<uint,string>> _instanceThreads;
 	}
 	UnorderedSet<uint32> _messages;
 	α Cache::Messages()noexcept->const UnorderedSet<uint32>&{ return _messages; }
 	α Cache::AddSession( uint id, sp<Messages::Application> pApplication )->void{ _sessions.emplace( id, pApplication ); }
-	α Cache::AppStrings( ApplicationPK applicationId )noexcept->sp<ApplicationStrings>{ return _applicationStrings.Find(applicationId); };
-	α Cache::Load( ApplicationPK applicationId )noexcept(false)->sp<ApplicationStrings>
+	α Cache::AppStrings()noexcept->ApplicationStrings&{ return _applicationStrings; };
+
+	std::once_flag _single;
+	mutex _loadMutex;
+	α Cache::Load( /*ApplicationPK applicationId*/ )noexcept(false)->ApplicationStrings&
 	{
-		static mutex loadMutex;
-		std::lock_guard l{loadMutex};
-		auto result = _applicationStrings.emplace( applicationId, ms<ApplicationStrings>(applicationId) );
-		if( result.second )
+
+		std::lock_guard _{_loadMutex};
+		std::call_once( _single, []()
 		{
-			auto& strings = *result.first.second;
-			strings.Files = Logging::Data::LoadFiles( applicationId );
-			strings.Functions = Logging::Data::LoadFunctions( applicationId );
-			strings.Messages = Logging::Data::LoadMessages( applicationId );
-			if( !_messages.size() )
-				_messages = Logging::Data::LoadMessages();
-		}
-		return result.first.second;
+			_applicationStrings.Files = Logging::Data::LoadFiles();
+			_applicationStrings.Functions = Logging::Data::LoadFunctions();
+			_applicationStrings.Messages = Logging::Data::LoadMessages();
+		//	if( !_messages.size() )
+			_messages = Logging::Data::LoadMessageIds();
+		} );
+		return _applicationStrings;
 	}
 
 	α Cache::Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )->void
 	{
-		auto pStrings = _applicationStrings.Find( applicationId ); if( !pStrings ) return DBG( "No application strings loaded for {}", applicationId );
+		//auto pStrings = _applicationStrings.Find( applicationId ); if( !pStrings ) return DBG( "No application strings loaded for {}", applicationId );
+		Load();
 		auto pValue = ms<string>( value.size() ? value : "{null}" );
 		bool save = false;
 		if( field==Logging::Proto::EFields::MessageId )
 			save = _messages.emplace( id );
 		else if( field==Logging::Proto::EFields::FileId )
-			save = pStrings->Files.emplace( id, pValue ).second;
+			save = _applicationStrings.Files.emplace( id, pValue ).second;
 		else if( field==Logging::Proto::EFields::FunctionId )
-			save = pStrings->Functions.emplace( id, pValue ).second;
+			save = _applicationStrings.Functions.emplace( id, pValue ).second;
 		else
 			ERR( "unknown field {}.", field );
 		if( save )

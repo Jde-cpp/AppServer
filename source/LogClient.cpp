@@ -16,7 +16,7 @@ namespace Jde::Logging
 	}
 
 	LogClient::LogClient( ApplicationPK id, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )noexcept(false):
-		IServerSink{ Data::LoadMessages() },
+		IServerSink{ Data::LoadMessageIds() },
 		InstanceId{applicationInstanceId},
 		ApplicationId{id}
 	{
@@ -26,8 +26,8 @@ namespace Jde::Logging
 			std::function<void(const uint32&, const string&)> fnctn = [&set](const uint32& key, const string&) {set.emplace(key);};
 			map.ForEach( fnctn );
 		};
-		addMessages( Data::LoadFiles(id), _filesSent );
-		addMessages( Data::LoadFunctions(id), _functionsSent );
+		addMessages( Data::LoadFiles(), _filesSent );
+		addMessages( Data::LoadFunctions(), _functionsSent );
 
 
 	}
@@ -47,13 +47,27 @@ namespace Jde::Logging
 		if( msg.Level>=_webLevel )
 			ApplicationServer::Web::Server().PushMessage( 0, ApplicationId, InstanceId, Clock::now(), msg.Level, (uint32)msg.MessageId, (uint32)msg.FileId, (uint32)msg.FunctionId, (uint32)msg.LineNumber, (uint32)msg.UserId, msg.ThreadId, vector<string>{values} );
 #endif
-		unique_lock<mutex> l{ _messageMutex };
-		if( ShouldSendMessage(msg.MessageId) )//2030045667
-			Data::SaveString( ApplicationId, Proto::EFields::MessageId, (uint32)msg.MessageId, make_shared<string>(msg.MessageView) );
-		if( ShouldSendFile(msg.FileId) )
-			Data::SaveString( ApplicationId, Proto::EFields::FileId, (uint32)msg.FileId, make_shared<string>(msg.File) );
-		if( ShouldSendFunction(msg.FunctionId) )
-			Data::SaveString( ApplicationId, Proto::EFields::FunctionId, (uint32)msg.FunctionId, make_shared<string>(msg.Function) );
-		Data::PushMessage( ApplicationId, InstanceId, Clock::now(), msg.Level, (uint32)msg.MessageId, (uint32)msg.FileId, (uint32)msg.FunctionId, (uint32)msg.LineNumber, (uint32)msg.UserId, msg.ThreadId, move(values) );
+		try
+		{
+			unique_lock<mutex> l{ _messageMutex };
+			if( ShouldSendMessage(msg.MessageId) )//2030045667
+				Data::SaveString( ApplicationId, Proto::EFields::MessageId, (uint32)msg.MessageId, make_shared<string>(msg.MessageView) );
+			if( ShouldSendFile(msg.FileId) )
+				Data::SaveString( ApplicationId, Proto::EFields::FileId, (uint32)msg.FileId, make_shared<string>(msg.File) );
+			if( ShouldSendFunction(msg.FunctionId) )
+				Data::SaveString( ApplicationId, Proto::EFields::FunctionId, (uint32)msg.FunctionId, make_shared<string>(msg.Function) );
+			Data::PushMessage( ApplicationId, InstanceId, Clock::now(), msg.Level, (uint32)msg.MessageId, (uint32)msg.FileId, (uint32)msg.FunctionId, (uint32)msg.LineNumber, (uint32)msg.UserId, msg.ThreadId, move(values) );
+		}
+		catch( ... )
+		{
+			try
+			{
+				std::rethrow_exception( std::current_exception() );
+			}
+			catch( const std::exception& e )
+			{
+				CRITICAL( "{}", e.what() );
+			}
+		}
 	}
 }

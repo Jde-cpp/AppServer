@@ -48,20 +48,19 @@
 	{
 		"columns": [
 			{ "name": "id", "type": "crc" },
-			{ "name": "applicationId", "type": "logApplications" },
 			{ "name": "value", "type": "path" }
 		],
 		"surrogateKey":["id"],
-		"naturalKey":["applicationId","id"]
+		"naturalKey":["value"]
 	},
 	"logFunctions":
 	{
 		"columns": [
 			{ "name": "id", "type": "crc" },
-			{ "name": "applicationId", "type": "logApplications" },
 			{ "name": "value", "type": "path" }
 		],
-		"surrogateKey":["applicationId","id"]
+		"surrogateKey":["id"],
+		"naturalKey":["value"]
 	},
 	"logHosts":
 	{

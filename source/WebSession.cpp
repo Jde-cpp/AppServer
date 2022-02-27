@@ -154,24 +154,22 @@ namespace Jde::ApplicationServer::Web
 		for( auto i=0; i<request.values_size(); ++i )
 		{
 			var& value = request.values( i );
-			auto pStrings = Cache::AppStrings( value.applicationid() );
-			if( !pStrings )
-				pStrings = Cache::Load( value.applicationid() );//todo wrap in try statement.
+			auto& strings = Cache::AppStrings();
 			sp<string> pString;
 			if( value.type()==FromClient::EStringRequest::MessageString )
-				pString = pStrings->Get( Logging::EFields::Message, value.value() );
+				pString = strings.Get( Logging::EFields::Message, value.value() );
 			else if( value.type()==FromClient::EStringRequest::File )
-				pString = pStrings->Get( Logging::EFields::File, value.value() );
+				pString = strings.Get( Logging::EFields::File, value.value() );
 			else if( value.type()==FromClient::EStringRequest::Function )
-				pString = pStrings->Get( Logging::EFields::Function, value.value() );
+				pString = strings.Get( Logging::EFields::Function, value.value() );
 
 			else if( value.type()==FromClient::EStringRequest::User )
-				pString = pStrings->Get( Logging::EFields::User, value.value() );
+				pString = strings.Get( Logging::EFields::User, value.value() );
 			if( pString )
 			{
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( *pString );
-				auto& strings = values.try_emplace(value.applicationid(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
-				strings.push_front( appString );
+				auto& strings2 = values.try_emplace(value.applicationid(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
+				strings2.push_front( appString );
 			}
 			else
 			{
@@ -179,8 +177,8 @@ namespace Jde::ApplicationServer::Web
 				const string typeString = value.type()<(int)StringTypes.size() ? string(StringTypes[value.type()]) : std::to_string( value.type() );
 				WARN( "Could not find string type='{}', id='{}', application='{}'"sv, typeString, value.value(), value.applicationid() );
 				FromServer::ApplicationString appString; appString.set_stringrequesttype( value.type() ); appString.set_id( value.value() ); appString.set_value( "{{error}}" );
-				auto& strings = values.try_emplace(value.applicationid(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
-				strings.push_front( appString );
+				auto& strings2 = values.try_emplace(value.applicationid(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
+				strings2.push_front( appString );
 			}
 		}
 

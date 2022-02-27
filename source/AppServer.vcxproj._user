@@ -12,4 +12,14 @@
     <LocalDebuggerCommandArguments>-c</LocalDebuggerCommandArguments>
     <LibraryPath>$(REPO_DIR)\protobuf\cmake\build\sln\release;$(REPO_DIR)\vcpkg\installed\x64-windows\release\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerEnvironment>JDE_LOG_META=../meta.json
+$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerEnvironment>JDE_LOG_META=../meta.json
+$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

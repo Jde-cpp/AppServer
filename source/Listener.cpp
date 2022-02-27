@@ -135,19 +135,13 @@ namespace Jde::ApplicationServer
 	α Session::WriteStrings()noexcept->void
 	{
 		Logging::Proto::FromServer t;
-		if( var pStrings = Cache::AppStrings(ApplicationId); pStrings )
-		{
-			auto pValues = make_unique<Logging::Proto::Strings>();
-			pStrings->Files.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_files(id);} );
-			pStrings->Functions.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_functions(id);} );
-			pStrings->Messages.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_messages(id);} );
+		var& strings = Cache::AppStrings();
+		auto pValues = make_unique<Logging::Proto::Strings>();
+		strings.Files.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_files(id);} );
+		strings.Functions.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_functions(id);} );
+		strings.Messages.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_messages(id);} );
+		t.add_messages()->set_allocated_strings( pValues.release() );
 
-			t.add_messages()->set_allocated_strings( pValues.release() );
-		}
-		else
-			CRITICAL( "!pStrings"sv );
-
-		//t.add_messages()->set_allocated_loglevels( LogLevels() );
 		Write( t );
 	}
 
@@ -261,7 +255,7 @@ namespace Jde::ApplicationServer
 					var [applicationId,instanceId, dbLogLevel_, fileLogLevel_] = Logging::Data::AddInstance( Name, HostName, ProcessId );//TODO don't use db for level
 					DBG( "({})Adding application app={}@{} pid={}", Id, Name, HostName, ProcessId );
 					InstanceId = instanceId; ApplicationId = applicationId;// _dbLevel = dbLogLevel; _fileLogLevel = fileLogLevel;
-					Cache::Load( ApplicationId );
+					Cache::Load();
 					WriteStrings();
 					break;
 				}

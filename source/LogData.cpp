@@ -25,13 +25,13 @@ namespace Jde::Logging
 	sp<DB::DBQueue> _pDbQueue;
 	α Configure()noexcept(false)->void
 	{
-		var p = Settings::Get<fs::path>( "db/meta" );
+		var p = Settings::Env( "db/meta" );
 		if( p )
 		{
-			INFO( "db meta='{}'"sv, p->string() );
+			INFO( "db meta='{}'"sv, *p );
 			var j = json::parse( IO::FileUtilities::Load(*p) );
 			if( auto ds=_dataSource; ds )
-				ds->SchemaProc()->CreateSchema( j, p->parent_path() );
+				ds->SchemaProc()->CreateSchema( j, fs::path{*p}.parent_path() );
 		}
 		else
 			INFO( "db/meta not specified" );
@@ -67,42 +67,36 @@ namespace Jde::Logging
 		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
 	}
 
-	α Fetch( string sql, ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
+	α Fetch( string sql, SRCE )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
 		Collections::UnorderedMap<uint32,string> map;
-		_dataSource->Select( move(sql), [&map]( const DB::IRow& row )
-		{
-			map.emplace( row.GetUInt32(0), ms<string>(row.GetString(1)) );
-		}, {applicationId} );
+		_dataSource->Select( move(sql), [&map]( const DB::IRow& row ){ map.emplace( row.GetUInt32(0), ms<string>(row.GetString(1)) ); }, {}, sl );
 		return map;
 	}
 
-	α Data::LoadFiles( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
+	α Data::LoadFiles( SL sl )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
-		return Fetch( "select id, value from log_files where application_id=?", applicationId );
+		return Fetch( "select id, value from log_files", sl );
 	}
-	α Data::LoadFunctions( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
+	α Data::LoadFunctions( SL sl )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
-		return Fetch( "select id, value from log_functions where application_id=?", applicationId );
+		return Fetch( "select id, value from log_functions", sl );
 	}
-	α Data::LoadMessages( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>
+	α Data::LoadMessages( SL sl )noexcept(false)->Collections::UnorderedMap<uint32,string>
 	{
-		return Fetch( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id where application_id=?", applicationId );
+		return Fetch( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id", sl );
 	}
-	α Data::LoadMessages()noexcept(false)->unordered_set<uint32>
+	α Data::LoadMessageIds( SL sl )noexcept(false)->unordered_set<uint32>
 	{
 		unordered_set<uint32> y;
-		_dataSource->Select( "select log_messages.id from log_messages", [&y]( const DB::IRow& row )
-		{
-			y.emplace( row.GetUInt32(0) );
-		} );
+		_dataSource->Select( "select log_messages.id from log_messages", [&y]( const DB::IRow& row ){ y.emplace( row.GetUInt32(0) ); }, sl );
 		return y;
 	}
 	#define _pQueue if( auto p = _pDbQueue; p )p
 	α Data::SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue, SL sl )noexcept->void
 	{
 		sv table = "log_messages"sv;
-		sv frmt = "insert into {}(application_id,id,value)values(?,?,?)";
+		sv frmt = "insert into {}(id,value)values(?,?)";
 		if( field==Proto::EFields::MessageId )
 			frmt = "insert into {}(id,value)values(?,?)";
 		else if( field==Proto::EFields::FileId )
@@ -114,9 +108,7 @@ namespace Jde::Logging
 
 		var sql = format( fmt::runtime(frmt), table );
 		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
-		if( field!=Proto::EFields::MessageId )
-			pParameters->push_back( applicationId );
-		pParameters->push_back( static_cast<uint>(id) );
+		pParameters->push_back( static_cast<uint32>(id) );
 		pParameters->push_back( pValue );
 		_pQueue->Push( sql, pParameters, false, sl );
 	}

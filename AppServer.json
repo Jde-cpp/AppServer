@@ -7,7 +7,7 @@
 		"connectionString": "$(Jde_Log_Connection)",
 		"connectionStringx": "DSN=Jde_Log_Connection",
 		"metax": "../meta.json",
-		"meta": "../log-meta.json"
+		"meta": "$(JDE_LOG_META)"
 	},
 	"logging":
 	{

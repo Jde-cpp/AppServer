@@ -16,10 +16,10 @@ namespace Jde::Logging::Data
 
 	α LoadApplications( ApplicationPK pk=0 )noexcept->up<ApplicationServer::Web::FromServer::Applications>;
 	α LoadEntries( ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, const std::optional<TimePoint>& start, uint limit )noexcept->up<ApplicationServer::Web::FromServer::Traces>;
-	α LoadFiles( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>;
-	α LoadFunctions( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>;
-	α LoadMessages( ApplicationPK applicationId )noexcept(false)->Collections::UnorderedMap<uint32,string>;
-	α LoadMessages()noexcept(false)->unordered_set<uint32> ;
+	α LoadFiles( SRCE )noexcept(false)->Collections::UnorderedMap<uint32,string>;
+	α LoadFunctions( SRCE )noexcept(false)->Collections::UnorderedMap<uint32,string>;
+	α LoadMessages( SRCE )noexcept(false)->Collections::UnorderedMap<uint32,string>;
+	α LoadMessageIds( SRCE )noexcept(false)->unordered_set<uint32>;
 
 	α PushMessage( ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables, SRCE )noexcept->void;
 }

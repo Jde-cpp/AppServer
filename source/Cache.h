@@ -10,12 +10,11 @@ namespace Jde::ApplicationServer
 	namespace Messages{ struct Application; struct Message; struct RequestStrings; }
 	struct ApplicationStrings
 	{
-		ApplicationStrings( ApplicationPK id ):Id{id}
+		ApplicationStrings(  )
 		{}
 		α Add( const Messages::Message& message )noexcept->void;
 		α Get( Logging::EFields field, Logging::MessageBase::ID id )noexcept->sp<string>;
 
-		ApplicationPK Id;
 		UnorderedMap<uint32,string> Files;
 		UnorderedMap<uint32,string> Functions;
 		UnorderedMap<uint32,string> Messages;
@@ -31,7 +30,7 @@ namespace Jde::ApplicationServer::Cache
 	α AddMessageStrings( uint sessionId, const Messages::Message& message )->void;
 	α ForEachApplication( std::function<void(const uint&,const Messages::Application&)> func )->uint;
 	α FetchStrings( uint sessionId, const Messages::RequestStrings& request )->void;
-	α Load( ApplicationPK applicationId )noexcept(false)->sp<ApplicationStrings>;
-	α AppStrings( ApplicationPK applicationId )noexcept->sp<ApplicationStrings>;
+	α Load()noexcept(false)->ApplicationStrings&;
+	α AppStrings()noexcept->ApplicationStrings&;
 	α Messages()noexcept->const UnorderedSet<uint32>&;
 }
