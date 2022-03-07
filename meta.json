@@ -4,7 +4,7 @@
 		"name":{ "length": 255 },
 		"$target":{ "length": 255 },
 		"description":{ "length": 2047 },
-		"path":{ "length": 4095 },
+		"path":{ "length": 512, "description": "512 required for mysql & nk" },
 		"bigId": { "type": "uint64", "sequence": true },
 		"id": "uint32",
 		"smallId": "uint16",
