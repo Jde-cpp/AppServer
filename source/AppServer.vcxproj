@@ -65,7 +65,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>PROTOBUF_USE_DLLS;PROTOBUF_USE_EXCEPTIONS=0;NOMINMAX;BOOST_ALL_DYN_LINK;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_xxxCONSOLE;ONE_CORE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PROTOBUF_USE_DLLS;PROTOBUF_USE_EXCEPTIONS=0;NOMINMAX;BOOST_ALL_DYN_LINK;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32_LEAN_AND_MEAN;ONE_CORE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297;5104</DisableSpecificWarnings>
@@ -90,7 +90,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>PROTOBUF_USE_DLLS;PROTOBUF_USE_EXCEPTIONS=0;NOMINMAX;BOOST_ALL_DYN_LINK;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_xxxCONSOLE;ONE_CORE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PROTOBUF_USE_DLLS;PROTOBUF_USE_EXCEPTIONS=0;NOMINMAX;BOOST_ALL_DYN_LINK;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32_LEAN_AND_MEAN;ONE_CORE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297;5104</DisableSpecificWarnings>

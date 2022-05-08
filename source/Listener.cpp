@@ -157,7 +157,7 @@ namespace Jde::ApplicationServer
 
 		var statuses = Str::Split( Status, '\n' );
 		for( var& statusDescription : statuses )
-			status.add_values( statusDescription );
+			status.add_values( string{statusDescription} );
 	}
 	α Session::OnDisconnect()noexcept->void
 	{
