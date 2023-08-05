@@ -11,7 +11,7 @@ namespace Jde::Logging
 	{
 		ASSERT( !Server() );
 		var [applicationId, applicationInstanceId, dbLogLevel, fileLogLevel] = Data::AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
-		auto p = make_unique<LogClient>( applicationId, applicationInstanceId, dbLogLevel );
+		auto p = mu<LogClient>( applicationId, applicationInstanceId, dbLogLevel );
 		SetServer( move(p) );
 	}
 

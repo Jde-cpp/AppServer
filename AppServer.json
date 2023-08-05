@@ -1,4 +1,5 @@
 {
+	"GoogleAuthClientId":"445012155442-1v8ntaa22konm0boge6hj5mfs15o9lvd.apps.googleusercontent.com",
 	"db":
 	{
 		"driver": "$(JDE_DB_DRIVER)",
@@ -7,6 +8,7 @@
 		"connectionString": "$(Jde_Log_Connection)",
 		"connectionStringx": "DSN=Jde_Log_Connection",
 		"metax": "../meta.json",
+		"createSchema":  false,
 		"meta": "$(JDE_LOG_META)"
 	},
 	"logging":

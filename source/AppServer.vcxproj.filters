@@ -39,6 +39,12 @@
     <ClInclude Include="Cache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WebSocketAsync.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResultsMessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

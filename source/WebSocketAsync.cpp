@@ -45,18 +45,18 @@ namespace Jde::WebSocket
 	void Session::Run()noexcept
 	{
 		LOG( "({})Session::Run()", Id );
-		net::dispatch( _ws.get_executor(), beast::bind_front_handler(&Session::OnRun, shared_from_this()) );
+		net::dispatch( StreamPtr->get_executor(), beast::bind_front_handler(&Session::OnRun, shared_from_this()) );
 	}
 
 	void Session::OnRun()noexcept
 	{
 		LOG( "({})Session::OnRun()", Id );
-		_ws.set_option( websocket::stream_base::timeout::suggested(beast::role_type::server) );
-		_ws.set_option( websocket::stream_base::decorator([]( websocket::response_type& res )
+		StreamPtr->set_option( websocket::stream_base::timeout::suggested(beast::role_type::server) );
+		StreamPtr->set_option( websocket::stream_base::decorator([]( websocket::response_type& res )
 		{
 			res.set( http::field::server, string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async" );
 		}) );
-		_ws.async_accept( beast::bind_front_handler(&Session::OnAccept,shared_from_this()) );
+		StreamPtr->async_accept( beast::bind_front_handler(&Session::OnAccept,shared_from_this()) );
 	}
 	void Session::OnAccept( beast::error_code ec )noexcept
 	{
@@ -67,10 +67,12 @@ namespace Jde::WebSocket
 	void Session::DoRead()noexcept
 	{
 		LOG( "({})Session::DoRead()", Id );
-		 _ws.async_read( _buffer, [this]( beast::error_code ec, uint c )noexcept
+		StreamPtr->async_read( _buffer, [this]( beast::error_code ec, uint c )noexcept
 		{
 			boost::ignore_unused( c );
-			CHECK_EC( ec, ec == websocket::error::closed ? LogLevel().Level : ELogLevel::Error );
+			var val = ec.value();
+			var closed = ec == websocket::error::closed;
+			CHECK_EC( ec, val==10053 || closed ? LogLevel().Level : ELogLevel::Error );
 			LOG( "({})Session::DoRead({})", Id, c );
 			OnRead( (char*)_buffer.data().data(), _buffer.size() );
 			DoRead();

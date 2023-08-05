@@ -1,8 +1,5 @@
 ﻿#pragma once
 #pragma region Defines
-#include <boost/beast.hpp>
-#include <boost/asio.hpp>
-#include <boost/exception/diagnostic_information.hpp>
 #include <jde/App.h>
 #include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/io/sockets/Socket.h"
@@ -18,6 +15,11 @@ namespace Jde::WebSocket
 	namespace net = boost::asio;
 	using tcp = net::ip::tcp;
 	using namespace Jde::IO::Sockets;
+#ifdef HTTPS
+	typedef websocket::stream<beast::ssl_stream<beast::tcp_stream>> SocketStream;
+#else
+	typedef websocket::stream<beast::tcp_stream> SocketStream;
+#endif
 #pragma endregion
 
 	struct WebListener /*abstract*/ : IO::Sockets::IServerSocket, std::enable_shared_from_this<WebListener>
@@ -54,14 +56,23 @@ namespace Jde::WebSocket
 
 	struct Session /*abstract*/: IO::Sockets::ISession, std::enable_shared_from_this<Session>
 	{
-		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):ISession{id}, _ws{std::move(socket)}, _server{server}{ _ws.binary( true ); }
+		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):
+			ISession{id}, 
+#ifdef HTTPS
+			StreamPtr{ ms<SocketStream>(std::move(socket)), ctx },
+#else
+			StreamPtr{ ms<SocketStream>(std::move(socket)) },
+#endif
+			_server{server}
+		{ 
+			StreamPtr->binary( true ); 
+		}
 		β Close()noexcept->void{};
 		β Run()noexcept->void;
 	protected:
 		α Disconnect()noexcept{ /*_connected = false;*/ _server.RemoveSession( Id ); }
 		β OnAccept( beast::error_code ec )noexcept->void;
-
-		websocket::stream<beast::tcp_stream> _ws;
+		sp<SocketStream> StreamPtr;
 		WebListener& _server;
 		static const LogTag& _logLevel;
 	private:
@@ -115,7 +126,7 @@ namespace Jde::WebSocket
 		auto result = co_await _writeLock.Lock();
 		auto l_ = result. template UP<CoGuard>();
 
-		_ws.async_write( b, [ this, b, l=move(l_), p=move(pData) ]( beast::error_code ec, uint bytes_transferred )mutable
+		StreamPtr->async_write( b, [ this, b, l=move(l_), p=move(pData) ]( beast::error_code ec, uint bytes_transferred )mutable
 		{
 			l = nullptr;
 			if( ec || p->size()!=bytes_transferred )
@@ -123,7 +134,7 @@ namespace Jde::WebSocket
 				DBGX( "Error writing to Session:  '{}'"sv, boost::diagnostic_information(ec) );
 				try
 				{
-					_ws.close( websocket::close_code::none );
+					StreamPtr->close( websocket::close_code::none );
 				}
 				catch( const boost::exception& e2 )
 				{

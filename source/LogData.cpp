@@ -3,7 +3,6 @@
 #include <nlohmann/json.hpp>
 #pragma warning( default : 4715)
 
-#include <jde/log/types/proto/FromServer.pb.h>
 #include "../../Framework/source/DateTime.h"
 #include "../../Framework/source/db/Database.h"
 #include "../../Framework/source/db/DataSource.h"
@@ -29,9 +28,19 @@ namespace Jde::Logging
 		if( p )
 		{
 			INFO( "db meta='{}'"sv, *p );
-			var j = json::parse( IO::FileUtilities::Load(*p) );
-			if( auto ds=_dataSource; ds )
-				ds->SchemaProc()->CreateSchema( j, fs::path{*p}.parent_path() );
+			json j;
+			try
+			{
+				j = json::parse( IO::FileUtilities::Load(*p) );
+			}
+			catch( const nlohmann::json::exception& e )
+			{
+				THROW( "Error reading {} - {}", *p, e.what() );
+			}
+			if( _dataSource && Settings::Get<bool>("db/createSchema").value_or(true) )
+			{
+				_dataSource->SchemaProc()->CreateSchema( j, fs::path{*p}.parent_path() );
+			}
 		}
 		else
 			INFO( "db/meta not specified" );
@@ -39,7 +48,7 @@ namespace Jde::Logging
 
 	α Data::SetDataSource( sp<DB::IDataSource> dataSource )noexcept(false)->void
 	{
-		TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
+		//TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
 		_dataSource = dataSource;
 		function<void()> clean =  [](){ DBG( "LogData::_dataSource = nullptr;"sv ); _dataSource = nullptr;  };
 		DB::ShutdownClean( clean );
@@ -93,7 +102,7 @@ namespace Jde::Logging
 		return y;
 	}
 	#define _pQueue if( auto p = _pDbQueue; p )p
-	α Data::SaveString( ApplicationPK applicationId, Proto::EFields field, uint32 id, sp<string> pValue, SL sl )noexcept->void
+	α Data::SaveString( ApplicationPK /*applicationId*/, Proto::EFields field, uint32 id, sp<string> pValue, SL sl )noexcept->void
 	{
 		sv table = "log_messages"sv;
 		sv frmt = "insert into {}(id,value)values(?,?)";
@@ -124,16 +133,16 @@ namespace Jde::Logging
 			uint i=0;
 			var id = row.GetUInt32(i++);
 			pTrace->set_id( id );
-			pTrace->set_instanceid( row.GetUInt32(i++) );
-			pTrace->set_fileid( row.GetUInt32(i++) );
-			pTrace->set_functionid( row.GetUInt32(i++) );
-			pTrace->set_linenumber( row.GetUInt32(i++) );
-			pTrace->set_messageid( row.GetUInt32(i++) );
+			pTrace->set_instance_id( row.GetUInt32(i++) );
+			pTrace->set_file_id( row.GetUInt32(i++) );
+			pTrace->set_function_id( row.GetUInt32(i++) );
+			pTrace->set_line_number( row.GetUInt32(i++) );
+			pTrace->set_message_id( row.GetUInt32(i++) );
 			pTrace->set_level( (ApplicationServer::Web::FromServer::ELogLevel)row.GetUInt16(i++) );
-			pTrace->set_threadid( row.GetUInt32(i++) );
+			pTrace->set_thread_id( row.GetUInt32(i++) );
 			var time = Chrono::MillisecondsSinceEpoch( row.GetTimePoint(i++) );
 			pTrace->set_time( time );
-			pTrace->set_userid( row.GetUInt32(i++) );
+			pTrace->set_user_id( row.GetUInt32(i++) );
 			mapTraces.emplace( id, pTrace );
 		};
 
@@ -191,9 +200,9 @@ namespace Jde::Logging
 			pApplication->set_id( row.GetUInt32(0) );
 			pApplication->set_name( row.GetString(1) );
 			optional<uint> dbLevel = row.GetUIntOpt( 2 );
-			pApplication->set_dblevel( dbLevel.has_value() ? (ApplicationServer::Web::FromServer::ELogLevel)dbLevel.value() : ApplicationServer::Web::FromServer::ELogLevel::Information );
+			pApplication->set_db_level( dbLevel.has_value() ? (ApplicationServer::Web::FromServer::ELogLevel)dbLevel.value() : ApplicationServer::Web::FromServer::ELogLevel::Information );
 			optional<uint> fileLevel = row.GetUIntOpt( 3 );
-			pApplication->set_filelevel( fileLevel.has_value() ? (ApplicationServer::Web::FromServer::ELogLevel)fileLevel.value() : ApplicationServer::Web::FromServer::ELogLevel::Information );
+			pApplication->set_file_level( fileLevel.has_value() ? (ApplicationServer::Web::FromServer::ELogLevel)fileLevel.value() : ApplicationServer::Web::FromServer::ELogLevel::Information );
 		};
 
 		constexpr sv sql = "select id, name, db_log_level, file_log_level from log_applications"sv;
@@ -213,14 +222,14 @@ namespace Jde::Logging
 		auto pParameters = ms<vector<DB::object>>(); pParameters->reserve( 10+variableCount );
 		pParameters->push_back( applicationId );
 		pParameters->push_back( instanceId );
-		pParameters->push_back( (uint)fileId );
-		pParameters->push_back( (uint)functionId );
-		pParameters->push_back( (uint)lineNumber );
-		pParameters->push_back( (uint)messageId );
-		pParameters->push_back( (uint)level );
+		pParameters->push_back( fileId );
+		pParameters->push_back( functionId );
+		pParameters->push_back( lineNumber );
+		pParameters->push_back( messageId );
+		pParameters->push_back( (uint8)level );
 		pParameters->push_back( threadId );
 		pParameters->push_back( time );
-		pParameters->push_back( (uint)userId );
+		pParameters->push_back( userId );
 		constexpr sv procedure = "log_message_insert"sv;
 		constexpr sv args = "(?,?,?,?,?,?,?,?,?,?"sv;
 		ostringstream os;

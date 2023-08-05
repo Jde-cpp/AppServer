@@ -42,7 +42,7 @@ namespace Jde::ApplicationServer
 	private:
 		α OnDisconnect()noexcept->void override;
 		Τ using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
-		ⓣ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )noexcept->void;
+		Ŧ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )noexcept->void;
 		ELogLevel _dbLevel;
 		atomic<ELogLevel> _webLevel{ELogLevel::None};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
@@ -74,7 +74,7 @@ namespace Jde::ApplicationServer
 	};
 
 #define var const auto
-	ⓣ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )noexcept->void
+	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )noexcept->void
 	{
 		WebRequestId webRequestId;
 		const RequestId reqId = message.requestid();

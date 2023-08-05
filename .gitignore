@@ -44,7 +44,7 @@ source/.vscode/settings.json
 source/.vscode/c_cpp_properties.json
 /AppServer.log
 sql/SQLQuery*.sql
-source/*.i
+*.i
 *.log
 source/stdafx.h
 tests/.bin/*
@@ -52,3 +52,5 @@ source/packages/*
 tests/.vscode/launch.json
 tests/.vscode/tasks.json
 tests/.vscode/settings.json
+
+*.pdb

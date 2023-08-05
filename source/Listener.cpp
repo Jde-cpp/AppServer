@@ -26,7 +26,7 @@ namespace Jde::ApplicationServer
 
 	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept->up<IO::Sockets::ProtoSession>
 	{
-		return make_unique<Session>( move(socket), id );
+		return mu<Session>( move(socket), id );
 	}
 
 	α TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )noexcept->uint
@@ -107,7 +107,7 @@ namespace Jde::ApplicationServer
 
 	α Session::Start2()noexcept->void
 	{
-		auto pAck = make_unique<Logging::Proto::Acknowledgement>();
+		auto pAck = mu<Logging::Proto::Acknowledgement>();
 		pAck->set_instanceid( Id );
 
 		Logging::Proto::FromServer t;
@@ -136,7 +136,7 @@ namespace Jde::ApplicationServer
 	{
 		Logging::Proto::FromServer t;
 		var& strings = Cache::AppStrings();
-		auto pValues = make_unique<Logging::Proto::Strings>();
+		auto pValues = mu<Logging::Proto::Strings>();
 		strings.Files.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_files(id);} );
 		strings.Functions.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_functions(id);} );
 		strings.Messages.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_messages(id);} );
@@ -147,12 +147,12 @@ namespace Jde::ApplicationServer
 
 	α Session::SetStatus( Web::FromServer::Status& status )const noexcept->void
 	{
-		status.set_applicationid( (uint32)ApplicationId );
-		status.set_instanceid( (uint32)InstanceId );
-		status.set_hostname( HostName );
-		status.set_starttime( (uint32)Clock::to_time_t(StartTime) );
-		status.set_dbloglevel( (Web::FromServer::ELogLevel)DbLogLevel() );
-		status.set_fileloglevel( (Web::FromServer::ELogLevel)FileLogLevel() );
+		status.set_application_id( (uint32)ApplicationId );
+		status.set_instance_id( (uint32)InstanceId );
+		status.set_host_name( HostName );
+		status.set_start_time( (uint32)Clock::to_time_t(StartTime) );
+		status.set_db_log_level( (Web::FromServer::ELogLevel)DbLogLevel() );
+		status.set_file_log_level( (Web::FromServer::ELogLevel)FileLogLevel() );
 		status.set_memory( Memory );
 
 		var statuses = Str::Split( Status, '\n' );

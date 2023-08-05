@@ -5,6 +5,7 @@
 #include "LogData.h"
 #include "../../Framework/source/Settings.h"
 #include "../../Framework/source/db/Database.h"
+#include "../../Ssl/source/Ssl.h"
 
 #define var const auto
 

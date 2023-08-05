@@ -47,16 +47,16 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <IntDir>.obj\$(Configuration)\</IntDir>
-    <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files\OpenSSL-Win64\include\;C:\code\libraries\spdlog\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\OpenSSL-Win64\lib\;C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
     <TargetName>Jde.$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <IntDir>.obj\$(Configuration)\</IntDir>
-    <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files\OpenSSL-Win64\include\;C:\code\libraries\spdlog\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\OpenSSL-Win64\lib\;C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
     <TargetName>Jde.$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -68,10 +68,10 @@
       <PreprocessorDefinitions>PROTOBUF_USE_DLLS;PROTOBUF_USE_EXCEPTIONS=0;NOMINMAX;BOOST_ALL_DYN_LINK;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32_LEAN_AND_MEAN;ONE_CORE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4068;4251;4275;4297;5104</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4068;4251;4275;4297;5104;5260</DisableSpecificWarnings>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -93,10 +93,10 @@
       <PreprocessorDefinitions>PROTOBUF_USE_DLLS;PROTOBUF_USE_EXCEPTIONS=0;NOMINMAX;BOOST_ALL_DYN_LINK;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32_LEAN_AND_MEAN;ONE_CORE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4068;4251;4275;4297;5104</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4068;4251;4275;4297;5104;5260</DisableSpecificWarnings>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -131,9 +131,11 @@
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4068;4251;4275;4297;5105;5104;4127;5054</DisableSpecificWarnings>
     </ClCompile>
     <ClInclude Include="LogData.h" />
+    <ClInclude Include="ResultsMessage.h" />
     <ClInclude Include="Sender.h" />
     <ClInclude Include="TypeDefs.h" />
     <ClInclude Include="WebSocket.h" />
+    <ClInclude Include="WebSocketAsync.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Listener.cpp" />
