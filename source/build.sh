@@ -2,11 +2,13 @@
 type=${1:-asan}
 clean=${2:-0}
 all=${3:-1}
-export CXX=clang++
+export CXX=clang++;
 
 if [ $all -eq 1 ]; then
 	../../Framework/cmake/buildc.sh ../../Framework/source $type $clean || exit 1;
 	../../Framework/cmake/buildc.sh ../../MySql/source $type $clean || exit 1;
+	../../Framework/cmake/buildc.sh ../../Ssl/source $type $clean || exit 1;
+	../../Framework/cmake/buildc.sh ../../XZ/source $type $clean || exit 1;
 fi
 if [ ! -d .obj ];	then
 	mkdir .obj;

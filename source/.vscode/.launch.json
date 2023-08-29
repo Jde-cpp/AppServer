@@ -2,14 +2,14 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Debug",
+			"name": "Asan",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/../../bin/debug/AppServer",
+			"program": "${workspaceFolder}/../../bin/asan/Jde.AppServer",
 			"args": ["-c"],
 			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}/../../bin/debug",
-			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }],
+			"cwd": "${workspaceFolder}/../../bin/asan",
+			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, { "name": "JDE_LOG_META", "value": "${workspaceFolder}/../meta.json" }],
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],

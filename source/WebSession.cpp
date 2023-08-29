@@ -1,6 +1,7 @@
 ﻿#include "WebSession.h"
 #include <boost/algorithm/hex.hpp>
 #include "../../Framework/source/DateTime.h"
+#include "../../Framework/source/db/GraphQL.h"
 #include "../../Google/source/TokenInfo.h"
 #include "Cache.h"
 #include "WebServer.h"
@@ -46,20 +47,26 @@ namespace Jde::ApplicationServer::Web
 
 	α MySession::OnRead( FromClient::Transmission t )noexcept->void
 	{
-		for( α i=0; i<t.messages_size(); ++i )
+		var c = t.messages_size();
+		for( α i=0; i<c; ++i )
 		{
 			auto pMessage = t.mutable_messages( i );
-			if( pMessage->has_request() )
+			if( pMessage->has_graph_ql() )
+			{
+				auto ql = pMessage->mutable_graph_ql();
+				GraphQL( move(*ql->mutable_query()), ql->request_id() );
+			}
+			else if( pMessage->has_request() )
 			{
 				var& request = pMessage->request();
-				if( request.value()==FromClient::ERequest::Statuses )
+				if( request.type()==FromClient::ERequest::Statuses )
 					SendStatuses();
-				else if( request.value()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
+				else if( request.type()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
 				{
 					Server().RemoveStatusSession( Id );
 					LOGT( Web::_logLevel, "({})Remove status subscription."sv, Id );
 				}
-				else if( request.value() == FromClient::ERequest::Applications )
+				else if( request.type() == FromClient::ERequest::Applications )
 				{
 					auto pApplications = Logging::Data::LoadApplications();
 					LOGT( Web::_logLevel, "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
@@ -67,13 +74,13 @@ namespace Jde::ApplicationServer::Web
 					Write( transmission );
 				}
 				else
-					WARN( "unsupported request '{}'", request.value() );
+					WARN( "unsupported request '{}'", request.type() );
 			}
-			else if( pMessage->has_request_id() )
+			else if( pMessage->has_request_app() )
 			{
-				var& request = pMessage->request_id();
+				var& request = pMessage->request_app();
 				var instanceId = (ApplicationInstancePK)request.instance_id();
-				var value = (int)request.value();
+				var value = (int)request.type();
 				if( value == -2 )//(int)(FromClient::ERequest::Power | FromClient::ERequest::Negate);
 					_listener.Kill( instanceId );
 				else if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
@@ -81,7 +88,7 @@ namespace Jde::ApplicationServer::Web
 				else if( value == FromClient::ERequest::Power )
 					WARN( "unsupported request Power" );
 				else
-					WARN( "unsupported request '{}'", request.value() );
+					WARN( "unsupported request '{}'", request.type() );
 			}
 			else if( pMessage->has_log_values() )
 			{
@@ -117,18 +124,39 @@ namespace Jde::ApplicationServer::Web
 			}
 			else if( pMessage->has_request_strings() )
 				SendStrings( pMessage->request_strings() );
-			else if( pMessage->has_string_request() )
+			else if( pMessage->has_request_value() )
 			{
-				auto p = pMessage->mutable_string_request();
+				auto p = pMessage->mutable_request_value();
 				var id = p->request_id();
 				var type = (FromClient::ERequest)p->type();
-				if( type==FromClient::ERequest::GoogleLogin )
-					GoogleLogin( move(*p->mutable_value()), id );
+				if( type==FromClient::ERequest::GoogleLogin && p->has_string() )
+					GoogleLogin( move(*p->mutable_string()), id );
+				else if( type==FromClient::ERequest::GoogleAuthClientId )
+					GoogleAuthClientId( p->request_id() );
 			}
 			else
 				ERR( "Unknown message:  {}"sv, (uint)pMessage->value_case() );
 		}
 	};
+
+	α MySession::GraphQL( string&& query, ClientId clientId )ι->Task
+	{
+		Web::FromServer::MessageUnion y;
+		try
+		{
+			var result = ( co_await DB::CoQuery(move(query), UserId) ).UP<nlohmann::json>();
+			y = ToMessageQL( result->dump(), clientId );
+		}
+		catch( const json::exception& e )
+		{
+			y = ToError( "Could not parse query", clientId );
+		}
+		catch( const IException& e )
+		{
+			y = ToError( e.what(), clientId );
+		}
+		co_await WebServer::CoSend( move(y), Id );
+	}
 
 	α MySession::SendStatuses()noexcept->void
 	{
@@ -258,7 +286,7 @@ namespace Jde::ApplicationServer::Web
 		transmission.add_messages()->set_allocated_traces( pTraces );
 		Write( transmission );
 	}
-	static mutex _credentailMutex;
+
 	α MySession::GoogleLogin( string&& credential, ClientId clientId )ι->Task
 	{
 		constexpr EAuthType type{ EAuthType::Google };
@@ -334,6 +362,19 @@ namespace Jde::ApplicationServer::Web
 		catch( const Exception& )
 		{
 			y = ToError( "Authentication Failed", clientId );
+		}
+		co_await WebServer::CoSend( move(y), Id );
+	}
+	α MySession::GoogleAuthClientId( ClientId clientId )ι->Task
+	{
+		Web::FromServer::MessageUnion y;
+		try
+		{
+			y = ToMessage( Settings::Getɛ<string>("GoogleAuthClientId"), clientId );
+		}
+		catch( const Exception& e )
+		{
+			y = ToError( e.what(), clientId );
 		}
 		co_await WebServer::CoSend( move(y), Id );
 	}

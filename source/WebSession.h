@@ -39,6 +39,8 @@ namespace Jde::ApplicationServer::Web
 		α Write( const FromServer::Transmission& tranmission )ε->void;
 		α Server()ι->WebServer&;
 		α GoogleLogin( string&& credential, ClientId clientId )ι->Task;
+		α GoogleAuthClientId( ClientId clientId )ι->Task;
+		α GraphQL( string&& query, ClientId clientId )ι->Task;
 
 		sp<std::atomic_flag> WriteLockPtr{ ms<std::atomic_flag>() };
 		EAuthType AuthType{EAuthType::None};

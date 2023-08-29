@@ -8,7 +8,7 @@
 namespace Jde::ApplicationServer::Web
 {
 	static const LogTag& _logLevel = Logging::TagLevel( "app.web" );
-	WebServer _instance{ Settings::Get<PortType>("web/port").value_or(1967) };
+	WebServer _instance{ Settings::Get<PortType>("web/socketPort").value_or(1967) };
 	α Server()ι->WebServer&{ return _instance; }
 
 	WebServer::WebServer( PortType port )noexcept:

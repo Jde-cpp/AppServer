@@ -1,5 +1,6 @@
 {
 	"files.associations": {
+		"*.sqlm": "sql",
 		"typeinfo": "cpp",
 		"chrono": "cpp",
 		"cmath": "cpp",
@@ -59,7 +60,12 @@
 		"algorithm": "cpp",
 		"*.ipp": "cpp",
 		"unordered_set": "cpp",
-		"variant": "cpp"
+		"variant": "cpp",
+		"*.inc": "cpp",
+		"__bit_reference": "cpp",
+		"ios": "cpp",
+		"__node_handle": "cpp",
+		"numbers": "cpp"
 	},
 	"window.title": "App"
 }

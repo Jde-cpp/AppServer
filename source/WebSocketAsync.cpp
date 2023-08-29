@@ -70,11 +70,13 @@ namespace Jde::WebSocket
 		StreamPtr->async_read( _buffer, [this]( beast::error_code ec, uint c )noexcept
 		{
 			boost::ignore_unused( c );
-			var val = ec.value();
-			var closed = ec == websocket::error::closed;
-			CHECK_EC( ec, val==10053 || closed ? LogLevel().Level : ELogLevel::Error );
+			//var val = ec.value();
+			using namespace boost::asio::error;
+			//var closed = ec == boost::asio::error::closed;
+			CHECK_EC( ec, ec.value()==1 || ec==connection_reset || ec==not_connected || ec==broken_pipe ? LogLevel().Level : ELogLevel::Error );
 			LOG( "({})Session::DoRead({})", Id, c );
 			OnRead( (char*)_buffer.data().data(), _buffer.size() );
+			_buffer.clear();
 			DoRead();
 		} );
 	}

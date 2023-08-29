@@ -1,8 +1,9 @@
 #include "Listener.h"
-//#include "EtwListener.h"
+#include "../../Framework/source/um/UM.h"
 #include "WebServer.h"
 #include "LogClient.h"
 #include "LogData.h"
+#include "Rest.h"
 #include "../../Framework/source/Settings.h"
 #include "../../Framework/source/db/Database.h"
 #include "../../Ssl/source/Ssl.h"
@@ -10,22 +11,22 @@
 #define var const auto
 
 #ifndef _MSC_VER
-namespace Jde{  string OSApp::CompanyName()noexcept{ return "Jde-Cpp"; } }
+namespace Jde{ α OSApp::CompanyName()ι->string{ return "Jde-Cpp"; } }
+namespace Jde{ α OSApp::ProductName()ι->sv{ return "AppServer"sv; } }
 #endif
 
-namespace Jde
+namespace Jde::ApplicationServer
 {
-	void Run();
+	α Startup( bool initialCall=true )noexcept->void;
 }
+
 int main( int argc, char** argv )
 {
 	using namespace Jde;
 	try
 	{
 		OSApp::Startup( argc, argv, "AppServer", "jde-cpp App Server." );
-		Logging::Data::SetDataSource( DB::DataSourcePtr() );
-		Logging::LogClient::CreateInstance();
-
+		IApplication::AddThread( ms<Threading::InterruptibleThread>("Startup", [&](){ApplicationServer::Startup();}) );
 		IApplication::Pause();
 	}
 	catch( const IException& e )
@@ -34,4 +35,30 @@ int main( int argc, char** argv )
 	}
 	IApplication::Cleanup();
 	return EXIT_SUCCESS;
+}
+
+namespace Jde
+{
+	α ApplicationServer::Startup( bool initialCall )noexcept->void
+	{
+		try
+		{
+				//if( Settings::TryGet<bool>("um/use").value_or(false) ) currently need to configure um so meta is loaded.
+			{
+				UM::Configure();
+			}
+			Logging::Data::SetDataSource( DB::DataSourcePtr() );
+			Logging::LogClient::CreateInstance();
+		}
+		catch( IException& e )
+		{
+			std::cerr << e.what() << std::endl;
+			{auto e2=e.Move();}//destructor log.
+			std::this_thread::sleep_for( 1s );
+			std::terminate();
+		}
+		Rest::Listener().DoAccept();
+		DBG( "Startup Loading Complete." );
+		IApplication::RemoveThread( "Startup" )->Detach();
+	}
 }

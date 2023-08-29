@@ -1,5 +1,10 @@
 {
 	"GoogleAuthClientId":"445012155442-1v8ntaa22konm0boge6hj5mfs15o9lvd.apps.googleusercontent.com",
+	"web":
+	{
+		"socketPort": 1967,
+		"restPort": 1999
+	},
 	"db":
 	{
 		"driver": "$(JDE_DB_DRIVER)",
@@ -8,7 +13,7 @@
 		"connectionString": "$(Jde_Log_Connection)",
 		"connectionStringx": "DSN=Jde_Log_Connection",
 		"metax": "../meta.json",
-		"createSchema":  false,
+		"createSchema":  true,
 		"meta": "$(JDE_LOG_META)"
 	},
 	"logging":
