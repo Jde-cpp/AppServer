@@ -65,7 +65,15 @@
 		"__bit_reference": "cpp",
 		"ios": "cpp",
 		"__node_handle": "cpp",
-		"numbers": "cpp"
+		"numbers": "cpp",
+		"string": "cpp",
+		"__hash_table": "cpp",
+		"__tree": "cpp",
+		"map": "cpp",
+		"set": "cpp",
+		"__split_buffer": "cpp",
+		"queue": "cpp",
+		"stack": "cpp"
 	},
 	"window.title": "App"
 }

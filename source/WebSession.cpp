@@ -189,7 +189,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		var reqId = request.request_id();
 		TRACE( "({}) requeststrings count='{}'"sv, Id, request.values_size() );
-		map<ApplicationPK,std::forward_list<FromServer::ApplicationString>> values;
+		flat_map<ApplicationPK,std::forward_list<FromServer::ApplicationString>> values;
 		for( auto i=0; i<request.values_size(); ++i )
 		{
 			var& value = request.values( i );

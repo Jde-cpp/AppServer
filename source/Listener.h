@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "WebServer.h"
-#include "../../Framework/source/io/sockets/ProtoServer.h"
+#include "../../Public/src/web/ProtoServer.h"
 
 
 namespace Jde::ApplicationServer
@@ -27,6 +27,7 @@ namespace Jde::ApplicationServer
 		α DbLogLevel()const noexcept->ELogLevel{ return _dbLevel; }
 		α FileLogLevel()const noexcept->ELogLevel{ return _fileLogLevel; }
 		α SetStatus( Web::FromServer::Status& status )const noexcept->void;
+		α SendSessionInfo( SessionPK sessionId )noexcept->Task;
 		α WebSubscribe( ELogLevel level )noexcept->void;
 		ApplicationInstancePK InstanceId{0};
 		ApplicationPK ApplicationId{0};
@@ -48,7 +49,7 @@ namespace Jde::ApplicationServer
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
 		using RequestId=uint;
 		atomic<RequestId> _requestId{0};
-		map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
+		flat_map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
 	};
 
 	struct TcpListener final : public IO::Sockets::ProtoServer

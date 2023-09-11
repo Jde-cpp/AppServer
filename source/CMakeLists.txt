@@ -15,6 +15,7 @@ include_directories( "../../Public" )
 target_link_libraries( Jde.AppServer ZLIB::ZLIB )
 target_link_libraries(Jde.AppServer Threads::Threads)
 target_link_libraries(Jde.AppServer Jde)
+target_link_libraries(Jde.AppServer Jde.Web)
 target_link_libraries(Jde.AppServer Jde.Ssl)
 target_link_libraries(Jde.AppServer Jde.XZ)
 target_link_libraries(Jde.AppServer dl)
@@ -39,11 +40,16 @@ target_precompile_headers(Jde.AppServer
 		<boost/asio.hpp>
 		<boost/asio/ssl/error.hpp>
 		<boost/exception/diagnostic_information.hpp>
+		<jde/Exports.h>
 		"TypeDefs.h"
 		<jde/Log.h>
 		<jde/Str.h>
 		<jde/log/types/proto/FromServer.pb.h>
+		"../../Framework/source/collections/UnorderedMap.h"
 		"../../Framework/source/db/Database.h"
-		"../../Framework/source/log/server/proto/messages.pb.h"
+		"../../Framework/source/io/ProtoUtilities.h"
+		"../../Framework/source/io/ServerSink.h"
+		"../../Framework/source/io/Socket.h"
+		"../../Framework/source/threading/Mutex.h"
 		"../../Ssl/source/Ssl.h"
 )

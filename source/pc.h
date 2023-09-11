@@ -18,5 +18,9 @@
 #include <jde/log/types/proto/FromServer.pb.h>
 #include "../../Ssl/source/Ssl.h"
 
-#include "../../Framework/source/log/server/proto/messages.pb.h"
+#include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/db/Database.h"
+#include "../../Framework/source/io/ProtoUtilities.h"
+#include "../../Framework/source/io/ServerSink.h"
+#include "../../Framework/source/io/Socket.h"
+#include "../../Framework/source/threading/Mutex.h"

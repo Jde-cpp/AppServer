@@ -1,8 +1,6 @@
 ﻿#pragma once
-#include "../../Framework/source/collections/UnorderedMap.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
 #include "TypeDefs.h"
-#include "../../Framework/source/log/server/proto/messages.pb.h"
 
 
 namespace Jde::ApplicationServer::Web::FromServer{ class Traces; class Applications;}

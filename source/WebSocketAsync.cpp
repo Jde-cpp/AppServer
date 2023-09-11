@@ -8,7 +8,7 @@ namespace Jde::WebSocket
 	const LogTag& Session::_logLevel = Logging::TagLevel( "net" );;
 	WebListener::WebListener( PortType port )noexcept(false):
 		IServerSocket{ port },
-		_pContextThread{ IOContextThread::Instance() },
+		_pContextThread{ IO::AsioContextThread::Instance() },
 		_acceptor{ _pContextThread->Context() }
 	{
 		try

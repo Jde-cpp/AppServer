@@ -1,15 +1,21 @@
-#include "../../Framework/source/io/sockets/RestServer.h"
+#pragma once
+#include "../../Public/src/web/ProtoServer.h"
+#include "../../Public/src/web/RestServer.h"
 
-
-namespace Jde::ApplicationServer::Rest
+namespace Jde::ApplicationServer
 {
-	using namespace IO::Rest;
-	struct Session : ISession, std::enable_shared_from_this<Session>
+	using namespace Jde::Web::Rest;
+	struct RestSession : ISession, std::enable_shared_from_this<RestSession>
 	{
-		Session( tcp::socket&& socket ): ISession{move(socket)}{}
-		virtual ~Session(){}
-		α HandleRequest( http::request<http::string_body>&& request, sp<ISession> s )ι->void override;
+		RestSession( tcp::socket&& socket ): ISession{move(socket)}{}
+		virtual ~RestSession(){}
+		α HandleRequest( string&& target, flat_map<string,string>&& params, up<SessionInfo> pSessionInfo, http::request<http::string_body>&& req, sp<ISession> s )ι->void override;
 		α MakeShared()ι->sp<ISession> override{ return shared_from_this(); }
+
+		α SendQuery( sv query, http::request<http::string_body>&& req, sp<ISession> s )ι->Task;
+		α GoogleLogin( http::request<http::string_body>&& req, sp<ISession> s )ι->Task;
+
+		α GetUserId( SessionPK sessionId )Ι->UserPK;
 	};
-	α Listener()ι->TListener<Session>&;
+	α Listener()ι->TListener<RestSession>&;
 }

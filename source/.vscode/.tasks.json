@@ -27,7 +27,7 @@
 	{
 		"label": "rebuildAll",
 		"type": "shell",
-		"command": "tput reset;./build.sh 1 1 1",
+		"command": "tput reset;./build.sh asan 1 1",
 		"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder}"],
 			"pattern": {
 				"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
@@ -60,7 +60,7 @@
 	{
 		"label": "clean",
 		"type": "shell",
-		"command": "tput reset; make clean",
+		"command": "tput reset;cd .obj/asan;make clean; cd ../release; make clean",
 		"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder}"],
 			"pattern": {
 				"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",

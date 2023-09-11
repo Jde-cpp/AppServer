@@ -1,10 +1,11 @@
 ﻿#include "Listener.h"
+#include <jde/Str.h>
+#include "../../Public/src/web/RestServer.h"
 #include "LogData.h"
 #include "WebServer.h"
 #include "Cache.h"
 #include "LogClient.h"
 #include "WebServer.h"
-#include <jde/Str.h>
 
 #define var const auto
 #define _logClient Logging::LogClient::Instance()
@@ -195,6 +196,20 @@ namespace Jde::ApplicationServer
 		Write( t );
 	}
 
+	α Session::SendSessionInfo( SessionPK sessionId )noexcept->Task
+	{
+		up<SessionInfo> pInfo;
+		try
+		{
+			var pInfo = (co_await Jde::Web::Rest::ISession::FetchSessionInfo(sessionId)).UP<SessionInfo>();
+		}
+		catch( Exception& e )
+		{}
+
+		Logging::Proto::FromServer t; t.add_messages()->set_allocated_session_info( pInfo ? pInfo.release() : new SessionInfo{} );
+		Write( t );
+	}
+
 	α Session::OnReceive( Logging::Proto::ToServer&& t )noexcept->void
 	{
 		try
@@ -259,6 +274,8 @@ namespace Jde::ApplicationServer
 					WriteStrings();
 					break;
 				}
+				else if( pMessage->has_session_info() )
+					SendSessionInfo( pMessage->session_info().session_id() );
 			}
 		}
 		catch( const IException& )

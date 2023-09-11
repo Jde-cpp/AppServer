@@ -57,7 +57,7 @@ namespace Jde
 			std::this_thread::sleep_for( 1s );
 			std::terminate();
 		}
-		Rest::Listener().DoAccept();
+		Listener().DoAccept();
 		DBG( "Startup Loading Complete." );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}

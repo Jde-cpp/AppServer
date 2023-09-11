@@ -1,10 +1,6 @@
 ﻿#pragma once
 #pragma region Defines
 #include <jde/App.h>
-#include "../../Framework/source/collections/UnorderedMap.h"
-#include "../../Framework/source/io/sockets/Socket.h"
-#include "../../Framework/source/io/ProtoUtilities.h"
-#include "../../Framework/source/threading/Mutex.h"
 #define var const auto
 
 namespace Jde::WebSocket
@@ -31,7 +27,7 @@ namespace Jde::WebSocket
 		α DoAccept()noexcept->void;
 		α OnAccept( beast::error_code ec, tcp::socket socket )noexcept->void;
 		atomic<bool> _shutdown{false};
-		sp<IOContextThread> _pContextThread;
+		sp<IO::AsioContextThread> _pContextThread;
 	protected:
 		tcp::acceptor _acceptor;
 	};
@@ -57,15 +53,15 @@ namespace Jde::WebSocket
 	struct Session /*abstract*/: IO::Sockets::ISession, std::enable_shared_from_this<Session>
 	{
 		Session( WebListener& server, SessionPK id, tcp::socket&& socket ):
-			ISession{id}, 
+			ISession{id},
 #ifdef HTTPS
 			StreamPtr{ ms<SocketStream>(std::move(socket)), ctx },
 #else
 			StreamPtr{ ms<SocketStream>(std::move(socket)) },
 #endif
 			_server{server}
-		{ 
-			StreamPtr->binary( true ); 
+		{
+			StreamPtr->binary( true );
 		}
 		β Close()noexcept->void{};
 		β Run()noexcept->void;
