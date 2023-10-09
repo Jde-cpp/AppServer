@@ -9,6 +9,7 @@ if [ $all -eq 1 ]; then
 	../../Framework/cmake/buildc.sh ../../MySql/source $type $clean || exit 1;
 	../../Framework/cmake/buildc.sh ../../Ssl/source $type $clean || exit 1;
 	../../Framework/cmake/buildc.sh ../../XZ/source $type $clean || exit 1;
+	../../Framework/cmake/buildc.sh ../../Public/src/web $type $clean || exit 1;
 fi
 if [ ! -d .obj ];	then
 	mkdir .obj;
@@ -25,6 +26,6 @@ if [ $clean -eq 1 ]; then
 	cmake -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
 	make clean;
 fi
-make -j
-cd - > /dev/null
-exit $?
+make -j;
+cd - > /dev/null;
+exit $?;

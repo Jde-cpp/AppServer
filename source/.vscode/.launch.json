@@ -14,22 +14,40 @@
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
 			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
-			"preLaunchTask": "build"
+			"preLaunchTask": "build",
+			"visualizerFile": "${workspaceFolder}/../../Framework/debugging/my.natvis",
+			"showDisplayString": true
 		},
 		{
 			"name": "Release",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/../../bin/release/AppServer",
+			"program": "${workspaceFolder}/../../bin/release/Jde.AppServer",
 			"args": ["-c"],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}/../../bin/release",
-			"environment": [],
+			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, { "name": "JDE_LOG_META", "value": "${workspaceFolder}/../meta.json" }],
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
 			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "release"
+		}
+		,
+		{
+			"name": "RelWithDebInfo",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/../../bin/relwithdebinfo/Jde.AppServer",
+			"args": ["-c"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/../../bin/relwithdebinfo",
+			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, { "name": "JDE_LOG_META", "value": "${workspaceFolder}/../meta.json" }],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
+			"preLaunchTask": "relWithDebInfo"
 		}
 	]
 }

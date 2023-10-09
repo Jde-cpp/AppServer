@@ -42,7 +42,7 @@ namespace Jde::GoogleLogin
 			if( foundKey.is_null() && fs::exists(IApplication::ApplicationDataFolder()/(kidString+".json")) )
 				foundKey = json::parse( IO::FileUtilities::Load(IApplication::ApplicationDataFolder()/(kidString+".json")) );
 #endif
-			THROW_IF( foundKey.is_null(), "Could not find key '{}' in: '{}'", pKid->get<string>(), pKeys->dump() );
+			THROW_IF( foundKey.is_null(), "Could not find key... '{}' in: '{}'", pKid->get<string>(), pKeys->dump() );
 			var alg = foundKey["alg"].get<string>();
 			var exponent = foundKey["e"].get<string>();
 			var modulus = foundKey["n"].get<string>();
@@ -51,8 +51,9 @@ namespace Jde::GoogleLogin
 			THROW_IF(token.Aud != Settings::Get<string>("GoogleAuthClientId"), "Invalid client id");
 			THROW_IF(token.Iss != "accounts.google.com" && token.Iss != "https://accounts.google.com", "Invalid iss");
 #ifdef NDEBUG
-			var expiration = Clock::from_time_t(token.Expiration);
-			THROW_IF(expiration < Clock::now(), "token expired");
+		// TODO uncomment
+		//	var expiration = Clock::from_time_t(token.Expiration);
+		//	THROW_IF(expiration < Clock::now(), "token expired");
 #endif
 			y = mu<Google::TokenInfo>( move(token) );
 		}
@@ -66,6 +67,7 @@ namespace Jde::GoogleLogin
 			y = e.Move();
 		}
 		h.resume();
+		co_return;
 	}
 	α GoogleLoginAwait::await_suspend( HCoroutine h )ι->void
 	{

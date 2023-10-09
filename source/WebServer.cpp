@@ -37,8 +37,8 @@ namespace Jde::ApplicationServer::Web
 	}
 	α WebServer::SetStatus( FromServer::Status& status )const ι->void
 	{
-		status.set_application_id( (google::protobuf::uint32)_logClient.ApplicationId );
-		status.set_instance_id( (google::protobuf::uint32)_logClient.InstanceId );
+		status.set_application_id( (google::protobuf::uint32)Logging::Server::ApplicationId() );
+		status.set_instance_id( (google::protobuf::uint32)Logging::Server::InstanceId() );
 		status.set_host_name( IApplication::HostName() );
 		status.set_start_time( (google::protobuf::uint32)Clock::to_time_t(IApplication::StartTime()) );
 		status.set_db_log_level( (Web::FromServer::ELogLevel)Logging::ServerLevel() );

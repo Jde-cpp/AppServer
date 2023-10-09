@@ -18,7 +18,7 @@
 	},
 	"logging":
 	{
-		"tags": [ "app-requests", "threads", "_locks", "settings", "sql" ],
+		"tags": [ "app-requests", "threads", "users", "_locks", "settings", "sql" ],
 		"console":{},
 		"file":{ "path": ".." },
 		"breakLevel": "Warning"

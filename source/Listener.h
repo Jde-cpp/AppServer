@@ -17,33 +17,30 @@ namespace Jde::ApplicationServer
 
 	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>
 	{
-		Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept;
-		~Session(){DBG("({})~Session - {}", Id, Name);}
-		α OnReceive( ToServer&& pValue )noexcept->void override;
-		α Start2()noexcept->void;
-		α WriteStrings()noexcept->void;
-		α SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept->void;
-		α LogLevels()noexcept->up<Logging::Proto::LogLevels>;
-		α DbLogLevel()const noexcept->ELogLevel{ return _dbLevel; }
-		α FileLogLevel()const noexcept->ELogLevel{ return _fileLogLevel; }
-		α SetStatus( Web::FromServer::Status& status )const noexcept->void;
-		α SendSessionInfo( SessionPK sessionId )noexcept->Task;
-		α WebSubscribe( ELogLevel level )noexcept->void;
+		Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι;
+		~Session(){DBG("({})~Session - {}", Id, InstancePtr ? InstancePtr->application() : "nullptr");}
+		α OnReceive( ToServer&& pValue )ι->void override;
+		α Start2()ι->void;
+		α WriteStrings()ι->void;
+		α SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )ι->void;
+		α LogLevels()ι->up<Logging::Proto::LogLevels>;
+		α DbLogLevel()Ι->ELogLevel{ return _dbLevel; }
+		α FileLogLevel()Ι->ELogLevel{ return _fileLogLevel; }
+		α SetStatus( Web::FromServer::Status& status )Ι->void;
+		α SendSessionInfo( SessionPK sessionId )ι->Task;
+		α WebSubscribe( ELogLevel level )ι->void;
 		ApplicationInstancePK InstanceId{0};
 		ApplicationPK ApplicationId{0};
-		string Name;
-		uint ProcessId{0};
-		string HostName;
+		sp<Logging::Proto::Instance> InstancePtr;
 		string Status;
-		TimePoint StartTime;
 		uint Memory{0};
 		using base=IO::Sockets::TProtoSession<ToServer,FromServer>;
 		using WebRequestId=uint; //
-		α WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )noexcept->void;
+		α WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )ι->void;
 	private:
-		α OnDisconnect()noexcept->void override;
+		α OnDisconnect()ι->void override;
 		Τ using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
-		Ŧ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )noexcept->void;
+		Ŧ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )ι->void;
 		ELogLevel _dbLevel;
 		atomic<ELogLevel> _webLevel{ELogLevel::None};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
@@ -54,34 +51,35 @@ namespace Jde::ApplicationServer
 
 	struct TcpListener final : public IO::Sockets::ProtoServer
 	{
-		TcpListener()noexcept(false);
+		TcpListener()ε;
 
-		static TcpListener& GetInstance()noexcept;
-
-
-		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept->up<IO::Sockets::ProtoSession> override;
-
-		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )noexcept->uint;
-		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept->void;
-		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept->void;
+		static TcpListener& GetInstance()ι;
 
 
-		α Kill( ApplicationInstancePK id )noexcept->void;
-		α WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept(false)->void;
+		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->up<IO::Sockets::ProtoSession> override;
+
+		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )ι->uint;
+		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void;
+		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )ι->void;
+
+
+		α Kill( ApplicationInstancePK id )ι->void;
+		α WriteCustom( ApplicationPK id, uint32 requestId, string&& message )ε->void;
+		α FindApplications( const string& name )ι->vector<sp<Logging::Proto::Instance>>;
 	private:
-		α FindApplication( ApplicationPK applicationId )noexcept->Session*;
-		α FindSessionByInstance( ApplicationInstancePK id )noexcept->Session*;
+		α FindApplication( ApplicationPK applicationId )Ι->sp<Session>;
+		α FindSessionByInstance( ApplicationInstancePK id )Ι->sp<Session>;
 
 	};
 
 #define var const auto
-	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )noexcept->void
+	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )ι->void
 	{
 		WebRequestId webRequestId;
 		const RequestId reqId = message.requestid();
 		IO::Sockets::SessionPK sessionId;
 		{
-			lock_guard l{_customWebRequestsMutex};
+			lg l{_customWebRequestsMutex};
 			var pRequest = _customWebRequests.find( reqId ); RETURN_IF( pRequest==_customWebRequests.end(), "Could not fine request {}", reqId );
 			webRequestId = get<0>( pRequest->second );
 			sessionId = get<1>( pRequest->second );

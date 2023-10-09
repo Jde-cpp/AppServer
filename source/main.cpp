@@ -4,6 +4,7 @@
 #include "LogClient.h"
 #include "LogData.h"
 #include "Rest.h"
+#include <jde/io/Crc.h>
 #include "../../Framework/source/Settings.h"
 #include "../../Framework/source/db/Database.h"
 #include "../../Ssl/source/Ssl.h"
@@ -59,6 +60,8 @@ namespace Jde
 		}
 		Listener().DoAccept();
 		DBG( "Startup Loading Complete." );
+		if( IO::Crc::Calc32(__FILE__)!=Calc32RunTime(__FILE__) )
+			CRITICAL( "crcs do not matchup consteval={:x} vs runtime={:x}", IO::Crc::Calc32(__FILE__), Calc32RunTime(__FILE__) );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}
 }

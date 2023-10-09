@@ -121,7 +121,7 @@ namespace Jde::WebSocket
 		var b = net::buffer( (const void*)pData->data(), pData->size() );
 		auto result = co_await _writeLock.Lock();
 		auto l_ = result. template UP<CoGuard>();
-
+#pragma clang diagnostic ignored "-Wunused-lambda-capture"
 		StreamPtr->async_write( b, [ this, b, l=move(l_), p=move(pData) ]( beast::error_code ec, uint bytes_transferred )mutable
 		{
 			l = nullptr;

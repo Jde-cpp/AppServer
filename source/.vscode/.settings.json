@@ -73,7 +73,9 @@
 		"set": "cpp",
 		"__split_buffer": "cpp",
 		"queue": "cpp",
-		"stack": "cpp"
+		"stack": "cpp",
+		"__assert": "cpp",
+		"__config": "cpp"
 	},
 	"window.title": "App"
 }

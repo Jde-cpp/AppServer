@@ -7,22 +7,26 @@
 					"/home/duffyj/code/libraries/spdlog/include/"
 					], "limitSymbolsToIncludedHeaders": true },
             "includePath": [
-                "${workspaceFolder}/**",
-                "/home/duffyj/code/libraries/asio/asio/include/",
-                "/home/duffyj/code/libraries/spdlog/include/",
-                "/home/duffyj/code/libraries/eigen",
-                "/home/duffyj/code/libraries/boostorg/boost_1_71_0",
-					 "/home/duffyj/code/libraries/json/include"
+								"/usr/include",
+								"/usr/include/x86_64-linux-gnu",
+								"/usr/local/lib/clang/16/include",
+								"${REPO_DIR}/llvm-project/libcxx/include/",
+								"${REPO_DIR}/llvm-project/libc/include/",
+                "${REPO_DIR}/spdlog/include",
+								"${REPO_DIR}/json/include",
+								"${REPO_DIR}/protobuf/src",
+                "${BOOST_LIBRARYDIR}/../..",
+								"${JDE_DIR}/Public",
+								"/usr/local/include/c++/v1"
             ],
 				"defines": [],
 				"forcedInclude": [
-					"${workspaceFolder}/pc.h",
-					"/home/duffyj/code/libraries/spdlog/include/spdlog/fmt/ostr.h"
+					"${workspaceFolder}/pc.h"
 				],
-            "compilerPath": "/usr/bin/clang++",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64",
+            "compilerPath": "",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-clang-x64",
             "compilerArgs": []
         }
     ],

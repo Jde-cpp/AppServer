@@ -16,51 +16,65 @@ namespace Jde::ApplicationServer
 {
 
 	TcpListener _listener;
-	TcpListener& TcpListener::GetInstance()noexcept{ return _listener; }
+	TcpListener& TcpListener::GetInstance()ι{ return _listener; }
 
-	TcpListener::TcpListener()noexcept(false)://multiple listeners on same port
+	TcpListener::TcpListener()ε://multiple listeners on same port
 		IO::Sockets::ProtoServer{ Settings::Get<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }
 	{
 		Accept();
 	}
 
 
-	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept->up<IO::Sockets::ProtoSession>
+	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->up<IO::Sockets::ProtoSession>
 	{
 		return mu<Session>( move(socket), id );
 	}
-
-	α TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )noexcept->uint
+#define $(x) dynamic_pointer_cast<Session>(x)
+	α TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )ι->uint
 	{
-		shared_lock l{ _mutex };
+		sl l{ _mutex };
 		for( var& [id,p] : _sessions )
-			f( id, (const ApplicationServer::Session&)*p );
+			f( id, *$(p) );
 		return _sessions.size();
 	}
 
-	α TcpListener::FindSessionByInstance( ApplicationInstancePK id )noexcept->Session*
+	α TcpListener::FindSessionByInstance( ApplicationInstancePK id )Ι->sp<Session>
 	{
-		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->InstanceId==id;} );
-		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
+		sl _{ _mutex };
+		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return $(p.second)->InstanceId==id;} );
+		return p==_sessions.end() ? nullptr :$(p->second);
 	}
-	α TcpListener::FindApplication( ApplicationPK id )noexcept->Session*
+	α TcpListener::FindApplication( ApplicationPK id )Ι->sp<Session>
 	{
-		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return ((Session*)p.second.get())->ApplicationId==id;} );
-		return p==_sessions.end() ? nullptr : (Session*)p->second.get();
+		sl _{ _mutex };
+		auto p = std::find_if( _sessions.begin(), _sessions.end(), [id](auto& p){ return $(p.second)->ApplicationId==id;} );
+		return p==_sessions.end() ? nullptr : $(p->second);
 	}
 
-	α TcpListener::Kill( ApplicationInstancePK id )noexcept->void
+	α TcpListener::FindApplications( const string& name )ι->vector<sp<Logging::Proto::Instance>>
 	{
-		shared_lock l{ _mutex };
-		if( auto p = FindSessionByInstance(id); p )
-			IApplication::Kill( p->ProcessId );
+		vector<sp<Logging::Proto::Instance>> y;
+		sl _{ _mutex };
+		for( auto s : _sessions )
+		{
+			if( $(s.second)->InstancePtr->application()==name )
+				y.push_back( $(s.second)->InstancePtr );
+		}
+		return y;
+	}
+#undef $
+	α TcpListener::Kill( ApplicationInstancePK id )ι->void
+	{
+		sl l{ _mutex };
+		if( auto p = FindSessionByInstance(id); p && p->InstancePtr )
+			IApplication::Kill( p->InstancePtr->pid() );
 		else
 			WARN( "({})Could not find instance to kill."sv, id );
 	}
 
-	α TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )noexcept(false)->void
+	α TcpListener::WriteCustom( ApplicationPK id, uint32 requestId, string&& message )ε->void
 	{
-		shared_lock l{ _mutex };
+		sl l{ _mutex };
 		if( auto p = FindApplication(id); p )
 			p->WriteCustom( p->Id, requestId, move(message) );
 		else
@@ -70,13 +84,12 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	α TcpListener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )noexcept->void
+	α TcpListener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void
 	{
-		if( instanceId==_logClient.InstanceId )
+		if( instanceId==Logging::Server::InstanceId() )
 		{
 			Logging::Default().set_level( (spdlog::level::level_enum)clientLevel );
-			if( Logging::Server() )
-				Logging::SetServerLevel( dbLevel );
+			Logging::Server::SetLevel( dbLevel );
 			Web::Server().UpdateStatus( Web::Server() );
 		}
 		else
@@ -87,10 +100,10 @@ namespace Jde::ApplicationServer
 		}
 	}
 
-	α TcpListener::WebSubscribe( ApplicationPK applicationId, ELogLevel level )noexcept->void
+	α TcpListener::WebSubscribe( ApplicationPK applicationId, ELogLevel level )ι->void
 	{
-		if( applicationId==_logClient.ApplicationId )
-			_logClient.WebSubscribe( level );
+		if( applicationId==Logging::Server::ApplicationId() )
+			Logging::Server::WebSubscribe( level );
 		else
 		{
 			auto pSession = FindApplication( applicationId );
@@ -100,13 +113,13 @@ namespace Jde::ApplicationServer
 	}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Session::Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )noexcept:
+	Session::Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι:
 		IO::Sockets::TProtoSession<ToServer,FromServer>{ move(socket), id }
 	{
 		Start2();//0x7fffe0004760
 	}
 
-	α Session::Start2()noexcept->void
+	α Session::Start2()ι->void
 	{
 		auto pAck = mu<Logging::Proto::Acknowledgement>();
 		pAck->set_instanceid( Id );
@@ -117,15 +130,15 @@ namespace Jde::ApplicationServer
 		Write( move(t) );
 	}
 
-	α Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )noexcept->void
+	α Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )ι->void
 	{
 		_dbLevel = dbLogLevel;
 		_fileLogLevel = fileLogLevel;
 		Logging::Proto::FromServer t;
 		t.add_messages()->set_allocated_loglevels( LogLevels().release() );
-		Write( t );
+		Write( move(t) );
 	}
-	α Session::LogLevels()noexcept->up<Logging::Proto::LogLevels>
+	α Session::LogLevels()ι->up<Logging::Proto::LogLevels>
 	{
 		auto pValues = mu<Logging::Proto::LogLevels>();
 		pValues->set_server( (Logging::Proto::ELogLevel)std::min((uint)_dbLevel, _webLevelUint) );
@@ -133,7 +146,7 @@ namespace Jde::ApplicationServer
 		return pValues;
 	}
 
-	α Session::WriteStrings()noexcept->void
+	α Session::WriteStrings()ι->void
 	{
 		Logging::Proto::FromServer t;
 		var& strings = Cache::AppStrings();
@@ -143,15 +156,15 @@ namespace Jde::ApplicationServer
 		strings.Messages.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_messages(id);} );
 		t.add_messages()->set_allocated_strings( pValues.release() );
 
-		Write( t );
+		Write( move(t) );
 	}
 
-	α Session::SetStatus( Web::FromServer::Status& status )const noexcept->void
+	α Session::SetStatus( Web::FromServer::Status& status )Ι->void
 	{
 		status.set_application_id( (uint32)ApplicationId );
 		status.set_instance_id( (uint32)InstanceId );
-		status.set_host_name( HostName );
-		status.set_start_time( (uint32)Clock::to_time_t(StartTime) );
+		status.set_host_name( InstancePtr ? InstancePtr->host() : "" );
+		status.set_start_time( InstancePtr ? InstancePtr->start_time() : 0 );
 		status.set_db_log_level( (Web::FromServer::ELogLevel)DbLogLevel() );
 		status.set_file_log_level( (Web::FromServer::ELogLevel)FileLogLevel() );
 		status.set_memory( Memory );
@@ -160,14 +173,15 @@ namespace Jde::ApplicationServer
 		for( var& statusDescription : statuses )
 			status.add_values( string{statusDescription} );
 	}
-	α Session::OnDisconnect()noexcept->void
+	α Session::OnDisconnect()ι->void
 	{
-		StartTime = TimePoint{};
+		if( InstancePtr )
+			InstancePtr->set_start_time( 0 );
 		Web::Server().UpdateStatus( *this );
 		TcpListener::GetInstance().RemoveSession( Id );
 	}
 
-	α Session::WebSubscribe( ELogLevel level )noexcept->void
+	α Session::WebSubscribe( ELogLevel level )ι->void
 	{
 		var currentLevel = std::min( (uint)_dbLevel, static_cast<uint>((Jde::ELogLevel)_webLevel) );
 		_webLevel = level;
@@ -175,28 +189,28 @@ namespace Jde::ApplicationServer
 		{
 			Logging::Proto::FromServer t;
 			t.add_messages()->set_allocated_loglevels( LogLevels().release() );
-			Write( t );
+			Write( move(t) );
 		}
 	}
 
-	α Session::WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )noexcept->void
+	α Session::WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )ι->void
 	{
 		Logging::Proto::FromServer t;
 
 		const RequestId requestId = ++_requestId;
 		{
-			lock_guard l{_customWebRequestsMutex};
+			lg l{_customWebRequestsMutex};
 			_customWebRequests.emplace( requestId, make_tuple(webRequestId, webClientId) );
 		}
 		auto pCustom = new Logging::Proto::CustomMessage();
 		pCustom->set_requestid( (uint32)requestId );
 		pCustom->set_message( move(message) );
-		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, Name, requestId, webClientId, webRequestId );
+		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, InstancePtr ? InstancePtr->application() : "", requestId, webClientId, webRequestId );
 		t.add_messages()->set_allocated_custom( pCustom );
-		Write( t );
+		Write( move(t) );
 	}
 
-	α Session::SendSessionInfo( SessionPK sessionId )noexcept->Task
+	α Session::SendSessionInfo( SessionPK sessionId )ι->Task
 	{
 		up<SessionInfo> pInfo;
 		try
@@ -207,10 +221,10 @@ namespace Jde::ApplicationServer
 		{}
 
 		Logging::Proto::FromServer t; t.add_messages()->set_allocated_session_info( pInfo ? pInfo.release() : new SessionInfo{} );
-		Write( t );
+		Write( move(t) );
 	}
 
-	α Session::OnReceive( Logging::Proto::ToServer&& t )noexcept->void
+	α Session::OnReceive( Logging::Proto::ToServer&& t )ι->void
 	{
 		try
 		{
@@ -262,13 +276,9 @@ namespace Jde::ApplicationServer
 				}
 				else if( pMessage->has_instance() )
 				{
-					auto& instance = *pMessage->mutable_instance();
-					Name = move( instance.application() );
-					HostName = move( instance.host() );
-					ProcessId = instance.pid();
-					StartTime = Clock::from_time_t( instance.start_time() );
-					var [applicationId,instanceId, dbLogLevel_, fileLogLevel_] = Logging::Data::AddInstance( Name, HostName, ProcessId );//TODO don't use db for level
-					DBG( "({})Adding application app={}@{} pid={}", Id, Name, HostName, ProcessId );
+					InstancePtr = ms<Logging::Proto::Instance>( move(*pMessage->mutable_instance()) );
+					var [applicationId,instanceId, dbLogLevel_, fileLogLevel_] = Logging::Data::AddInstance( InstancePtr->application(), InstancePtr->host(), InstancePtr->pid() );//TODO don't use db for level
+					DBG( "({})Adding application app={}@{} pid={}", Id, InstancePtr->application(), InstancePtr->host(), InstancePtr->pid() );
 					InstanceId = instanceId; ApplicationId = applicationId;// _dbLevel = dbLogLevel; _fileLogLevel = fileLogLevel;
 					Cache::Load();
 					WriteStrings();

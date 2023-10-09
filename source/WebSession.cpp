@@ -144,7 +144,8 @@ namespace Jde::ApplicationServer::Web
 		Web::FromServer::MessageUnion y;
 		try
 		{
-			var result = ( co_await DB::CoQuery(move(query), UserId) ).UP<nlohmann::json>();
+			string threadId = format( "[{}.{}] - GraphQL", Id, clientId );
+			var result = ( co_await DB::CoQuery(move(query), UserId, threadId) ).UP<nlohmann::json>();
 			y = ToMessageQL( result->dump(), clientId );
 		}
 		catch( const json::exception& e )
