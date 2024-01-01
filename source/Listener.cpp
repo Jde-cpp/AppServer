@@ -259,7 +259,7 @@ namespace Jde::ApplicationServer
 					Memory = status.memory();
 					ostringstream os;
 					for( α i2=0; i2<status.details_size(); ++i2 )
-						os << move(*status.mutable_details(i2)) << endl;
+						os << move(*status.mutable_details(i2)) << std::endl;
 					Status = os.str();
 					Web::Server().UpdateStatus( *this );
 				}

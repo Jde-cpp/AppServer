@@ -106,19 +106,22 @@ namespace Jde::Logging
 	#define _pQueue if( auto p = _pDbQueue; p )p
 	α Data::SaveString( ApplicationPK /*applicationId*/, Proto::EFields field, uint32 id, sp<string> pValue, SL sl )noexcept->void
 	{
-		sv table = "log_messages"sv;
+		sv table = "log_messages";
 		sv frmt = "insert into {}(id,value)values(?,?)";
 		if( field==Proto::EFields::MessageId )
 			frmt = "insert into {}(id,value)values(?,?)";
 		else if( field==Proto::EFields::FileId )
-			table = "log_files"sv;
+			table = "log_files";
 		else if( field==Proto::EFields::FunctionId )
-			table = "log_functions"sv;
+			table = "log_functions";
 		else
-			return ERR( "unknown field '{}'."sv, field );
+			return ERR( "unknown field '{}'.", field );
 
 		var sql = format( fmt::runtime(frmt), table );
 		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
+		//ASSERT( Calc32RunTime(*pValue)==id );
+		if( Calc32RunTime(*pValue)!=id )
+			return ERR( "id '{}' does not match crc of '{}'", id, *pValue );
 		pParameters->push_back( static_cast<uint32>(id) );
 		pParameters->push_back( pValue );
 		_pQueue->Push( sql, pParameters, false, sl );

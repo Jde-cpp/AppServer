@@ -59,9 +59,7 @@ namespace Jde
 			std::terminate();
 		}
 		Listener().DoAccept();
-		DBG( "Startup Loading Complete." );
-		if( IO::Crc::Calc32(__FILE__)!=Calc32RunTime(__FILE__) )
-			CRITICAL( "crcs do not matchup consteval={:x} vs runtime={:x}", IO::Crc::Calc32(__FILE__), Calc32RunTime(__FILE__) );
+		DBG( "--AppServer Started.--" );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}
 }

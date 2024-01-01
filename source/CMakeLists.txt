@@ -7,8 +7,8 @@ link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
 find_package(ZLIB)
 
 add_executable( Jde.AppServer main.cpp Cache.cpp GoogleLogin.cpp Listener.cpp LogData.cpp LogClient.cpp
-			Rest.cpp WebServer.cpp WebSession.cpp WebSocketAsync.cpp
-			types/proto/FromClient.pb.cc types/proto/FromServer.pb.cc )
+			Rest.cpp WebServer.cpp WebSession.cpp
+			types/proto/AppFromClient.pb.cc types/proto/AppFromServer.pb.cc )
 #######################################################
 include_directories( "../../Public" )
 #target_link_libraries(Jde.AppServer)
@@ -41,10 +41,12 @@ target_precompile_headers(Jde.AppServer
 		<boost/asio/ssl/error.hpp>
 		<boost/exception/diagnostic_information.hpp>
 		<jde/Exports.h>
+		"../../Public/src/web/Exports.h"
 		"TypeDefs.h"
+		"types/proto/AppFromServer.pb.h"
+		"types/proto/AppFromClient.pb.h"
 		<jde/Log.h>
 		<jde/Str.h>
-		<jde/log/types/proto/FromServer.pb.h>
 		"../../Framework/source/collections/UnorderedMap.h"
 		"../../Framework/source/db/Database.h"
 		"../../Framework/source/io/ProtoUtilities.h"

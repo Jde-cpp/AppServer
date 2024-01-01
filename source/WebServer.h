@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "WebSocketAsync.h"
+#include "../../Public/src/web/WebSocket.h"
 #include "WebSession.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
 

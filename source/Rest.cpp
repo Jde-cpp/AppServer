@@ -73,7 +73,7 @@ namespace Jde::ApplicationServer
 		string bodyv = req.ClientRequest().body();
 		try
 		{
-			Dbg( bodyv );
+//			Dbg( bodyv );
 			json body = json::parse( bodyv );
 			var j{ body.find("value") };
 			if( j->is_null() || !j->is_string() || j->get<string>().empty() )

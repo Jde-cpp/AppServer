@@ -13,6 +13,9 @@
 #include <boost/exception/diagnostic_information.hpp>
 
 #include "TypeDefs.h"
+#include "types/proto/AppFromServer.pb.h"
+#include "types/proto/AppFromClient.pb.h"
+
 #include <jde/Log.h>
 #include <jde/Str.h>
 #include <jde/log/types/proto/FromServer.pb.h>

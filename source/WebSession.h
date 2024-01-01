@@ -1,7 +1,5 @@
 ﻿#pragma once
-#include "WebSocketAsync.h"
-#include <jde/log/types/proto/FromServer.pb.h>
-#include <jde/log/types/proto/FromClient.pb.h>
+#include "../../Public/src/web/WebSocket.h"
 
 namespace Jde::ApplicationServer::Web
 {
@@ -30,11 +28,11 @@ namespace Jde::ApplicationServer::Web
 		Ω SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )ι->void;
 		α PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )ι->void;
 		α WriteCustom( uint32 clientId, const string& message )ι->void;
-		α WriteComplete( uint32 clientId )ι->void;
+		α WriteComplete( uint32 clientId )ι->Task;
 		α Run()ι->void override;
 	private:
 		α SendStrings( const FromClient::RequestStrings& request )ι->void;
-		α WriteError( string&& msg, uint32 requestId=0 )ι->void;
+		α WriteError( string&& msg, uint32 requestId=0 )ι->Task;
 		α Write( const FromServer::Transmission& tranmission )ε->void;
 		α Server()ι->WebServer&;
 		α GoogleLogin( string&& credential, ClientId clientId )ι->Task;

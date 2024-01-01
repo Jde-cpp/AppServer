@@ -16,7 +16,7 @@ namespace Jde::ApplicationServer::Web
 {
 	static const LogTag& _logLevel = Logging::TagLevel( "app-requests" );
 
-	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )noexcept(false):
+	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε:
 		base( server, id, move(socket) )
 	{}
 
@@ -25,40 +25,42 @@ namespace Jde::ApplicationServer::Web
 		LOG( "({})~MySession()"sv, Id );
 	}
 
-	α MySession::Run()noexcept->void
+	α MySession::Run()ι->void
 	{
 		base::Run();
 		LOG( "({})MySession::Run()"sv, Id );
 //		Server().UpdateStatus( Server() );
 	}
-	α MySession::OnAccept( beast::error_code ec )noexcept->void
+	α MySession::OnAccept( beast::error_code ec )ι->void
 	{
 		LOG( "({})MySession::OnAccept()"sv, Id );
-		auto pAck{ mu<FromServer::Acknowledgement>() }; pAck->set_id( (uint32)Id );
+		auto pAck{ mu<Jde::Web::FromServer::Acknowledgement>() }; pAck->set_id( (uint32)Id );
 		FromServer::Transmission t; t.add_messages()->set_allocated_acknowledgement( pAck.release() );
 		Write( t );
 		base::OnAccept( ec );
 	}
 
-	α MySession::Server()noexcept->WebServer&
+	α MySession::Server()ι->WebServer&
 	{
 		return dynamic_cast<WebServer&>( _server );
 	}
 
-	α MySession::OnRead( FromClient::Transmission t )noexcept->void
-	{
+	α MySession::OnRead( FromClient::Transmission t )ι->void{
+		// FromClient::Transmission t2;
+		// auto r = new FromClient::Request(); r->set_type( FromClient::ERequest::Applications );
+		// t2.add_messages()->set_allocated_request( r );
+		// string x = IO::Proto::ToString( t2 );
+		// DBG( "x='{}'", x.size() );
+		// auto t3 = IO::Proto::Deserialize<FromClient::Transmission>( (const google::protobuf::uint8*)x.data(), (int)x.size() );
 		var c = t.messages_size();
-		for( α i=0; i<c; ++i )
-		{
-			auto pMessage = t.mutable_messages( i );
-			if( pMessage->has_graph_ql() )
-			{
-				auto ql = pMessage->mutable_graph_ql();
+		for( auto i=0; i<c; ++i ){
+			auto& m = *t.mutable_messages( i );
+			if( m.has_graph_ql() ){
+				auto ql = m.mutable_graph_ql();
 				GraphQL( move(*ql->mutable_query()), ql->request_id() );
 			}
-			else if( pMessage->has_request() )
-			{
-				var& request = pMessage->request();
+			else if( m.has_request() ){
+				var& request = m.request();
 				if( request.type()==FromClient::ERequest::Statuses )
 					SendStatuses();
 				else if( request.type()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
@@ -76,9 +78,8 @@ namespace Jde::ApplicationServer::Web
 				else
 					WARN( "unsupported request '{}'", request.type() );
 			}
-			else if( pMessage->has_request_app() )
-			{
-				var& request = pMessage->request_app();
+			else if( m.has_request_app() ){
+				var& request = m.request_app();
 				var instanceId = (ApplicationInstancePK)request.instance_id();
 				var value = (int)request.type();
 				if( value == -2 )//(int)(FromClient::ERequest::Power | FromClient::ERequest::Negate);
@@ -90,17 +91,15 @@ namespace Jde::ApplicationServer::Web
 				else
 					WARN( "unsupported request '{}'", request.type() );
 			}
-			else if( pMessage->has_log_values() )
-			{
-				var& values = pMessage->log_values();
+			else if( m.has_log_values() ){
+				var& values = m.log_values();
 				if( values.db_value()<ELogLevelStrings.size() && values.client_value()<ELogLevelStrings.size() )
 					LOGT( Web::_logLevel, "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instance_id(), ELogLevelStrings[values.db_value()], ELogLevelStrings[values.client_value()] );
 				Logging::Proto::LogLevels levels;
 				_listener.SetLogLevel((ApplicationInstancePK)values.instance_id(), (ELogLevel)values.db_value(), (ELogLevel)values.client_value() );
 			}
-			else if( pMessage->has_request_logs() )
-			{
-				var value = pMessage->request_logs();
+			else if( m.has_request_logs() ){
+				var value = m.request_logs();
 				if( value.value()<ELogLevelStrings.size() )
 					LOGT( Web::_logLevel, "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.application_id(), value.instance_id(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, (ApplicationPK)value.application_id(), (ApplicationInstancePK)value.instance_id(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
@@ -109,9 +108,8 @@ namespace Jde::ApplicationServer::Web
 						SendLogs(self, (ApplicationPK)value.application_id(), (ApplicationInstancePK)value.instance_id(), (ELogLevel)value.value(), value.start(), value.limit());
 					}}.detach();
 			}
-			else if( pMessage->has_custom() )
-			{
-				auto pCustom = pMessage->mutable_custom();
+			else if( m.has_custom() ){
+				auto pCustom = m.mutable_custom();
 				LOGT( Web::_logLevel, "({})received From Web custom reqId='{}' for application='{}'"sv, Id, pCustom->request_id(), pCustom->application_id() );
 				try
 				{
@@ -122,11 +120,10 @@ namespace Jde::ApplicationServer::Web
 					WriteError( e.what(), pCustom->request_id() );
 				}
 			}
-			else if( pMessage->has_request_strings() )
-				SendStrings( pMessage->request_strings() );
-			else if( pMessage->has_request_value() )
-			{
-				auto p = pMessage->mutable_request_value();
+			else if( m.has_request_strings() )
+				SendStrings( m.request_strings() );
+			else if( m.has_request_value() ){
+				auto p = m.mutable_request_value();
 				var id = p->request_id();
 				var type = (FromClient::ERequest)p->type();
 				if( type==FromClient::ERequest::GoogleLogin && p->has_string() )
@@ -135,36 +132,30 @@ namespace Jde::ApplicationServer::Web
 					GoogleAuthClientId( p->request_id() );
 			}
 			else
-				ERR( "Unknown message:  {}"sv, (uint)pMessage->value_case() );
+				ERR( "Unknown message:  {}"sv, (uint)m.value_case() );
 		}
 	};
 
-	α MySession::GraphQL( string&& query, ClientId clientId )ι->Task
-	{
+	α MySession::GraphQL( string&& query, ClientId clientId )ι->Task{
 		Web::FromServer::MessageUnion y;
-		try
-		{
+		try{
 			string threadId = format( "[{}.{}] - GraphQL", Id, clientId );
 			var result = ( co_await DB::CoQuery(move(query), UserId, threadId) ).UP<nlohmann::json>();
 			y = ToMessageQL( result->dump(), clientId );
 		}
-		catch( const json::exception& e )
-		{
-			y = ToError( "Could not parse query", clientId );
+		catch( const json::exception& e ){
+			y = ToException( "Could not parse query", clientId );
 		}
-		catch( const IException& e )
-		{
-			y = ToError( e.what(), clientId );
+		catch( const IException& e ){
+			y = ToException( e.what(), clientId );
 		}
 		co_await WebServer::CoSend( move(y), Id );
 	}
 
-	α MySession::SendStatuses()noexcept->void
-	{
+	α MySession::SendStatuses()ι->void{
 		auto pStatuses = new FromServer::Statuses();
 		Server().SetStatus( *pStatuses->add_values() );
-		std::function<void( const IO::Sockets::SessionPK&, const ApplicationServer::Session& session )> fncn = [pStatuses]( const IO::Sockets::SessionPK& /*id*/, const ApplicationServer::Session& session )
-		{
+		std::function<void( const IO::Sockets::SessionPK&, const ApplicationServer::Session& session )> fncn = [pStatuses]( const IO::Sockets::SessionPK& /*id*/, const ApplicationServer::Session& session ){
 			session.SetStatus( *pStatuses->add_values() );
 		};
 		_listener.ForEachSession( fncn );
@@ -174,8 +165,7 @@ namespace Jde::ApplicationServer::Web
 		LOG( "({})Add status subscription."sv, Id );
 		Server().AddStatusSession( Id );
 	}
-	α MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )noexcept->void
-	{
+	α MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )ι->void{
 		std::optional<TimePoint> time = start ? Clock::from_time_t(start) : std::optional<TimePoint>{};
 		auto pTraces = Logging::Data::LoadEntries( applicationId, instanceId, level, time, limit );
 		pTraces->add_values();//Signify end.
@@ -186,8 +176,7 @@ namespace Jde::ApplicationServer::Web
 		transmission.add_messages()->set_allocated_traces( pTraces.release() );
 		self->Write( transmission );
 	}
-	α MySession::SendStrings( const FromClient::RequestStrings& request )noexcept->void
-	{
+	α MySession::SendStrings( const FromClient::RequestStrings& request )ι->void{
 		var reqId = request.request_id();
 		TRACE( "({}) requeststrings count='{}'"sv, Id, request.values_size() );
 		flat_map<ApplicationPK,std::forward_list<FromServer::ApplicationString>> values;
@@ -205,14 +194,12 @@ namespace Jde::ApplicationServer::Web
 
 			else if( value.type()==FromClient::EStringRequest::User )
 				pString = strings.Get( Logging::EFields::User, value.value() );
-			if( pString )
-			{
+			if( pString ){
 				FromServer::ApplicationString appString; appString.set_string_request_type( value.type() ); appString.set_id( value.value() ); appString.set_value( *pString );
 				auto& strings2 = values.try_emplace(value.application_id(), std::forward_list<FromServer::ApplicationString>{} ).first->second;
 				strings2.push_front( appString );
 			}
-			else
-			{
+			else{
 				static constexpr array<sv,5> StringTypes = {"Message","File","Function","Thread","User"};
 				const string typeString = value.type()<(int)StringTypes.size() ? string(StringTypes[value.type()]) : std::to_string( value.type() );
 				WARN( "Could not find string type='{}', id='{}', application='{}'"sv, typeString, value.value(), value.application_id() );
@@ -236,37 +223,25 @@ namespace Jde::ApplicationServer::Web
 		transmission.add_messages()->set_allocated_strings( pStrings );//finished.
 		Write( transmission );
 	}
-	α MySession::WriteCustom( uint32 clientId, const string& message )noexcept->void
-	{
+	α MySession::WriteCustom( uint32 clientId, const string& message )ι->void{
 		var pCustom = new FromServer::Custom();
 		pCustom->set_request_id( clientId );
 		pCustom->set_message( message );
 		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_custom( pCustom );
 		Write( transmission );
 	}
-	α MySession::WriteComplete( uint32 clientId )noexcept->void
-	{
-		var pCustom = new FromServer::Complete();
-		pCustom->set_request_id( clientId );
-		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_complete( pCustom );
-		Write( transmission );
+	α MySession::WriteComplete( uint32 requestId )ι->Task{
+		co_await WebServer::CoSend( ToComplete(requestId), requestId );
 	}
 
-	α MySession::WriteError( string&& msg, uint32 requestId )noexcept->void
-	{
+	α MySession::WriteError( string&& msg, uint32 requestId )ι->Task{
 		LOG( "({})WriteError( '{}', '{}' )"sv, Id, requestId, msg );
-		var pError = new FromServer::ErrorMessage();
-		pError->set_request_id( requestId );
-		pError->set_message( msg );
-		FromServer::Transmission transmission; transmission.add_messages()->set_allocated_error( pError );
-		Write( transmission );
+		co_await WebServer::CoSend( ToException(move(msg), requestId), requestId );
 	}
-	α MySession::Write( const FromServer::Transmission& t  )noexcept(false)->void
-	{
+	α MySession::Write( const FromServer::Transmission& t  )ε->void{
 		base::Write( mu<string>(IO::Proto::ToString(t)) );
 	}
-	α MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )noexcept->void
-	{
+	α MySession::PushMessage( LogPK id, ApplicationInstancePK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, const vector<string>& variables )ι->void{
 		auto pTraces = new FromServer::Traces();
 		pTraces->set_application_id( (google::protobuf::uint32)applicationId );
 		auto pTrace = pTraces->add_values();
@@ -288,14 +263,12 @@ namespace Jde::ApplicationServer::Web
 		Write( transmission );
 	}
 
-	α MySession::GoogleLogin( string&& credential, ClientId clientId )ι->Task
-	{
+	α MySession::GoogleLogin( string&& credential, ClientId clientId )ι->Task{
 		constexpr EAuthType type{ EAuthType::Google };
 		var parts = Str::Split(credential, '.');
 		Google::TokenInfo token;
 		Web::FromServer::MessageUnion y;
-		try
-		{
+		try{
 			var header = json::parse( Ssl::Decode64(string{parts[0]}) );//{"alg":"RS256","kid":"fed80fec56db99233d4b4f60fbafdbaeb9186c73","typ":"JWT"}
 			var body = json::parse( Ssl::Decode64(string{parts[1]}) );
 			token = body.get<Google::TokenInfo>();
@@ -309,11 +282,9 @@ namespace Jde::ApplicationServer::Web
 			var kidString = pKid->get<string>();
 			var pKeys = jwks.find( "keys" );  THROW_IF( pKeys==jwks.end(), "Could not find pKeys in jwks {}", jwks.dump() );
 			json foundKey;
-			for( var& key : *pKeys )
-			{
+			for( var& key : *pKeys ){
 				var keyString = key["kid"].get<string>();
-				if( keyString==kidString )
-				{
+				if( keyString==kidString ){
 					foundKey = key;
 #ifndef NDEBUG
 					if( var f = IApplication::ApplicationDataFolder()/(keyString+".json"); !fs::exists(f) )
@@ -321,7 +292,6 @@ namespace Jde::ApplicationServer::Web
 #endif
 					break;
 				}
-				//break;
 			}
 #ifndef NDEBUG
 			if( foundKey.is_null() && fs::exists(IApplication::ApplicationDataFolder()/(kidString+".json")) )
@@ -358,16 +328,15 @@ namespace Jde::ApplicationServer::Web
 		catch( const nlohmann::json::exception& e )
 		{
 			CRITICAL( "json exception - {}"sv, e.what() );
-			y = ToError( "Authentication Failed", clientId );
+			y = ToException( "Authentication Failed", clientId );
 		}
 		catch( const Exception& )
 		{
-			y = ToError( "Authentication Failed", clientId );
+			y = ToException( "Authentication Failed", clientId );
 		}
 		co_await WebServer::CoSend( move(y), Id );
 	}
-	α MySession::GoogleAuthClientId( ClientId clientId )ι->Task
-	{
+	α MySession::GoogleAuthClientId( ClientId clientId )ι->Task{
 		Web::FromServer::MessageUnion y;
 		try
 		{
@@ -375,7 +344,7 @@ namespace Jde::ApplicationServer::Web
 		}
 		catch( const Exception& e )
 		{
-			y = ToError( e.what(), clientId );
+			y = ToException( e.what(), clientId );
 		}
 		co_await WebServer::CoSend( move(y), Id );
 	}
