@@ -1,4 +1,4 @@
-#include "GoogleLogin.h"
+﻿#include "GoogleLogin.h"
 
 #define var const auto
 namespace Jde::GoogleLogin

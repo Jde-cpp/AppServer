@@ -12,13 +12,13 @@
 #include <boost/asio.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
+#include "../../Public/src/web/Exports.h"
 #include "TypeDefs.h"
+
 #include "types/proto/AppFromServer.pb.h"
 #include "types/proto/AppFromClient.pb.h"
-
 #include <jde/Log.h>
 #include <jde/Str.h>
-#include <jde/log/types/proto/FromServer.pb.h>
 #include "../../Ssl/source/Ssl.h"
 
 #include "../../Framework/source/collections/UnorderedMap.h"

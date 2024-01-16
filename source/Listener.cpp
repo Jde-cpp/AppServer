@@ -8,6 +8,7 @@
 #include "WebServer.h"
 
 #define var const auto
+#define _logLevel LogLevel()
 #define _logClient Logging::LogClient::Instance()
 
 #define _webServer Web::Server()
@@ -215,9 +216,9 @@ namespace Jde::ApplicationServer
 		up<SessionInfo> pInfo;
 		try
 		{
-			var pInfo = (co_await Jde::Web::Rest::ISession::FetchSessionInfo(sessionId)).UP<SessionInfo>();
+			pInfo = (co_await Jde::Web::Rest::ISession::FetchSessionInfo(sessionId)).UP<SessionInfo>();
 		}
-		catch( Exception& e )
+		catch( const Exception& )
 		{}
 
 		Logging::Proto::FromServer t; t.add_messages()->set_allocated_session_info( pInfo ? pInfo.release() : new SessionInfo{} );

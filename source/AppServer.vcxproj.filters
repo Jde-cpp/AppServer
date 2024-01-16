@@ -19,6 +19,15 @@
     <Filter Include="Header Files\types">
       <UniqueIdentifier>{f2bf6e13-c819-4f72-b888-4baf2a9d96ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\types\proto">
+      <UniqueIdentifier>{f5c7a006-eea9-42a5-b528-5cb030593335}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\types\proto">
+      <UniqueIdentifier>{519a15f8-3bae-4dd4-9136-77d3cd0480db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\types\rest">
+      <UniqueIdentifier>{0ac75741-c001-45d1-813a-1d3cac970452}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Listener.h">
@@ -45,6 +54,18 @@
     <ClInclude Include="ResultsMessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="types\proto\AppFromClient.pb.h">
+      <Filter>Header Files\types\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="types\proto\AppFromServer.pb.h">
+      <Filter>Header Files\types\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="types\proto\FromServer.pb.h">
+      <Filter>Header Files\types\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="types\rest\json.h">
+      <Filter>Header Files\types\rest</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -59,12 +80,6 @@
     <ClCompile Include="Cache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="types\proto\FromClient.pb.cc">
-      <Filter>Source Files\types</Filter>
-    </ClCompile>
-    <ClCompile Include="types\proto\FromServer.pb.cc">
-      <Filter>Source Files\types</Filter>
-    </ClCompile>
     <ClCompile Include="WebSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -77,7 +92,16 @@
     <ClCompile Include="pc.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WebSocketAsync.cpp">
+    <ClCompile Include="types\proto\AppFromClient.pb.cc">
+      <Filter>Source Files\types\proto</Filter>
+    </ClCompile>
+    <ClCompile Include="types\proto\AppFromServer.pb.cc">
+      <Filter>Source Files\types\proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Rest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GoogleLogin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

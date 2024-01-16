@@ -1,4 +1,4 @@
-#include "Rest.h"
+﻿#include "Rest.h"
 #include "../../Framework/source/db/GraphQL.h"
 #include "../../Framework/source/math/MathUtilities.h"
 #include "GoogleLogin.h"
@@ -15,25 +15,19 @@ namespace Jde::ApplicationServer
 
 	//α GoogleLogin( Request&& req )ι->Task;
 
-	α SendValue( string&& value, Request&& req )ι->void
-	{
+	α SendValue( string&& value, Request&& req )ι->void{
 		ISession::Send( format("{{\"value\": \"{}\"}}", value), move(req) );
 	}
 
-	α RestSession::HandleRequest( string&& target, flat_map<string,string>&& params, Request&& req )ι->void
-	{
-		try
-		{
-	    if( req.Method() == http::verb::get )
-			{
+	α RestSession::HandleRequest( string&& target, flat_map<string,string>&& /*params*/, Request&& req )ι->void{
+		try{
+	    if( req.Method() == http::verb::get ){
 				if( target=="/GoogleAuthClientId" )
 					SendValue( Settings::Getɛ<string>("GoogleAuthClientId"), move(req) );
-				else if( target=="/IotWebSocket" )
-				{
+				else if( target=="/IotWebSocket" ){
 					var apps = ApplicationServer::TcpListener::GetInstance().FindApplications( "IotWebSocket" );
 					json japps{ json::array() };
-					for( auto& p : apps )
-					{
+					for( auto& p : apps ){
 						json a;
 						to_json( a, *p );
 						japps.push_back( a );
@@ -45,34 +39,27 @@ namespace Jde::ApplicationServer
 				else
 					Send( http::status::bad_request, move(target), move(req) );
 			}
-			else if( req.Method() == http::verb::post )
-			{
+			else if( req.Method() == http::verb::post ){
 				if( target=="/GoogleLogin" )
-				{
 					GoogleLogin( move(req) );
-				}
 				else
 					Send( http::status::bad_request, target, move(req) );
 			}
 			else if( req.Method() == boost::beast::http::verb::options )
-			{
 				SendOptions( move(req) );
+			else{
+				Send( http::status::bad_request, format("Only get/put verb is supported {}", string{to_string(req.Method())}), move(req) );
 			}
-			else
-	      Send( http::status::bad_request, format("Only get/put verb is supported {}",req.Method()), move(req) );
 		}
-		catch( const Exception& e )
-		{
+		catch( const Exception& e ){
 			Send( http::status::internal_server_error, e.what(), move(req) );
 		}
 	}
 
 
-	α RestSession::GoogleLogin( Request req )ι->Task
-	{
+	α RestSession::GoogleLogin( Request req )ι->Task{
 		string bodyv = req.ClientRequest().body();
-		try
-		{
+		try{
 //			Dbg( bodyv );
 			json body = json::parse( bodyv );
 			var j{ body.find("value") };
@@ -88,17 +75,14 @@ namespace Jde::ApplicationServer
 
 			SendValue( format("{:x}", sessionInfo->session_id()), move(req) );
 		}
-		catch( const nlohmann::json::exception& e )
-		{
+		catch( const nlohmann::json::exception& e ){
 			DBG( "BadRequest({}) - {}", bodyv, e.what() );
 			Send( http::status::bad_request, bodyv, move(req) );
 		}
-		catch( IRequestException& e )
-		{
+		catch( IRequestException& e ){
 			Send( move(e), move(req) );
 		}
-		catch( const Exception& e )
-		{
+		catch( const Exception& e ){
 			Send( http::status::internal_server_error, e.what(), move(req) );
 		}
 	}

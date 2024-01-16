@@ -143,7 +143,7 @@ namespace Jde::ApplicationServer::Web
 			var result = ( co_await DB::CoQuery(move(query), UserId, threadId) ).UP<nlohmann::json>();
 			y = ToMessageQL( result->dump(), clientId );
 		}
-		catch( const json::exception& e ){
+		catch( const json::exception& ){
 			y = ToException( "Could not parse query", clientId );
 		}
 		catch( const IException& e ){

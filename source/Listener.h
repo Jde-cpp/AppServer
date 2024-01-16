@@ -73,6 +73,7 @@ namespace Jde::ApplicationServer
 	};
 
 #define var const auto
+#define _logLevel LogLevel()
 	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )ι->void
 	{
 		WebRequestId webRequestId;
@@ -92,4 +93,5 @@ namespace Jde::ApplicationServer
 			DBG( "({})Could not find web session."sv, sessionId );
 	}
 #undef var
+#undef _logLevel
 }

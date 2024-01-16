@@ -1,4 +1,4 @@
-#include "Listener.h"
+﻿#include "Listener.h"
 #include "../../Framework/source/um/UM.h"
 #include "WebServer.h"
 #include "LogClient.h"
@@ -18,7 +18,7 @@ namespace Jde{ α OSApp::ProductName()ι->sv{ return "AppServer"sv; } }
 
 namespace Jde::ApplicationServer
 {
-	α Startup( bool initialCall=true )noexcept->void;
+	α Startup()ι->void;
 }
 
 int main( int argc, char** argv )
@@ -40,7 +40,7 @@ int main( int argc, char** argv )
 
 namespace Jde
 {
-	α ApplicationServer::Startup( bool initialCall )noexcept->void
+	α ApplicationServer::Startup()ι->void
 	{
 		try
 		{

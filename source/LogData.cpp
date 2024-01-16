@@ -69,7 +69,7 @@ namespace Jde::Logging
 			row >> applicationId >> applicationInstanceId >> dbLogLevelInt >> fileLogLevelInt;
 		};
 		while( !_dataSource )
-			sleep( 1 );
+			std::this_thread::sleep_for( 1s );
 		_dataSource->ExecuteProc( "log_application_instance_insert(?,?,?)", {applicationName, hostName, processId}, fnctn );
 
 		ELogLevel dbLogLevel = dbLogLevelInt.has_value() ? (ELogLevel)dbLogLevelInt.value() : ELogLevel::Information;

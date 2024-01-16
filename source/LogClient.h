@@ -17,7 +17,7 @@ namespace Jde::Logging
 		α Log( const MessageBase& messageBase )ι->void override;
 		α Log( const MessageBase& messageBase, vector<string>& values )ι->void override;
 
-		α Write( Logging::Proto::ToServer&& m )ι->void override{ CRITICAL("Tried to write on local LogClient"); }
+		α Write( Logging::Proto::ToServer&& )ι->void override{ CRITICAL("Tried to write on local LogClient"); }
 		α WebSubscribe( ELogLevel level )ι->void override{ _webLevel = level; }
 
 		const ApplicationPK _applicationId;
