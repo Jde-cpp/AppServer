@@ -7,7 +7,7 @@
 #define _logClient Logging::LogClient::Instance()
 namespace Jde::ApplicationServer::Web
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "app.web" );
+	static sp<LogTag> _logTag{ Logging::Tag("app.socket") };
 	WebServer _instance{ Settings::Get<PortType>("web/socketPort").value_or(1967) };
 	α Server()ι->WebServer&{ return _instance; }
 
@@ -49,7 +49,7 @@ namespace Jde::ApplicationServer::Web
 
 	α WebServer::AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK /*instanceId*/, ELogLevel level )ι->bool{
 		bool newSubscription;
-		uint minLevel = (uint)ELogLevel::None;
+		uint minLevel = (uint)ELogLevel::Critical;
 		{
 			unique_lock l{ _logSubscriptionMutex };
 			auto& sessions = _logSubscriptions.try_emplace( applicationId, flat_map<WebSocket::SessionPK,ELogLevel>{} ).first->second;
@@ -62,7 +62,7 @@ namespace Jde::ApplicationServer::Web
 		return newSubscription;
 	}
 	α WebServer::RemoveLogSubscription( WebSocket::SessionPK sessionId, ApplicationInstancePK instanceId )ι->void{
-		uint minLevel = (uint)ELogLevel::None;
+		uint minLevel = (uint)ELogLevel::Critical;
 		{
 			unique_lock l{ _logSubscriptionMutex };
 			auto pSubscriptions = _logSubscriptions.find( instanceId );
@@ -85,7 +85,7 @@ namespace Jde::ApplicationServer::Web
 
 	α WebServer::PushMessage( LogPK id, ApplicationPK applicationId, ApplicationInstancePK instanceId, TimePoint time, ELogLevel level, uint32 messageId, uint32 fileId, uint32 functionId, uint16 lineNumber, uint32 userId, uint threadId, vector<string>&& variables )ι->ELogLevel{
 		unique_lock l{ _logSubscriptionMutex };
-		auto minLevel{ ELogLevel::None };
+		auto minLevel{ ELogLevel::Critical };
 		auto pSessions = _logSubscriptions.find( applicationId );
 		if( pSessions==_logSubscriptions.end() )
 			return minLevel;
@@ -94,7 +94,7 @@ namespace Jde::ApplicationServer::Web
 		for( var& [sessionId,sessionLevel] : pSessions->second ){
 			if( level<sessionLevel )
 				continue;
-			minLevel = (ELogLevel)std::min( (uint)minLevel, (uint)sessionLevel );
+			minLevel = (ELogLevel)std::min( (int8)minLevel, (int8)sessionLevel );
 			shared_lock l3{ _sessionMutex };
 			if( auto pSession = _sessions.find( sessionId ); pSession!=_sessions.end() ){
 				sp<IO::Sockets::ISession> p = pSession->second;
@@ -135,9 +135,13 @@ namespace Jde::ApplicationServer::Web
 		const size_t size = t.ByteSizeLong();
 		auto pBuffer = make_shared<std::vector<char>>( size );
 		t.SerializeToArray( pBuffer->data(), (int)pBuffer->size() );
-		var pKeyValue = _sessions.find( id ); RETURN_IF( pKeyValue==_sessions.end(), "({})Could not find session for outgoing transmission.", id );
-		auto p = dynamic_pointer_cast<MySession>( pKeyValue->second );
-		p->Write( t );
+		var pKeyValue = _sessions.find( id ); 
+		if( pKeyValue!=_sessions.end() ){
+			auto p = dynamic_pointer_cast<MySession>( pKeyValue->second );
+			p->Write( t );
+		}
+		else
+			TRACE( "({})Could not find session for outgoing transmission.", id );
 	}
 
 	BeastException::BeastException( sv what, beast::error_code&& ec, ELogLevel level, const source_location& sl )ι:
@@ -145,10 +149,10 @@ namespace Jde::ApplicationServer::Web
 		ErrorCode{ move(ec) }
 	{}
 
-	α BeastException::LogCode( const beast::error_code& ec, ELogLevel level, sv what )ι->void{
+	α BeastException::LogCode( const beast::error_code& ec, ELogLevel level, sv what, SL sl )ι->void{
 		if( BeastException::IsTruncated(ec) || ec.value()==125 || ec.value()==995 || what=="~DoSession" )
-			LOGL( level, "{} - ({}){}"sv, what, ec.value(), ec.message() );
+			LOGSL( level, AppTag(), "{} - ({}){}", what, ec.value(), ec.message() );
 		else
-			WARN( "{} - ({}){}"sv, what, ec.value(), ec.message() );
+			LOGSL( ELogLevel::Warning, AppTag(), "{} - ({}){}", what, ec.value(), ec.message() );
 	}
 }

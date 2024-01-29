@@ -10,18 +10,18 @@ namespace Jde::Logging
 		α Close()ι->void override{};
 		α ApplicationId()ι->ApplicationPK override{return _applicationId;}
 		Ω CreateInstance()ε->void;
-		α FetchSessionInfo( SessionPK sessionId )ι->SessionInfoAwait override{CRITICAL("calling GetSessionInfo from server."); return SessionInfoAwait{sessionId}; }
+		α FetchSessionInfo( SessionPK sessionId )ι->SessionInfoAwait override{CRITICALT(AppTag(), "calling GetSessionInfo from server."); return SessionInfoAwait{sessionId}; }
 		α InstanceId()ι->ApplicationInstancePK override{return _instanceId;}
 		α IsLocal()ι->bool override{ return true; }
 		α Log( Messages::ServerMessage& message )ι->void override;
 		α Log( const MessageBase& messageBase )ι->void override;
 		α Log( const MessageBase& messageBase, vector<string>& values )ι->void override;
 
-		α Write( Logging::Proto::ToServer&& )ι->void override{ CRITICAL("Tried to write on local LogClient"); }
+		α Write( Logging::Proto::ToServer&& )ι->void override{ CRITICALT(AppTag(), "Tried to write on local LogClient"); }
 		α WebSubscribe( ELogLevel level )ι->void override{ _webLevel = level; }
 
 		const ApplicationPK _applicationId;
 	private:
-		ELogLevel _webLevel{ELogLevel::None};
+		ELogLevel _webLevel{ELogLevel::Critical};
 	};
 }

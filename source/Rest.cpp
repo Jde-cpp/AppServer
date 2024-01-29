@@ -8,12 +8,11 @@
 
 
 #define var const auto
-namespace Jde::ApplicationServer
-{
+namespace Jde::ApplicationServer{
+	sp<LogTag> _logTag = Logging::Tag( "app.rest" );
+
 	sp<TListener<RestSession>> _restListener{ ms<TListener<RestSession>>(Settings::Get<PortType>("web/restPort").value_or(1999)) };
 	α Listener()ι->TListener<RestSession>&{return *_restListener;}
-
-	//α GoogleLogin( Request&& req )ι->Task;
 
 	α SendValue( string&& value, Request&& req )ι->void{
 		ISession::Send( format("{{\"value\": \"{}\"}}", value), move(req) );

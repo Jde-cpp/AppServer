@@ -54,3 +54,4 @@ tests/.vscode/tasks.json
 tests/.vscode/settings.json
 
 *.pdb
+*.aps

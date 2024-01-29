@@ -18,7 +18,14 @@
 	},
 	"logging":
 	{
-		"tags": [ "app-requests", "threads", "users", "_locks", "settings", "sql" ],
+		"tags": {
+			"Trace":["users", "settings","app.session.receive", "net"],
+			"Debug":["sql"],
+			"Information":["app", "app.log", "app.session", "app.rest", "app.socket", "threads", "locks", "settings", "ql", "sockets", "io", "logServer", "xml", "status", "cache", "alarm", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
+			"Warning":[],
+			"Error":[],
+			"Critical":[]
+		},
 		"console":{},
 		"file":{ "path": ".." },
 		"breakLevel": "Warning"

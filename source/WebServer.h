@@ -38,7 +38,7 @@ namespace Jde::ApplicationServer::Web
 	{
 		BeastException( sv what, beast::error_code&& ec, ELogLevel level=ELogLevel::Trace, SRCE )noexcept;
 		Ω IsTruncated( const beast::error_code& ec )noexcept{ return ec == net::ssl::error::stream_truncated; }
-		Ω LogCode( const boost::system::error_code& ec, ELogLevel level, sv what )noexcept->void;
+		Ω LogCode( const boost::system::error_code& ec, ELogLevel level, sv what, SRCE )noexcept->void;
 
 		using T=BeastException;
 		α Clone()noexcept->sp<IException> override{ return ms<T>(move(*this)); }\

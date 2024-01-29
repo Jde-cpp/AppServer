@@ -31,8 +31,11 @@ namespace Jde::GoogleLogin
 				{
 					foundKey = key;
 #ifndef NDEBUG
-					if( var f = IApplication::ApplicationDataFolder()/(keyString+".json"); !fs::exists(f) )
-						co_await IO::Write( f, ms<string>(foundKey.dump()) );
+					try{
+						if( auto f = IApplication::ApplicationDataFolder()/(keyString+".json"); !fs::exists(f) )
+							(co_await IO::Write( move(f), ms<string>(foundKey.dump()) )).CheckError();
+					}catch( const IOException& )
+					{}
 #endif
 					break;
 				}
@@ -57,9 +60,8 @@ namespace Jde::GoogleLogin
 #endif
 			y = mu<Google::TokenInfo>( move(token) );
 		}
-		catch( const nlohmann::json::exception& e )
-		{
-			CRITICAL( "json exception - {}"sv, e.what() );
+		catch( const nlohmann::json::exception& e ){
+			CRITICALT( AppTag(), "json exception - {}", e.what() );
 			y = mu<Exception>( "Authentication Failed" );
 		}
 		catch( Exception& e )

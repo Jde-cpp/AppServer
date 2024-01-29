@@ -7,14 +7,15 @@
 #include <set>
 #include <shared_mutex>
 #include <unordered_map>
+#include "TypeDefs.h"
 
+DISABLE_WARNINGS
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+ENABLE_WARNINGS
 
 #include "../../Public/src/web/Exports.h"
-#include "TypeDefs.h"
-
 #include "types/proto/AppFromServer.pb.h"
 #include "types/proto/AppFromClient.pb.h"
 #include <jde/Log.h>

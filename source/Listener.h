@@ -2,21 +2,21 @@
 #include "WebServer.h"
 #include "../../Public/src/web/ProtoServer.h"
 
+#define _logTag SessionTag()
+#define var const auto
 
 namespace Jde::ApplicationServer
 {
-
 	using Logging::Proto::ToServer;
 	using Logging::Proto::FromServer;
-	namespace Web
-	{
+	namespace Web{
 		struct MySession;
 		namespace FromServer{ class Status; }
 	}
 	namespace basio=boost::asio;
+	α SessionTag()ι->sp<LogTag>;
 
-	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>
-	{
+	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>{
 		Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι;
 		~Session(){DBG("({})~Session - {}", Id, InstancePtr ? InstancePtr->application() : "nullptr");}
 		α OnReceive( ToServer&& pValue )ι->void override;
@@ -42,8 +42,8 @@ namespace Jde::ApplicationServer
 		Τ using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
 		Ŧ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )ι->void;
 		ELogLevel _dbLevel;
-		atomic<ELogLevel> _webLevel{ELogLevel::None};
-		atomic<ELogLevel> _fileLogLevel{ELogLevel::None};
+		atomic<ELogLevel> _webLevel{ELogLevel::Critical};
+		atomic<ELogLevel> _fileLogLevel{ELogLevel::Critical};
 		using RequestId=uint;
 		atomic<RequestId> _requestId{0};
 		flat_map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
@@ -52,12 +52,8 @@ namespace Jde::ApplicationServer
 	struct TcpListener final : public IO::Sockets::ProtoServer
 	{
 		TcpListener()ε;
-
-		static TcpListener& GetInstance()ι;
-
-
+		Ω GetInstance()ι->TcpListener&;
 		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->up<IO::Sockets::ProtoSession> override;
-
 		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )ι->uint;
 		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void;
 		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )ι->void;
@@ -69,11 +65,8 @@ namespace Jde::ApplicationServer
 	private:
 		α FindApplication( ApplicationPK applicationId )Ι->sp<Session>;
 		α FindSessionByInstance( ApplicationInstancePK id )Ι->sp<Session>;
-
 	};
 
-#define var const auto
-#define _logLevel LogLevel()
 	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )ι->void
 	{
 		WebRequestId webRequestId;
@@ -81,7 +74,11 @@ namespace Jde::ApplicationServer
 		IO::Sockets::SessionPK sessionId;
 		{
 			lg l{_customWebRequestsMutex};
-			var pRequest = _customWebRequests.find( reqId ); RETURN_IF( pRequest==_customWebRequests.end(), "Could not fine request {}", reqId );
+			var pRequest = _customWebRequests.find( reqId ); 
+			if( pRequest==_customWebRequests.end() ){
+				WARN( "Could not find request {}", reqId );
+				return;
+			}
 			webRequestId = get<0>( pRequest->second );
 			sessionId = get<1>( pRequest->second );
 			if( erase )
@@ -93,5 +90,5 @@ namespace Jde::ApplicationServer
 			DBG( "({})Could not find web session."sv, sessionId );
 	}
 #undef var
-#undef _logLevel
+#undef _logTag
 }

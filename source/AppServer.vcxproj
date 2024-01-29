@@ -134,6 +134,7 @@
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4068;4251;4275;4297;5105;5104;4127;5054</DisableSpecificWarnings>
     </ClCompile>
     <ClInclude Include="LogData.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ResultsMessage.h" />
     <ClInclude Include="Sender.h" />
     <ClInclude Include="TypeDefs.h" />
@@ -162,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="WebServer.cpp" />
     <ClCompile Include="WebSession.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AppServer.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

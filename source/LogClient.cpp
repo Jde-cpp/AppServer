@@ -7,14 +7,14 @@
 #define var const auto
 namespace Jde::Logging
 {
-	α LogClient::CreateInstance()noexcept(false)->void
+	α LogClient::CreateInstance()ε->void
 	{
 		var [applicationId, applicationInstanceId, dbLogLevel, fileLogLevel] = Data::AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
 		auto p = ms<LogClient>( applicationId, applicationInstanceId, dbLogLevel );
 		Server::Set( move(p) );
 	}
 
-	LogClient::LogClient( ApplicationPK id, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )noexcept(false):
+	LogClient::LogClient( ApplicationPK id, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )ε:
 		IServerSink{ Data::LoadMessageIds() },
 		_applicationId{id}
 	{
@@ -31,17 +31,17 @@ namespace Jde::Logging
 
 
 	}
-	α LogClient::Log( Messages::ServerMessage& message )noexcept->void
+	α LogClient::Log( Messages::ServerMessage& message )ι->void
 	{
 		Log( dynamic_cast<MessageBase&>(message), message.Variables );
 	}
-	α LogClient::Log( const MessageBase& msg )noexcept->void
+	α LogClient::Log( const MessageBase& msg )ι->void
 	{
 		vector<string> v;
 		Log( msg, v );
 	}
 	mutex _messageMutex;//if 1st function save, 2nd will skip to insert and get fk error.
-	α LogClient::Log( const MessageBase& msg, vector<string>& values )noexcept->void
+	α LogClient::Log( const MessageBase& msg, vector<string>& values )ι->void
 	{
 #ifndef TESTING
 		if( msg.Level>=_webLevel )
@@ -60,13 +60,11 @@ namespace Jde::Logging
 		}
 		catch( ... )
 		{
-			try
-			{
+			try{
 				std::rethrow_exception( std::current_exception() );
 			}
-			catch( const std::exception& e )
-			{
-				CRITICAL( "{}", e.what() );
+			catch( const std::exception& e ){
+				CRITICALT( AppTag(), "{}", e.what() );
 			}
 		}
 	}

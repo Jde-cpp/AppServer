@@ -14,7 +14,7 @@
 
 namespace Jde::ApplicationServer::Web
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "app-requests" );
+	static sp<LogTag> _logTag{ Logging::Tag("app.session") };
 
 	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε:
 		base( server, id, move(socket) )
@@ -22,18 +22,18 @@ namespace Jde::ApplicationServer::Web
 
 	MySession::~MySession()
 	{
-		LOG( "({})~MySession()"sv, Id );
+		TRACE( "({})~MySession()"sv, Id );
 	}
 
 	α MySession::Run()ι->void
 	{
 		base::Run();
-		LOG( "({})MySession::Run()"sv, Id );
+		TRACE( "({})MySession::Run()"sv, Id );
 //		Server().UpdateStatus( Server() );
 	}
 	α MySession::OnAccept( beast::error_code ec )ι->void
 	{
-		LOG( "({})MySession::OnAccept()"sv, Id );
+		TRACE( "({})MySession::OnAccept()"sv, Id );
 		auto pAck{ mu<Jde::Web::FromServer::Acknowledgement>() }; pAck->set_id( (uint32)Id );
 		FromServer::Transmission t; t.add_messages()->set_allocated_acknowledgement( pAck.release() );
 		Write( t );
@@ -66,12 +66,12 @@ namespace Jde::ApplicationServer::Web
 				else if( request.type()==(FromClient::ERequest::Statuses|FromClient::ERequest::Negate) )
 				{
 					Server().RemoveStatusSession( Id );
-					LOGT( Web::_logLevel, "({})Remove status subscription."sv, Id );
+					TRACE( "({})Remove status subscription.", Id );
 				}
 				else if( request.type() == FromClient::ERequest::Applications )
 				{
 					auto pApplications = Logging::Data::LoadApplications();
-					LOGT( Web::_logLevel, "({})Writing Applications count='{}'"sv, Id, pApplications->values_size() );
+					TRACE( "({})Writing Applications count='{}'", Id, pApplications->values_size() );
 					FromServer::Transmission transmission; transmission.add_messages()->set_allocated_applications( pApplications.release() );
 					Write( transmission );
 				}
@@ -94,14 +94,14 @@ namespace Jde::ApplicationServer::Web
 			else if( m.has_log_values() ){
 				var& values = m.log_values();
 				if( values.db_value()<ELogLevelStrings.size() && values.client_value()<ELogLevelStrings.size() )
-					LOGT( Web::_logLevel, "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instance_id(), ELogLevelStrings[values.db_value()], ELogLevelStrings[values.client_value()] );
+					TRACE( "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instance_id(), ELogLevelStrings[values.db_value()], ELogLevelStrings[values.client_value()] );
 				Logging::Proto::LogLevels levels;
 				_listener.SetLogLevel((ApplicationInstancePK)values.instance_id(), (ELogLevel)values.db_value(), (ELogLevel)values.client_value() );
 			}
 			else if( m.has_request_logs() ){
 				var value = m.request_logs();
 				if( value.value()<ELogLevelStrings.size() )
-					LOGT( Web::_logLevel, "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.application_id(), value.instance_id(), ELogLevelStrings[value.value()] );
+					TRACE( "({})AddLogSubscription application='{}' instance='{}', level='{}'"sv, Id, value.application_id(), value.instance_id(), ELogLevelStrings[value.value()] );
 				if( Server().AddLogSubscription(Id, (ApplicationPK)value.application_id(), (ApplicationInstancePK)value.instance_id(), (ELogLevel)value.value()) )//if changing level, don't want to send old logs
 					std::thread{ [self=dynamic_pointer_cast<MySession>(shared_from_this()),value]()
 					{
@@ -110,7 +110,7 @@ namespace Jde::ApplicationServer::Web
 			}
 			else if( m.has_custom() ){
 				auto pCustom = m.mutable_custom();
-				LOGT( Web::_logLevel, "({})received From Web custom reqId='{}' for application='{}'"sv, Id, pCustom->request_id(), pCustom->application_id() );
+				TRACE( "({})received From Web custom reqId='{}' for application='{}'"sv, Id, pCustom->request_id(), pCustom->application_id() );
 				try
 				{
 					_listener.WriteCustom( pCustom->application_id(), pCustom->request_id(), move(*up<string>(pCustom->release_message())) );
@@ -162,7 +162,7 @@ namespace Jde::ApplicationServer::Web
 		FromServer::Transmission t;
 		t.add_messages()->set_allocated_statuses( pStatuses );
 		Try( [&t,this]{Write(t);} );
-		LOG( "({})Add status subscription."sv, Id );
+		TRACE( "({})Add status subscription."sv, Id );
 		Server().AddStatusSession( Id );
 	}
 	α MySession::SendLogs( sp<MySession> self, ApplicationPK applicationId, ApplicationInstancePK instanceId, ELogLevel level, time_t start, uint limit )ι->void{
@@ -171,7 +171,7 @@ namespace Jde::ApplicationServer::Web
 		pTraces->add_values();//Signify end.
 
 		pTraces->set_application_id( (google::protobuf::uint32)applicationId );
-		LOG( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
+		TRACE( "({})MySession::SendLogs({}, {}) write {}"sv, self->Id, applicationId, (uint)level, pTraces->values_size()-1 );
 		FromServer::Transmission transmission;
 		transmission.add_messages()->set_allocated_traces( pTraces.release() );
 		self->Write( transmission );
@@ -235,7 +235,7 @@ namespace Jde::ApplicationServer::Web
 	}
 
 	α MySession::WriteError( string&& msg, uint32 requestId )ι->Task{
-		LOG( "({})WriteError( '{}', '{}' )"sv, Id, requestId, msg );
+		TRACE( "({})WriteError( '{}', '{}' )"sv, Id, requestId, msg );
 		co_await WebServer::CoSend( ToException(move(msg), requestId), requestId );
 	}
 	α MySession::Write( const FromServer::Transmission& t  )ε->void{

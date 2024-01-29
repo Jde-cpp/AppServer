@@ -12,8 +12,8 @@ namespace Jde::ApplicationServer
 	{
 		ApplicationStrings(  )
 		{}
-		α Add( const Messages::Message& message )noexcept->void;
-		α Get( Logging::EFields field, Logging::MessageBase::ID id )noexcept->sp<string>;
+		α Add( const Messages::Message& message )ι->void;
+		α Get( Logging::EFields field, Logging::MessageBase::ID id )ι->sp<string>;
 
 		UnorderedMap<uint32,string> Files;
 		UnorderedMap<uint32,string> Functions;
@@ -24,13 +24,13 @@ namespace Jde::ApplicationServer
 }
 namespace Jde::ApplicationServer::Cache
 {
-	α Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )->void;
-	α AddSession( uint id, sp<Messages::Application> pApplication )->void;
-	α AddThread( uint sessionId, uint threadId, sv thread )->void;
-	α AddMessageStrings( uint sessionId, const Messages::Message& message )->void;
-	α ForEachApplication( std::function<void(const uint&,const Messages::Application&)> func )->uint;
-	α FetchStrings( uint sessionId, const Messages::RequestStrings& request )->void;
-	α Load()noexcept(false)->ApplicationStrings&;
-	α AppStrings()noexcept->ApplicationStrings&;
-	α Messages()noexcept->const UnorderedSet<uint32>&;
+	α Add( ApplicationPK applicationId, Logging::Proto::EFields field, uint32 id, sv value )ι->void;
+	α AddSession( uint id, sp<Messages::Application> pApplication )ι->void;
+	α AddThread( uint sessionId, uint threadId, sv thread )ι->void;
+	α AddMessageStrings( uint sessionId, const Messages::Message& message )ι->void;
+	α ForEachApplication( std::function<void(const uint&,const Messages::Application&)> func )ι->uint;
+	α FetchStrings( uint sessionId, const Messages::RequestStrings& request )ι->void;
+	α Load()ε->ApplicationStrings&;
+	α AppStrings()ι->ApplicationStrings&;
+	α Messages()ι->const UnorderedSet<uint32>&;
 }

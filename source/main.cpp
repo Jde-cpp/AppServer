@@ -59,7 +59,7 @@ namespace Jde
 			std::terminate();
 		}
 		Listener().DoAccept();
-		DBG( "--AppServer Started.--" );
+		INFOT( AppTag(), "--AppServer Started.--" );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}
 }
