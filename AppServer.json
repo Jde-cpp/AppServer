@@ -21,7 +21,7 @@
 		"tags": {
 			"Trace":["users", "settings","app.session.receive", "net"],
 			"Debug":["sql"],
-			"Information":["app", "app.log", "app.session", "app.rest", "app.socket", "threads", "locks", "settings", "ql", "sockets", "io", "logServer", "xml", "status", "cache", "alarm", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
+			"Information":["alarm", "app", "app.log", "app.session", "app.rest", "app.socket", "threads", "locks", "settings", "ql", "sockets", "io", "xml", "status", "cache", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
 			"Warning":[],
 			"Error":[],
 			"Critical":[]

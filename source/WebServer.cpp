@@ -38,7 +38,7 @@ namespace Jde::ApplicationServer::Web
 		status.set_host_name( IApplication::HostName() );
 		status.set_start_time( (google::protobuf::uint32)Clock::to_time_t(IApplication::StartTime()) );
 		status.set_db_log_level( (Web::FromServer::ELogLevel)Logging::ServerLevel() );
-		status.set_file_log_level( (Web::FromServer::ELogLevel)Logging::Default().level() );
+		status.set_file_log_level( (Web::FromServer::ELogLevel)Logging::Default()->level() );
 		status.set_memory( IApplication::MemorySize() );
 		status.add_values( fmt::format("Web Connections:  {}", SessionCount()) );
 	}

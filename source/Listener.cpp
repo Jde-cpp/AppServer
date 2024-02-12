@@ -81,7 +81,7 @@ namespace Jde::ApplicationServer{
 
 	α TcpListener::SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void{
 		if( instanceId==Logging::Server::InstanceId() ){
-			Logging::Default().set_level( (spdlog::level::level_enum)clientLevel );
+			Logging::Default()->set_level( (spdlog::level::level_enum)clientLevel );
 			Logging::Server::SetLevel( dbLevel );
 			Web::Server().UpdateStatus( Web::Server() );
 		}
