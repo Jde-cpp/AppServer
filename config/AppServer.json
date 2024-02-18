@@ -1,0 +1,34 @@
+{
+	"GoogleAuthClientId":"445012155442-1v8ntaa22konm0boge6hj5mfs15o9lvd.apps.googleusercontent.com",
+	"web":{
+		"socketPort": 1967,
+		"restPort": 1999
+	},
+	"db":{
+		"driver": "$(JDE_DB_DRIVER)",
+		"driverx": "libJde.MySql.so",
+		"driver2": "Jde.DB.Odbc.dll",
+		"connectionString": "$(Jde_App_Connection)",
+		"createSchema":  true,
+		"meta": "meta.json"
+	},
+	"logging":{
+		"tags": {
+			"Trace":[],
+			"Debug":[],
+			"Information":["sql","users", "settings","app.session.receive", "net","alarm", "app", "app.log", "app.session", "app.rest", "app.socket", "threads", "locks", "settings", "ql", "sockets", "io", "xml", "status", "cache", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
+			"Warning":[],
+			"Error":[],
+			"Critical":[]
+		},
+		"console":{},
+		"file":{ "path": "$(ProgramData)/Jde-cpp/AppServer/logs", "md": false },
+		"breakLevel": "Warning"
+	},
+	"net":{
+		"ip": "v6"
+	},
+	"testing":{
+		"tests":  "*"
+	}
+}

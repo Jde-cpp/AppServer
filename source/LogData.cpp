@@ -24,22 +24,19 @@ namespace Jde::Logging
 	sp<DB::DBQueue> _pDbQueue;
 	sp<LogTag> _logTag = Logging::Tag( "app.log" );
 	α Configure()ε->void{
-		var p = Settings::Env( "db/meta" );
-		if( p ){
+		if( auto p = Settings::Get<fs::path>( "db/meta" ); p ){
 			INFO( "db meta='{}'"sv, *p );
 			json j;
-			try
-			{
+			try{
+				if( !fs::exists(*p) )
+					*p = _debug && _msvc ? "../config/meta.json" : IApplication::ApplicationDataFolder() / *p;//TODO combine with UM.cpp and move somewhere else.
 				j = json::parse( IO::FileUtilities::Load(*p) );
 			}
-			catch( const nlohmann::json::exception& e )
-			{
-				THROW( "Error reading {} - {}", *p, e.what() );
+			catch( const nlohmann::json::exception& e ){
+				throw IOException( SRCE_CUR, *p, ELogLevel::Critical, "Error reading '{}'", e.what() );
 			}
 			if( _dataSource && Settings::Get<bool>("db/createSchema").value_or(true) )
-			{
 				_dataSource->SchemaProc()->CreateSchema( j, fs::path{*p}.parent_path() );
-			}
 		}
 		else
 			INFO( "db/meta not specified" );
