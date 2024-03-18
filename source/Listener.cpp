@@ -224,9 +224,9 @@ namespace Jde::ApplicationServer{
 					vector<string> variables; variables.reserve( message.variables_size() );
 					for( int i2=0; i2<message.variables_size(); ++i2 )
 						variables.push_back( move(*message.mutable_variables(i2)) );
-					var sendWeb = level>=_webLevelUint;
+					var sendWeb = _webLevel.load()<(ELogLevel)level;
 					const Jde::TimePoint time = TimePoint{} + std::chrono::seconds{ message.time().seconds() } + std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::nanoseconds{ message.time().nanos() });
-					if( level>=(uint)_dbLevel )
+					if( _dbLevel<(ELogLevel)level )
 						Logging::Data::PushMessage( ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), sendWeb ? variables : move(variables) );
 					if( sendWeb )
 						_webLevel = Web::Server().PushMessage( 0, ApplicationId, InstanceId, time, (ELogLevel)message.level(), message.messageid(), message.fileid(), message.functionid(), message.linenumber(), message.userid(), message.threadid(), move(variables) );
@@ -272,7 +272,10 @@ namespace Jde::ApplicationServer{
 					TRACE( "[{}]SessionInfo={}", Id, pMessage->session_info().session_id() );
 					SendSessionInfo( pMessage->session_info().session_id() );
 					break;}
+				case VALUE_NOT_SET:
+					throw Exception( "Value not set." );
 				}
+
 				if( cMessage )
 					TRACEX( "[{}]Received messages count='{}'", Id, cMessage );
 				if( cString )

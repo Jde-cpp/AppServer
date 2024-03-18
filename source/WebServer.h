@@ -36,15 +36,15 @@ namespace Jde::ApplicationServer::Web
 	namespace net = boost::asio;
 	struct BeastException : public IException
 	{
-		BeastException( sv what, beast::error_code&& ec, ELogLevel level=ELogLevel::Trace, SRCE )noexcept;
-		Ω IsTruncated( const beast::error_code& ec )noexcept{ return ec == net::ssl::error::stream_truncated; }
-		Ω LogCode( const boost::system::error_code& ec, ELogLevel level, sv what, SRCE )noexcept->void;
+		BeastException( sv what, beast::error_code&& ec, ELogLevel level=ELogLevel::Trace, SRCE )ι;
+		Ω IsTruncated( const beast::error_code& ec )ι{ return ec == net::ssl::error::stream_truncated; }
+		Ω LogCode( const boost::system::error_code& ec, ELogLevel level, sv what, SRCE )ι->void;
 
 		using T=BeastException;
-		α Clone()noexcept->sp<IException> override{ return ms<T>(move(*this)); }\
-			α Move()noexcept->up<IException> override{ return mu<T>(move(*this)); }\
-			α Ptr()->std::exception_ptr override{ return Jde::make_exception_ptr(move(*this)); }\
-			[[noreturn]] α Throw()->void override{ throw move(*this); }
+		α Clone()ι->sp<IException> override{ return ms<T>(move(*this)); }
+		α Move()ι->up<IException> override{ return mu<T>(move(*this)); }
+		α Ptr()ι->std::exception_ptr override{ return Jde::make_exception_ptr(move(*this)); }
+		[[noreturn]] α Throw()ε->void override{ throw move(*this); }
 		beast::error_code ErrorCode;
 	};
 

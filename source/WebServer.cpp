@@ -145,8 +145,8 @@ namespace Jde::ApplicationServer::Web
 	}
 
 	BeastException::BeastException( sv what, beast::error_code&& ec, ELogLevel level, const source_location& sl )ι:
-		IException{ {std::to_string(ec.value()), ec.message()}, format("{} returned ({{}}){{}}", what), sl, (uint)ec.value(), level },
-		ErrorCode{ move(ec) }
+		IException{ {std::to_string(ec.value()), ec.message()}, Jde::format("{} returned ({{}}){{}}", what), sl, (uint)ec.value(), level },
+		ErrorCode{ move(static_cast<std::error_code>(ec)) }
 	{}
 
 	α BeastException::LogCode( const beast::error_code& ec, ELogLevel level, sv what, SL sl )ι->void{

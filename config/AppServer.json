@@ -5,12 +5,10 @@
 		"restPort": 1999
 	},
 	"db":{
-		"driver": "$(JDE_DB_DRIVER)",
-		"driverx": "libJde.MySql.so",
-		"driver2": "Jde.DB.Odbc.dll",
+		"driver": "./libJde.MySql.so",
 		"connectionString": "$(Jde_App_Connection)",
 		"createSchema":  true,
-		"meta": "meta.json"
+		"meta": "../config/AppServerMeta.json"
 	},
 	"logging":{
 		"tags": {

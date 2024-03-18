@@ -1,5 +1,6 @@
 ﻿#include "WebSession.h"
 #include <boost/algorithm/hex.hpp>
+#include <jde/crypto/OpenSsl.h>
 #include "../../Framework/source/DateTime.h"
 #include "../../Framework/source/db/GraphQL.h"
 #include "../../Google/source/TokenInfo.h"
@@ -76,7 +77,7 @@ namespace Jde::ApplicationServer::Web
 					Write( transmission );
 				}
 				else
-					WARN( "unsupported request '{}'", request.type() );
+					WARN( "unsupported request '{}'", (int)request.type() );
 			}
 			else if( m.has_request_app() ){
 				var& request = m.request_app();
@@ -89,7 +90,7 @@ namespace Jde::ApplicationServer::Web
 				else if( value == FromClient::ERequest::Power )
 					WARN( "unsupported request Power" );
 				else
-					WARN( "unsupported request '{}'", request.type() );
+					WARN( "unsupported request '{}'", (int)request.type() );
 			}
 			else if( m.has_log_values() ){
 				var& values = m.log_values();
@@ -302,7 +303,7 @@ namespace Jde::ApplicationServer::Web
 			var exponent = foundKey["e"].get<string>();
 			var modulus = foundKey["n"].get<string>();
 			//var token = Ssl::Get<Google::TokenInfo>( "oauth2.googleapis.com", format("/tokeninfo?id_token={}"sv, credential) );
-			Ssl::Verify( Ssl::Decode64<vector<unsigned char>>(modulus, true), Ssl::Decode64<vector<unsigned char>>(exponent, true), string{parts[0]}+'.'+string{parts[1]}, Ssl::Decode64(string{parts[2]}, true) );
+			Crypto::Verify( Ssl::Decode64<vector<unsigned char>>(modulus, true), Ssl::Decode64<vector<unsigned char>>(exponent, true), string{parts[0]}+'.'+string{parts[1]}, Ssl::Decode64(string{parts[2]}, true) );
 			THROW_IF(token.Aud != Settings::Get<string>("GoogleAuthClientId"), "Invalid client id");
 			THROW_IF(token.Iss != "accounts.google.com" && token.Iss != "https://accounts.google.com", "Invalid iss");
 			var expiration = Clock::from_time_t(token.Expiration);
@@ -317,7 +318,9 @@ namespace Jde::ApplicationServer::Web
 			Name = token.Name;
 			PictureUrl = token.PictureUrl;
 			Expiration = expiration;
-			var p = ( co_await DB::ScalerCo<UserPK>( "select id from um_users where name=? and authenticator_id=?", {Email,(uint)AuthType} ) ).UP<UserPK>();
+			//gcc internal compiler error when not separated.
+			auto task = DB::ScalerCo<UserPK>( "select id from um_users where name=? and authenticator_id=?", {Email,(uint)AuthType} );
+			var p = ( co_await task ).UP<UserPK>();
 			if( p )
 				UserId = *p;
 			if( !UserId )

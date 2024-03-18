@@ -41,7 +41,7 @@ namespace Jde::ApplicationServer
 		α OnDisconnect()ι->void override;
 		Τ using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
 		Ŧ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )ι->void;
-		ELogLevel _dbLevel;
+		ELogLevel _dbLevel{ELogLevel::Information};
 		atomic<ELogLevel> _webLevel{ELogLevel::Critical};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::Critical};
 		using RequestId=uint;

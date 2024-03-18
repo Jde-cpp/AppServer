@@ -15,7 +15,7 @@ namespace Jde::ApplicationServer{
 	α Listener()ι->TListener<RestSession>&{return *_restListener;}
 
 	α SendValue( string&& value, Request&& req )ι->void{
-		ISession::Send( format("{{\"value\": \"{}\"}}", value), move(req) );
+		ISession::Send( Jde::format("{{\"value\": \"{}\"}}", value), move(req) );
 	}
 
 	α RestSession::HandleRequest( string&& target, flat_map<string,string>&& /*params*/, Request&& req )ι->void{
@@ -25,7 +25,7 @@ namespace Jde::ApplicationServer{
 					SendValue( Settings::Getɛ<string>("GoogleAuthClientId"), move(req) );
 				else if( target=="/IotWebSocket" ){
 					var apps = ApplicationServer::TcpListener::GetInstance().FindApplications( "IotWebSocket" );
-					json japps{ json::array() };
+					json japps = json::array();
 					for( auto& p : apps ){
 						json a;
 						to_json( a, *p );
@@ -47,7 +47,7 @@ namespace Jde::ApplicationServer{
 			else if( req.Method() == boost::beast::http::verb::options )
 				SendOptions( move(req) );
 			else{
-				Send( http::status::bad_request, format("Only get/put verb is supported {}", string{to_string(req.Method())}), move(req) );
+				Send( http::status::bad_request, Jde::format("Only get/put verb is supported {}", string{to_string(req.Method())}), move(req) );
 			}
 		}
 		catch( const Exception& e ){
@@ -65,14 +65,16 @@ namespace Jde::ApplicationServer{
 			if( j->is_null() || !j->is_string() || j->get<string>().empty() )
 				throw RequestException<http::status::bad_request>();
 			var info = ( co_await GoogleLogin::Verify(j->get<string>()) ).UP<Google::TokenInfo>();
-			var p = ( co_await DB::ScalerCo<UserPK>( "select id from um_users where name=? and authenticator_id=?", {info->Email,(uint)Web::EAuthType::Google} ) ).UP<UserPK>();
+			//gcc internal compiler error when not separated.
+			auto task = DB::ScalerCo<UserPK>( "select id from um_users where name=? and authenticator_id=?", {info->Email,(uint)Web::EAuthType::Google} );
+			auto p = (co_await task).UP<UserPK>();
 			var userId = p ? *p : 0;
 			if( !userId )
 				throw RequestException<http::status::bad_request>{ SRCE_CUR, "'{}' not found.", info->Email };
 
 			var sessionInfo = ISession::AddSession( userId );
 
-			SendValue( format("{:x}", sessionInfo->session_id()), move(req) );
+			SendValue( Jde::format("{:x}", sessionInfo->session_id()), move(req) );
 		}
 		catch( const nlohmann::json::exception& e ){
 			DBG( "BadRequest({}) - {}", bodyv, e.what() );

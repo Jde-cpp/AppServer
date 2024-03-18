@@ -1,6 +1,6 @@
 drop procedure if exists log_application_instance_insert;
-go
-#DELIMITER $$
+
+DELIMITER $$;
 CREATE  PROCEDURE log_application_instance_insert( _application_name varchar(255), _host_name varchar(255), _process_id int unsigned )
 begin
 	declare _host_id int unsigned;
@@ -23,5 +23,5 @@ begin
 	select LAST_INSERT_ID() into _instance_id;
    select _application_id, _instance_id, _db_log_level, _file_log_level;
 end
-#$$
-#DELIMITER ;
+$$
+DELIMITER ;

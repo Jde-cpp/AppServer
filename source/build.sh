@@ -2,14 +2,15 @@
 type=${1:-asan}
 clean=${2:-0}
 all=${3:-1}
-export CXX=clang++;
+compiler=${4:-g++-13}
 
+BUILD=../../Public/build/so.sh;
 if [ $all -eq 1 ]; then
-	../../Framework/cmake/buildc.sh ../../Framework/source $type $clean || exit 1;
-	../../Framework/cmake/buildc.sh ../../MySql/source $type $clean || exit 1;
-	../../Framework/cmake/buildc.sh ../../Ssl/source $type $clean || exit 1;
-	../../Framework/cmake/buildc.sh ../../XZ/source $type $clean || exit 1;
-	../../Framework/cmake/buildc.sh ../../Public/src/web $type $clean || exit 1;
+	$BUILD ../../Framework/source $type $clean $compiler || exit 1;
+	$BUILD ../../MySql/source $type $clean $compiler || exit 1;
+	$BUILD ../../Ssl/source $type $clean $compiler || exit 1;
+	$BUILD ../../XZ/source $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/web $type $clean $compiler || exit 1;
 fi
 if [ ! -d .obj ];	then
 	mkdir .obj;
@@ -21,9 +22,9 @@ if [ ! -d $type ]; then
 	clean=1;
 fi;
 cd $type;
-if [ $clean -eq 1 ]; then
+if (( $clean == 1 )) || [ ! -f CMakeCache.txt ]; then
 	rm -f CMakeCache.txt;
-	cmake -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
+	cmake -DCMAKE_CXX_COMPILER=$compiler -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
 	make clean;
 fi
 make -j;

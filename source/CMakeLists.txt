@@ -1,35 +1,35 @@
 cmake_minimum_required(VERSION 3.16)
 project(Jde.AppServer)
-set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
-include(SetUpConfigurations)
+set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Public/build )
+include(common)
 #######################################################
 link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+link_directories( ${Protobuf_DIR}/../.. )
 find_package(ZLIB)
+get_cmake_property(_variableNames VARIABLES)
 
-add_executable( Jde.AppServer main.cpp Cache.cpp GoogleLogin.cpp Listener.cpp LogData.cpp LogClient.cpp
+add_executable( ${CMAKE_PROJECT_NAME} main.cpp Cache.cpp GoogleLogin.cpp Listener.cpp LogData.cpp LogClient.cpp
 			Rest.cpp WebServer.cpp WebSession.cpp
 			types/proto/AppFromClient.pb.cc types/proto/AppFromServer.pb.cc )
 #######################################################
 include_directories( "../../Public" )
-#target_link_libraries(Jde.AppServer)
-target_link_libraries( Jde.AppServer ZLIB::ZLIB )
-target_link_libraries(Jde.AppServer Threads::Threads)
-target_link_libraries(Jde.AppServer Jde)
-target_link_libraries(Jde.AppServer Jde.Web)
-target_link_libraries(Jde.AppServer Jde.Ssl)
-target_link_libraries(Jde.AppServer Jde.XZ)
-target_link_libraries(Jde.AppServer dl)
-target_link_libraries( Jde.AppServer lzma )
-target_link_libraries( Jde.AppServer crypto )
-target_link_libraries( Jde.AppServer ssl )
-target_link_libraries(Jde.AppServer protobuf)
-target_link_libraries(Jde.AppServer stdc++)
-#target_link_libraries(Jde.AppServer boost_system)
-#target_link_libraries(Jde.AppServer boost_thread)
-#target_link_libraries(Jde.AppServer mysqlcppconn8)
-#target_link_libraries(Jde.AppServer Jde.MySql)
+
+target_link_libraries( ${CMAKE_PROJECT_NAME} ZLIB::ZLIB )
+target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized libfmt.a )
+target_link_libraries( ${CMAKE_PROJECT_NAME} Threads::Threads )
+target_link_libraries( ${CMAKE_PROJECT_NAME} Jde )
+target_link_libraries( ${CMAKE_PROJECT_NAME} Jde.Crypto )
+target_link_libraries( ${CMAKE_PROJECT_NAME} Jde.Ssl )
+target_link_libraries( ${CMAKE_PROJECT_NAME} Jde.Web )
+target_link_libraries( ${CMAKE_PROJECT_NAME} Jde.XZ )
+target_link_libraries( ${CMAKE_PROJECT_NAME} dl )
+target_link_libraries( ${CMAKE_PROJECT_NAME} lzma )
+target_link_libraries( ${CMAKE_PROJECT_NAME} crypto )
+target_link_libraries( ${CMAKE_PROJECT_NAME} ssl )
+target_link_libraries( ${CMAKE_PROJECT_NAME} protobuf::libprotobuf )
+target_link_libraries( ${CMAKE_PROJECT_NAME} stdc++ )
 #######################################################
-target_precompile_headers(Jde.AppServer
+target_precompile_headers(${CMAKE_PROJECT_NAME}
 	PRIVATE
 		<filesystem>
 		<forward_list>

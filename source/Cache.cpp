@@ -47,7 +47,7 @@ namespace Jde::ApplicationServer
 		else if( field==Logging::Proto::EFields::FunctionId )
 			save = _applicationStrings.Functions.emplace( id, pValue ).second;
 		else
-			ERRT( AppTag(), "unknown field {}.", field );
+			ERRT( AppTag(), "unknown field {}.", (int)field );
 		if( save )
 			Logging::Data::SaveString( applicationId, field, id, pValue );
 	}
@@ -73,7 +73,7 @@ namespace Jde::ApplicationServer
 		else if( field==Logging::EFields::User )
 			pString = UsersPtr->Find( id );
 		else
-			WARNT( AppTag(), "requested string for field '{}'", field );
+			WARNT( AppTag(), "requested string for field '{}'", (int)field );
 		return pString;
 	}
 }

@@ -4,7 +4,7 @@
 	{
 		"label": "build",
 		"type": "shell",
-		"command": "tput reset;./build.sh asan 0 1",
+		"command": "tput reset;./build.sh asan 0 1 g++-13",
 		"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder}"],
 			"pattern": {
 				"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",

@@ -1,4 +1,5 @@
 ﻿#include "GoogleLogin.h"
+#include <jde/crypto/OpenSsl.h>
 
 #define var const auto
 namespace Jde::GoogleLogin
@@ -50,7 +51,7 @@ namespace Jde::GoogleLogin
 			var exponent = foundKey["e"].get<string>();
 			var modulus = foundKey["n"].get<string>();
 			//var token = Ssl::Get<Google::TokenInfo>( "oauth2.googleapis.com", format("/tokeninfo?id_token={}"sv, credential) );
-			Ssl::Verify( Ssl::Decode64<vector<unsigned char>>(modulus, true), Ssl::Decode64<vector<unsigned char>>(exponent, true), string{parts[0]}+'.'+string{parts[1]}, Ssl::Decode64(string{parts[2]}, true) );
+			Crypto::Verify( Ssl::Decode64<vector<unsigned char>>(modulus, true), Ssl::Decode64<vector<unsigned char>>(exponent, true), string{parts[0]}+'.'+string{parts[1]}, Ssl::Decode64(string{parts[2]}, true) );
 			THROW_IF(token.Aud != Settings::Get<string>("GoogleAuthClientId"), "Invalid client id");
 			THROW_IF(token.Iss != "accounts.google.com" && token.Iss != "https://accounts.google.com", "Invalid iss");
 #ifdef NDEBUG

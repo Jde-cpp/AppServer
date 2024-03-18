@@ -22,10 +22,10 @@ namespace Jde::Logging
 	using ApplicationServer::Web::FromServer::Applications;
 	sp<DB::IDataSource> _dataSource;
 	sp<DB::DBQueue> _pDbQueue;
-	sp<LogTag> _logTag = Logging::Tag( "app.log" );
+	static sp<LogTag> _logTag = Logging::Tag( "app.log" );
 	α Configure()ε->void{
 		if( auto p = Settings::Get<fs::path>( "db/meta" ); p ){
-			INFO( "db meta='{}'"sv, *p );
+			INFO( "db meta='{}'"sv, p->string() );
 			json j;
 			try{
 				if( !fs::exists(*p) )
@@ -110,10 +110,10 @@ namespace Jde::Logging
 		else if( field==Proto::EFields::FunctionId )
 			table = "log_functions";
 		else{
-			ERR( "unknown field '{}'.", field );
+			ERR( "unknown field '{}'.", (int)field );
 			return;
 		}
-		var sql = format( fmt::runtime(frmt), table );
+		var sql = Jde::format( fmt::runtime(frmt), table );
 		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
 		//ASSERT( Calc32RunTime(*pValue)==id );
 		RETURN_IF( Calc32RunTime(*pValue)!=id, ELogLevel::Error,  "id '{}' does not match crc of '{}'", id, *pValue );
@@ -150,7 +150,7 @@ namespace Jde::Logging
 		{
 			vector<string> where;
 			if( pStart )
-				where.push_back( format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
+				where.push_back( Jde::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
 			std::vector<DB::object> params;
 			if( applicationId>0 )
 			{
@@ -163,11 +163,11 @@ namespace Jde::Logging
 				params.push_back( instanceId );
 			}
 
-			var sql = format( "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, {}, user_id from logs", _syntax.DateTimeSelect("time") );
-			auto whereString = where.size() ? format( " where {}", Str::AddSeparators(where, " and ") ) : string{};
+			var sql = Jde::format( "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, {}, user_id from logs", _syntax.DateTimeSelect("time") );
+			auto whereString = where.size() ? Jde::format( " where {}", Str::AddSeparators(where, " and ") ) : string{};
 			var orderDirection = pStart ? "asc"sv : "desc"sv;
-			_dataSource->Select( _syntax.Limit(format("{}{} order by id {}", sql, whereString, orderDirection), limit), fnctn, params );
-			//_dataSource->Select( _syntax.Limit( format("{}{} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, params );
+			_dataSource->Select( _syntax.Limit(Jde::format("{}{} order by id {}", sql, whereString, orderDirection), limit), fnctn, params );
+			//_dataSource->Select( _syntax.Limit( Jde::format("{}{} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, params );
 			if( mapTraces.size() )
 			{
 				auto fnctn2 = [&mapTraces]( const DB::IRow& row )
@@ -183,7 +183,7 @@ namespace Jde::Logging
 					whereString += " and logs.id>=?";
 					params.push_back( mapTraces.begin()->first );
 				}
-				_dataSource->Select( format("{}{} order by log_id {}, variable_index", variableSql, whereString, orderDirection), fnctn2, params );
+				_dataSource->Select( Jde::format("{}{} order by log_id {}, variable_index", variableSql, whereString, orderDirection), fnctn2, params );
 			}
 		}
 		catch(const std::exception& /*e*/)
@@ -209,7 +209,7 @@ namespace Jde::Logging
 		Try( [&]()
 		{
 			if( id )
-				_dataSource->Select( format("{} where id=?"sv, sql), fnctn, {id} );
+				_dataSource->Select( Jde::format("{} where id=?"sv, sql), fnctn, {id} );
 			else
 				_dataSource->Select( string{sql}, fnctn, {} );
 		} );
