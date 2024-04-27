@@ -49,15 +49,14 @@ namespace Jde::ApplicationServer
 		flat_map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
 	};
 
-	struct TcpListener final : public IO::Sockets::ProtoServer
-	{
+	struct TcpListener final : public IO::Sockets::ProtoServer{
 		TcpListener()ε;
-		Ω GetInstance()ι->TcpListener&;
+		Ω GetInstance()ε->TcpListener&;
+		Ω Start()ι->void;
 		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->up<IO::Sockets::ProtoSession> override;
 		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )ι->uint;
 		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void;
 		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )ι->void;
-
 
 		α Kill( ApplicationInstancePK id )ι->void;
 		α WriteCustom( ApplicationPK id, uint32 requestId, string&& message )ε->void;
@@ -67,8 +66,7 @@ namespace Jde::ApplicationServer
 		α FindSessionByInstance( ApplicationInstancePK id )Ι->sp<Session>;
 	};
 
-	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )ι->void
-	{
+	Ŧ Session::SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase )ι->void{
 		WebRequestId webRequestId;
 		const RequestId reqId = message.requestid();
 		IO::Sockets::SessionPK sessionId;

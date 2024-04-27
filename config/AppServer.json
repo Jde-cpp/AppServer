@@ -5,10 +5,9 @@
 		"restPort": 1999
 	},
 	"db":{
-		"driver": "./libJde.MySql.so",
 		"connectionString": "$(Jde_App_Connection)",
 		"createSchema":  true,
-		"meta": "../config/AppServerMeta.json"
+		"meta": "$(ProgramData)/Jde-cpp/AppServer/meta.json"
 	},
 	"logging":{
 		"tags": {

@@ -16,23 +16,19 @@ namespace Jde{ α OSApp::CompanyName()ι->string{ return "Jde-Cpp"; } }
 namespace Jde{ α OSApp::ProductName()ι->sv{ return "AppServer"sv; } }
 #endif
 
-namespace Jde::ApplicationServer
-{
+namespace Jde::ApplicationServer{
 	α Startup()ι->void;
 }
 
-int main( int argc, char** argv )
-{
+int main( int argc, char** argv ){
 	using namespace Jde;
-	try
-	{
-		OSApp::Startup( argc, argv, "AppServer", "jde-cpp App Server." );
+	try{
+		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
 		IApplication::AddThread( ms<Threading::InterruptibleThread>("Startup", [&](){ApplicationServer::Startup();}) );
 		IApplication::Pause();
 	}
-	catch( const IException& e )
-	{
-		std::cout << "Exiting on error:  " << e.what() << std::endl;
+	catch( const IException& e ){
+		std::cout << (e.Level()==ELogLevel::Trace ? "Exiting..." : "Exiting on error:  ") << e.what() << std::endl;
 	}
 	IApplication::Cleanup();
 	return EXIT_SUCCESS;
@@ -40,10 +36,8 @@ int main( int argc, char** argv )
 
 namespace Jde
 {
-	α ApplicationServer::Startup()ι->void
-	{
-		try
-		{
+	α ApplicationServer::Startup()ι->void{
+		try{
 				//if( Settings::TryGet<bool>("um/use").value_or(false) ) currently need to configure um so meta is loaded.
 			{
 				UM::Configure();
@@ -51,14 +45,16 @@ namespace Jde
 			Logging::Data::SetDataSource( DB::DataSourcePtr() );
 			Logging::LogClient::CreateInstance();
 		}
-		catch( IException& e )
-		{
+		catch( IException& e ){
 			std::cerr << e.what() << std::endl;
 			{auto e2=e.Move();}//destructor log.
 			std::this_thread::sleep_for( 1s );
 			std::terminate();
 		}
-		Listener().DoAccept();
+		StartRestService();
+		Web::StartWebSocket();
+		TcpListener::Start();
+		//Listener().DoAccept();
 		INFOT( AppTag(), "--AppServer Started.--" );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}

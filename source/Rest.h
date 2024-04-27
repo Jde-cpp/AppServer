@@ -2,11 +2,10 @@
 #include "../../Public/src/web/ProtoServer.h"
 #include "../../Public/src/web/RestServer.h"
 
-namespace Jde::ApplicationServer
-{
+namespace Jde::ApplicationServer{
+
 	using namespace Jde::Web::Rest;
-	struct RestSession : ISession, std::enable_shared_from_this<RestSession>
-	{
+	struct RestSession : ISession, std::enable_shared_from_this<RestSession>{
 		RestSession( tcp::socket&& socket ): ISession{move(socket)}{}
 		virtual ~RestSession(){}
 		α HandleRequest( string&& target, flat_map<string,string>&& params, Request&& req )ι->void override;
@@ -17,5 +16,5 @@ namespace Jde::ApplicationServer
 
 		α GetUserId( SessionPK sessionId )Ι->UserPK;
 	};
-	α Listener()ι->TListener<RestSession>&;
+	α StartRestService()ι->void;
 }

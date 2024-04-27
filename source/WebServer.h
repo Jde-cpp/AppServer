@@ -8,8 +8,8 @@ namespace Jde::ApplicationServer::Web
 {
 	using WebSocket::SessionPK;
 
-	struct WebServer final : WebSocket::TListener<FromServer::Transmission,MySession>
-	{
+	α StartWebSocket()ι->void;
+	struct WebServer final : WebSocket::TListener<FromServer::Transmission,MySession>{
 		using base=WebSocket::TListener<FromServer::Transmission,MySession>;
 		WebServer( PortType port )ι;
 
@@ -34,8 +34,7 @@ namespace Jde::ApplicationServer::Web
 	α Server()ι->WebServer&;
 
 	namespace net = boost::asio;
-	struct BeastException : public IException
-	{
+	struct BeastException : public IException{
 		BeastException( sv what, beast::error_code&& ec, ELogLevel level=ELogLevel::Trace, SRCE )ι;
 		Ω IsTruncated( const beast::error_code& ec )ι{ return ec == net::ssl::error::stream_truncated; }
 		Ω LogCode( const boost::system::error_code& ec, ELogLevel level, sv what, SRCE )ι->void;
@@ -48,8 +47,7 @@ namespace Jde::ApplicationServer::Web
 		beast::error_code ErrorCode;
 	};
 
-	Ŧ WebServer::UpdateStatus( const T& app )ι->void
-	{
+	Ŧ WebServer::UpdateStatus( const T& app )ι->void{
 		auto pStatuses = mu<FromServer::Statuses>();
 		app.SetStatus( *pStatuses->add_values() );
 //		SendStatuses( move(pStatuses) );
