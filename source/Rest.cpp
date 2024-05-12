@@ -11,9 +11,11 @@
 namespace Jde::ApplicationServer{
 	sp<LogTag> _logTag = Logging::Tag( "app.rest" );
 
-	sp<TListener<RestSession>> _restListener{ ms<TListener<RestSession>>(Settings::Get<PortType>("web/restPort").value_or(1999)) };
-	α Listener()ι->TListener<RestSession>&{return *_restListener;}
+	sp<TListener<RestSession>> _restListener{};//each session has a sp.
 
+	α Listener()ε->TListener<RestSession>&{ THROW_IF( !_restListener, "RestListener not started" ); return *_restListener; }
+	α StartRestService()ι->void{ _restListener = ms<TListener<RestSession>>(Settings::Get<PortType>("web/restPort").value_or(1999)); _restListener->Run(); }
+	
 	α SendValue( string&& value, Request&& req )ι->void{
 		ISession::Send( Jde::format("{{\"value\": \"{}\"}}", value), move(req) );
 	}
@@ -24,7 +26,7 @@ namespace Jde::ApplicationServer{
 				if( target=="/GoogleAuthClientId" )
 					SendValue( Settings::Getɛ<string>("GoogleAuthClientId"), move(req) );
 				else if( target=="/IotWebSocket" ){
-					var apps = ApplicationServer::TcpListener::GetInstance().FindApplications( "IotWebSocket" );
+					var apps = ApplicationServer::TcpListener::GetInstance().FindApplications( "Jde.IotWebSocket" );
 					json japps = json::array();
 					for( auto& p : apps ){
 						json a;

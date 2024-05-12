@@ -17,8 +17,9 @@ namespace Jde::ApplicationServer{
 	static sp<LogTag> _sessionReceiveTag{ Logging::Tag("app.session.receive") };
 	α SessionTag()ι->sp<LogTag>{ return _logTag; }
 
-	TcpListener _listener;
-	TcpListener& TcpListener::GetInstance()ι{ return _listener; }
+	up<TcpListener> _listener;
+	α TcpListener::GetInstance()ε->TcpListener&{ THROW_IF( !_listener, "Listener not started" ); return *_listener; }
+	α TcpListener::Start()ι->void{ _listener = mu<TcpListener>(); }
 
 	TcpListener::TcpListener()ε://multiple listeners on same port
 		IO::Sockets::ProtoServer{ Settings::Get<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }{
@@ -161,7 +162,11 @@ namespace Jde::ApplicationServer{
 		if( InstancePtr )
 			InstancePtr->set_start_time( 0 );
 		Web::Server().UpdateStatus( *this );
-		TcpListener::GetInstance().RemoveSession( Id );
+		try{
+			TcpListener::GetInstance().RemoveSession( Id );
+		}
+		catch( const IException& )
+		{}
 	}
 
 	α Session::WebSubscribe( ELogLevel level )ι->void{

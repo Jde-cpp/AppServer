@@ -8,9 +8,9 @@
 namespace Jde::ApplicationServer::Web
 {
 	static sp<LogTag> _logTag{ Logging::Tag("app.socket") };
-	WebServer _instance{ Settings::Get<PortType>("web/socketPort").value_or(1967) };
-	α Server()ι->WebServer&{ return _instance; }
-
+	up<WebServer> _instance;//{ Settings::Get<PortType>("web/socketPort").value_or(1967) };
+	α Server()ι->WebServer&{ THROW_IF( !_instance, "Websocket not started" ); return *_instance; }
+	α StartWebSocket()ι->void{ _instance = mu<WebServer>(Settings::Get<PortType>("web/socketPort").value_or(1967)); }
 	WebServer::WebServer( PortType port )ι:
 		base{ port }{
 		INFO( "WebSocket listening on port={}", port );
