@@ -1,6 +1,5 @@
 {
-	"$types":
-	{
+	"$types":{
 		"name":{ "length": 255 },
 		"$target":{ "length": 255 },
 		"description":{ "length": 2047 },
@@ -10,10 +9,11 @@
 		"smallId": "uint16",
 		"tinyId": "uint8",
 		"crc": "uint32",
-		"created":  { "type": "dateTime", "insertable": false, "updateable": false, "default": "$now" }
+		"created":  { "type": "dateTime", "insertable": false, "updateable": false, "default": "$now" },
+		"password": { "type": "varbinary", "length": 2047, "encrypted":true }
+
 	},
-	"$values":
-	{
+	"$values":{
 		"columns": [
 			{ "name": "id", "type": "id" },
 			{ "name": "name", "type": "name"}
@@ -21,8 +21,7 @@
 		"surrogateKey":["id"],
 		"naturalKey":["name"]
 	},
-	"$data":
-	{
+	"$data":{
 		"columns": [
 			{ "name": "id", "sequence": true },
 			{ "name": "name", "type": "name"}
@@ -30,8 +29,7 @@
 		"surrogateKey":["id"],
 		"naturalKey":["name"]
 	},
-	"$nk":
-	{
+	"$nk":{
 		"parent": "$data",
 		"columns": [
 			{ "name": "attributes", "type": "uint16?" },
@@ -40,18 +38,16 @@
 			{ "name": "deleted", "type": "dateTime?", "insertable": false, "updateable": false }
 		]
 	},
-	"$description":
-	{
+	"$description":{
 		"parent": "$nk",
 		"columns": [
-			{ "name": "target", "type": "$target?" },
+			{ "name": "target", "type": "$target" },
 			{ "name": "description", "type": "description?" }
 		],
 		"naturalKey":["target"]
 	},
-	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql"],
-	"$smallValues":
-	{
+	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql", "sql/um_providers_ql.sql"],
+	"$smallValues":{
 		"columns": [
 			{ "name": "id", "type": "smallId", "sequence": true },
 			{ "name": "name", "type": "name" }
@@ -59,8 +55,7 @@
 		"surrogateKey":["id"],
 		"naturalKey":["name"]
 	},
-	"logApplications":
-	{
+	"logApplications":{
 		"parent": "$smallValues",
 		"columns": [
 			{ "name": "dbLogLevel", "type": "tinyId" },
@@ -69,8 +64,7 @@
 		],
 		"customInsertProc": true
 	},
-	"logApplicationInstances":
-	{
+	"logApplicationInstances":{
 		"columns": [
 			{ "name": "id", "type": "uint32", "sequence": true },
 			{ "name": "applicationId", "type": "logApplications" },
@@ -82,8 +76,7 @@
 		"surrogateKey":["id"],
 		"customInsertProc": true
 	},
-	"logFiles":
-	{
+	"logFiles":{
 		"columns": [
 			{ "name": "id", "type": "crc" },
 			{ "name": "value", "type": "path" }
@@ -91,8 +84,7 @@
 		"surrogateKey":["id"],
 		"naturalKey":["value"]
 	},
-	"logFunctions":
-	{
+	"logFunctions":{
 		"columns": [
 			{ "name": "id", "type": "crc" },
 			{ "name": "value", "type": "path" }
@@ -100,21 +92,18 @@
 		"surrogateKey":["id"],
 		"naturalKey":["value"]
 	},
-	"logHosts":
-	{
+	"logHosts":{
 		"parent": "$smallValues",
 		"customInsertProc": true
 	},
-	"logMessages":
-	{
+	"logMessages":{
 		"columns": [
 			{ "name": "id", "type": "crc" },
 			{ "name": "value", "length": 4095 }
 		],
 		"surrogateKey":["id"]
 	},
-	"logVariables":
-	{
+	"logVariables":{
 		"columns": [
 			{ "name": "logId", "type": "logs" },
 			{ "name": "variable_index", "type": "uint8" },
@@ -122,8 +111,7 @@
 		],
 		"surrogateKey":["logId","variable_index"]
 	},
-	"logs":
-	{
+	"logs":{
 		"columns": [
 			{ "name": "id", "type": "bigId" },
 			{ "name": "applicationId", "type": "logApplications" },
@@ -139,68 +127,87 @@
 		],
 		"surrogateKey":["id"]
 	},
-	"umApis":
-	{
+	"umApis":{
 		"parent": "$values",
 		"data": ["None","UM", "Web", "Tws", "Blockly"]
 	},
-	"umUsers":
-	{
+	"umEntities":{
+		"notes": "Group or User",
 		"parent": "$description",
 		"columns": [
-			{ "name": "authenticatorId", "type": "umAuthenticators?" }
+			{ "name": "is_group", "type": "bit", "default": "false" },
+			{ "name": "provider_id", "type": "umProviders?" }
+		],
+		"data": [
+			{"id":1, "attributes":5, "name":"Everyone", "target":"everyone", "isGroup":true }, 
+			{"id":2, "attributes":6, "name":"Users", "target":"users", "isGroup":true}]
+	},
+	"umProviders":{
+		"columns": [
+			{ "name": "id", "type": "uint32", "sequence": true },
+			{ "name": "provider_type_id", "type": "umProviderTypes" },
+			{ "name": "target", "type": "$target?", "notes": "Points to target in another table (eg OpcServer)" }
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["provider_type_id","target"],
+		"data": [{"id":1, "providerTypeId":1}],
+		"qlView": "um_providers_ql"
+	},
+	"um_providers_ql":{
+		"isView": true,
+		"columns": [
+			{ "name": "id", "type": "uint32", "sequence": true },
+			{ "name": "name", "type": "name?" }
 		]
 	},
-	"umAuthenticators":
-	{
+	"umProviderTypes":{
 		"parent": "$values",
-		"data": ["None", "Google"]
+		"data": [{"id":1, "name":"Google"}, {"id":2, "name":"OpcServer"}]
 	},
-	"umGroups":
-	{
-		"parent": "$description",
-		"data": [{"id":1, "attributes":5, "name":"Everyone", "target":"everyone" }, {"id":2, "attributes":6, "name":"Users", "target":"users"}]
-	},
-	"umUserGroups":
-	{
+	"umUsers":{
 		"columns": [
-			{ "name": "userId", "type": "umUsers" },
-			{ "name": "groupId", "type": "umGroups" }
+			{ "name": "entityId", "type": "umEntities", "criteria": "not is_group" },
+			{ "name": "password", "type": "password?" }
 		],
-		"surrogateKey":["userId", "groupId"]
+		"surrogateKey":["entityId"]
 	},
-	"umRoles":
-	{
-		"parent": "$description",
-		"data": [{"id":1, "attributes":4, "name":"User Management", "target": "user_management" }]
-	},
-	"umGroupRoles":
-	{
+	"umGroups":{
 		"columns": [
-			{ "name": "groupId", "type": "umGroups" },
+			{ "name": "entityId", "type": "umEntities", "criteria": "is_group" },
+			{ "name": "memberId", "type": "umEntities" }
+		],
+		"map": {"parentId":"entityId", "childId":"memberId"},
+		"surrogateKey":["entityId", "memberId"]
+	},
+	"umRoles":{
+		"parent": "$description",
+		"data": [
+			{"id":1, "attributes":4, "name":"User Management", "target": "user_management" }
+		]
+	},
+	"umEntityRoles":{
+		"columns": [
+			{ "name": "entityId", "type": "umEntities" },
 			{ "name": "roleId", "type": "umRoles" }
 		],
-		"surrogateKey":["groupId","roleId"],
-		"data": [{"groupId":1, "roleId":1 }]
+		"surrogateKey":["entityId","roleId"],
+		"data": [{"entityId":1, "roleId":1 }]
 	},
-	"umPermissions":
-	{
+	"umPermissions":{
 		"columns": [
 			{ "name": "id", "sequence": true },
 			{ "name": "apiId", "type": "umApis" },
-			{ "name": "name", "type": "name?", "qlAppend":"apiId", "description": "null=default, name=particular permission, api=um, name='change password'" }
+			{ "name": "name", "type": "name?", "qlAppend":"apiId", "notes": "null=default, name=particular permission, api=um, name='change password'" }
 		],
 		"surrogateKey":["id"],
 		"naturalKey":["apiId","name"],
 		"data": [{"id":1, "apiId":1}, {"id":2, "apiId":3} ]
 	},
-	"umRights":
-	{
+	"umRights":{
 		"parent": "$values",
 		"flagsData": ["None","Administer", "Write", "Read"]
 	},
-	"umRolePermissions":
-	{
+	"umRolePermissions":{
 		"columns": [
 			{ "name": "roleId", "type": "umRoles", "updateable":false },
 			{ "name": "permissionId", "type": "umPermissions", "updateable":false },

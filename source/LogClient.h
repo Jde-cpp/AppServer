@@ -1,11 +1,10 @@
 ﻿#pragma once
 #include "TypeDefs.h"
 #include <jde/Assert.h>
+#include "../../Framework/source/io/ServerSink.h"
 
-namespace Jde::Logging
-{
-	struct LogClient : public IServerSink//, IShutdown
-	{
+namespace Jde::Logging{
+	struct LogClient : public IServerSink{
 		LogClient( ApplicationPK applicationId, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )ε;
 		α Close()ι->void override{};
 		α ApplicationId()ι->ApplicationPK override{return _applicationId;}

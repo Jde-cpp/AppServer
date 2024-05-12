@@ -11,7 +11,7 @@
 				"file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
 			}
 		},
-		"group": { "kind": "build", "isDefault": true }
+		"group": { "kind": "build", "isDefault": false }
 	},
 	{
 		"label": "rebuild",

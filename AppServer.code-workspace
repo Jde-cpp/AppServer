@@ -1,0 +1,222 @@
+{
+	"folders": [
+		{
+			"path": "./source",
+			"name": "AppServer"
+		},
+		{
+			"path": "../Public/jde",
+			"name": "headers"
+		},
+		{
+			"path": "../Ssl/source",
+			"name": "Ssl"
+		},
+		{
+			"path": "../Framework/source",
+			"name": "Framework"
+		},
+		{
+			"path": "../MySql/source",
+			"name": "MySql"
+		},
+		{
+			"path": "../Public/tests/appServer",
+			"name": "tests"
+		}
+	],
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "build",
+				"type": "shell",
+				"command": "tput reset;./build.sh",
+				"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder:AppServer}"],
+					"pattern": {
+						"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+						"file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+					}
+				},
+				"group": { "kind": "build", "isDefault": true }
+			},
+			{
+				"label": "buildTests",
+				"type": "shell",
+				"command": "cd ../../Public/tests/appServer; tput reset;./build.sh;",
+				"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder:AppServer}"],
+					"pattern": {
+						"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+						"file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+					}
+				},
+				"group": { "kind": "build", "isDefault": false }
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [{
+			"name": "Asan",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder:AppServer}/../../bin/asan/Jde.AppServer",
+			"args": ["-c"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder:AppServer}/../../bin/asan",
+			"environment": [
+				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, 
+				{ "name": "JDE_LOG_META", "value": "${workspaceFolder:AppServer}/../meta.json" },
+				{ "name": "Jde_App_Connection", "value": "${env:Jde_App_Connection}" }
+			],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
+			"preLaunchTask": "build",
+			"visualizerFile": "${workspaceFolder:AppServer}/../../Public/build/gcc.natvis",
+			"showDisplayString": true
+		},
+		{
+			"name": "Release",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder:AppServer}/../../bin/release/Jde.AppServer",
+			"args": ["-c"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder:AppServer}/../../bin/release",
+			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, { "name": "JDE_LOG_META", "value": "${workspaceFolder:AppServer}/../meta.json" }],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
+			"preLaunchTask": "release"
+		}
+		,
+		{
+			"name": "RelWithDebInfo",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder:AppServer}/../../bin/relwithdebinfo/Jde.AppServer",
+			"args": ["-c"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder:AppServer}/../../bin/relwithdebinfo",
+			"environment": [{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, { "name": "JDE_LOG_META", "value": "${workspaceFolder:AppServer}/../meta.json" }],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
+			"preLaunchTask": "relWithDebInfo"
+		},
+		{
+			"name": "Tests Asan",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder:tests}/../../../bin/asan/Tests.AppServer",
+			"args": ["-c"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder:tests}/../../../bin/asan",
+			"environment": [
+				{ "name": "JDE_DB_DRIVER", "value": "./libJde.MySql.so" }, 
+				{ "name": "JDE_LOG_META", "value": "${env:JDE_DIR}/bin/config/AppServerMeta.json" },
+				{ "name": "Jde_Test_Connection", "value": "${env:Jde_App_Test_Connection}" }
+			],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
+			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
+			"preLaunchTask": "buildTests",
+			"visualizerFile": "${workspaceFolder:tests}/../../build/gcc.natvis",
+			"showDisplayString": true
+		}],
+		"compounds": []
+	},
+	"settings": {
+		"files.associations": {
+			"*.sqlm": "sql",
+			"typeinfo": "cpp",
+			"chrono": "cpp",
+			"cmath": "cpp",
+			"shared_mutex": "cpp",
+			"iosfwd": "cpp",
+			"cctype": "cpp",
+			"clocale": "cpp",
+			"csignal": "cpp",
+			"cstdarg": "cpp",
+			"cstddef": "cpp",
+			"cstdio": "cpp",
+			"cstdlib": "cpp",
+			"cstring": "cpp",
+			"ctime": "cpp",
+			"cwchar": "cpp",
+			"cwctype": "cpp",
+			"array": "cpp",
+			"atomic": "cpp",
+			"*.tcc": "cpp",
+			"bitset": "cpp",
+			"cinttypes": "cpp",
+			"codecvt": "cpp",
+			"condition_variable": "cpp",
+			"cstdint": "cpp",
+			"deque": "cpp",
+			"forward_list": "cpp",
+			"list": "cpp",
+			"unordered_map": "cpp",
+			"vector": "cpp",
+			"exception": "cpp",
+			"filesystem": "cpp",
+			"string_view": "cpp",
+			"fstream": "cpp",
+			"functional": "cpp",
+			"future": "cpp",
+			"initializer_list": "cpp",
+			"iomanip": "cpp",
+			"istream": "cpp",
+			"limits": "cpp",
+			"memory": "cpp",
+			"mutex": "cpp",
+			"ostream": "cpp",
+			"ratio": "cpp",
+			"sstream": "cpp",
+			"stdexcept": "cpp",
+			"streambuf": "cpp",
+			"system_error": "cpp",
+			"thread": "cpp",
+			"type_traits": "cpp",
+			"tuple": "cpp",
+			"typeindex": "cpp",
+			"utility": "cpp",
+			"complex": "cpp",
+			"iostream": "cpp",
+			"new": "cpp",
+			"optional": "cpp",
+			"algorithm": "cpp",
+			"*.ipp": "cpp",
+			"unordered_set": "cpp",
+			"variant": "cpp",
+			"*.inc": "cpp",
+			"__bit_reference": "cpp",
+			"ios": "cpp",
+			"__node_handle": "cpp",
+			"numbers": "cpp",
+			"string": "cpp",
+			"__hash_table": "cpp",
+			"__tree": "cpp",
+			"map": "cpp",
+			"set": "cpp",
+			"__split_buffer": "cpp",
+			"queue": "cpp",
+			"stack": "cpp",
+			"__assert": "cpp",
+			"__config": "cpp",
+			"format": "cpp",
+			"locale": "cpp",
+			"source_location": "cpp",
+			"ranges": "cpp",
+			"span": "cpp",
+			"valarray": "cpp",
+			"any": "cpp"
+		},
+		"window.title": "App"
+	}
+}

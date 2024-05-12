@@ -12,7 +12,7 @@
 			"environment": [
 				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, 
 				{ "name": "JDE_LOG_META", "value": "${workspaceFolder}/../meta.json" },
-				{ "name": "Jde_App_Connection", "value": "${Jde_App_Connection}" }
+				{ "name": "Jde_App_Connection", "value": "${env:Jde_App_Connection}" }
 			],
 			"externalConsole": false,
 			"MIMode": "gdb",

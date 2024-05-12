@@ -55,3 +55,4 @@ tests/.vscode/settings.json
 
 *.pdb
 *.aps
+config/ql.json

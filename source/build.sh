@@ -4,6 +4,7 @@ clean=${2:-0}
 all=${3:-1}
 compiler=${4:-g++-13}
 
+export CXX=$compiler;
 BUILD=../../Public/build/so.sh;
 if [ $all -eq 1 ]; then
 	$BUILD ../../Framework/source $type $clean $compiler || exit 1;
