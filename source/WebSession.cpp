@@ -265,7 +265,7 @@ namespace Jde::ApplicationServer::Web
 	}
 
 	α MySession::GoogleLogin( string&& credential, ClientId clientId )ι->Task{
-		constexpr EAuthType type{ EAuthType::Google };
+		constexpr UM::EProviderType type{ UM::EProviderType::Google };
 		var parts = Str::Split(credential, '.');
 		Google::TokenInfo token;
 		Web::FromServer::MessageUnion y;

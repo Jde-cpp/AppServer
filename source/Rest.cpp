@@ -19,7 +19,7 @@ namespace Jde::ApplicationServer{
 	α SendValue( string&& value, Request&& req )ι->void{
 		ISession::Send( Jde::format("{{\"value\": \"{}\"}}", value), move(req) );
 	}
-
+	
 	α RestSession::HandleRequest( string&& target, flat_map<string,string>&& /*params*/, Request&& req )ι->void{
 		try{
 	    if( req.Method() == http::verb::get ){
@@ -64,16 +64,10 @@ namespace Jde::ApplicationServer{
 //			Dbg( bodyv );
 			json body = json::parse( bodyv );
 			var j{ body.find("value") };
-			if( j->is_null() || !j->is_string() || j->get<string>().empty() )
-				throw RequestException<http::status::bad_request>();
+			if( j==body.end() || j->is_null() || !j->is_string() || j->get<string>().empty() )
+				throw RequestException<http::status::bad_request>{ SRCE_CUR, "value not found." };
 			var info = ( co_await GoogleLogin::Verify(j->get<string>()) ).UP<Google::TokenInfo>();
-			//gcc internal compiler error when not separated.
-			auto task = DB::ScalerCo<UserPK>( "select id from um_users where name=? and authenticator_id=?", {info->Email,(uint)Web::EAuthType::Google} );
-			auto p = (co_await task).UP<UserPK>();
-			var userId = p ? *p : 0;
-			if( !userId )
-				throw RequestException<http::status::bad_request>{ SRCE_CUR, "'{}' not found.", info->Email };
-
+			var userId = *(co_await UM::Login(info->Email, (uint)UM::EProviderType::Google)).UP<UserPK>();
 			var sessionInfo = ISession::AddSession( userId );
 
 			SendValue( Jde::format("{:x}", sessionInfo->session_id()), move(req) );

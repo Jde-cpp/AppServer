@@ -21,6 +21,10 @@
 			"name": "MySql"
 		},
 		{
+			"path": "../Public/src/web",
+			"name": "Web"
+		},		
+		{
 			"path": "../Public/tests/appServer",
 			"name": "tests"
 		}
@@ -119,7 +123,7 @@
 			"environment": [
 				{ "name": "JDE_DB_DRIVER", "value": "./libJde.MySql.so" }, 
 				{ "name": "JDE_LOG_META", "value": "${env:JDE_DIR}/bin/config/AppServerMeta.json" },
-				{ "name": "Jde_Test_Connection", "value": "${env:Jde_App_Test_Connection}" }
+				{ "name": "Jde_Test_Connection", "value": "${env:Jde_Test_Connection}" }
 			],
 			"externalConsole": false,
 			"MIMode": "gdb",
@@ -215,7 +219,18 @@
 			"ranges": "cpp",
 			"span": "cpp",
 			"valarray": "cpp",
-			"any": "cpp"
+			"any": "cpp",
+			"coroutine": "cpp",
+			"bit": "cpp",
+			"compare": "cpp",
+			"concepts": "cpp",
+			"iterator": "cpp",
+			"memory_resource": "cpp",
+			"numeric": "cpp",
+			"__debug": "cpp",
+			"__mutex_base": "cpp",
+			"__threading_support": "cpp",
+			"__verbose_abort": "cpp"
 		},
 		"window.title": "App"
 	}

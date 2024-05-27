@@ -46,7 +46,8 @@
 		],
 		"naturalKey":["target"]
 	},
-	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql", "sql/um_providers_ql.sql"],
+	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql", 
+		"sql/um_providers_ql.sql", "sql/um_user_insert.sql", "sql/um_user_insert_login.sql"],
 	"$smallValues":{
 		"columns": [
 			{ "name": "id", "type": "smallId", "sequence": true },
@@ -150,7 +151,7 @@
 		],
 		"surrogateKey":["id"],
 		"naturalKey":["provider_type_id","target"],
-		"data": [{"id":1, "providerTypeId":1}],
+		"data": [{"id":1, "providerTypeId":1}, {"id":2, "providerTypeId":2}, {"id":3, "providerTypeId":3}, {"id":4, "providerTypeId":4}, {"id":5, "providerTypeId":5} ],
 		"qlView": "um_providers_ql"
 	},
 	"um_providers_ql":{
@@ -162,11 +163,18 @@
 	},
 	"umProviderTypes":{
 		"parent": "$values",
-		"data": [{"id":1, "name":"Google"}, {"id":2, "name":"OpcServer"}]
+		"data": [
+			{"id":1, "name":"Google"},
+			{"id":2, "name":"Facebook"},
+			{"id":3, "name":"Amazon"},
+			{"id":4, "name":"Microsoft"},
+			{"id":5, "name":"VK"},
+			{"id":6, "name":"OpcServer"}]
 	},
 	"umUsers":{
 		"columns": [
 			{ "name": "entityId", "type": "umEntities", "criteria": "not is_group" },
+			{ "name": "login_name", "type": "name" },
 			{ "name": "password", "type": "password?" }
 		],
 		"surrogateKey":["entityId"]

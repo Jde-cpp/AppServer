@@ -110,13 +110,14 @@ namespace Jde::Logging
 		else if( field==Proto::EFields::FunctionId )
 			table = "log_functions";
 		else{
-			ERR( "unknown field '{}'.", (int)field );
+			ERRX( "unknown field '{}'.", (int)field );
 			return;
 		}
 		var sql = Jde::format( fmt::runtime(frmt), table );
 		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
 		//ASSERT( Calc32RunTime(*pValue)==id );
-		RETURN_IF( Calc32RunTime(*pValue)!=id, ELogLevel::Error,  "id '{}' does not match crc of '{}'", id, *pValue );
+		if( Calc32RunTime(*pValue)!=id )
+			return ERRX( "id '{}' does not match crc of '{}'", id, *pValue );//locks itself on server log.
 		pParameters->push_back( static_cast<uint32>(id) );
 		pParameters->push_back( pValue );
 		_pQueue->Push( sql, pParameters, false, sl );

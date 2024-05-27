@@ -20,7 +20,7 @@ namespace Jde::ApplicationServer
 		Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι;
 		~Session(){DBG("({})~Session - {}", Id, InstancePtr ? InstancePtr->application() : "nullptr");}
 		α OnReceive( ToServer&& pValue )ι->void override;
-		α Start2()ι->void;
+		α SendAck()ι->void;
 		α WriteStrings()ι->void;
 		α SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )ι->void;
 		α LogLevels()ι->up<Logging::Proto::LogLevels>;
@@ -41,28 +41,31 @@ namespace Jde::ApplicationServer
 		α OnDisconnect()ι->void override;
 		Τ using CustomFunction = function<void(Web::MySession&, uint, T&&)>;
 		Ŧ SendCustomToWeb( T&& message, CustomFunction<T&&> write, bool erase=false )ι->void;
+		α AddSession( string domain, string userId, uint providerType, uint requestId )ι->Task;
+		α GraphQL( string&& query, uint requestId )ι->Task;
 		ELogLevel _dbLevel{ELogLevel::Information};
 		atomic<ELogLevel> _webLevel{ELogLevel::Critical};
 		atomic<ELogLevel> _fileLogLevel{ELogLevel::Critical};
 		using RequestId=uint;
 		atomic<RequestId> _requestId{0};
 		flat_map<RequestId,tuple<WebRequestId,IO::Sockets::SessionPK>> _customWebRequests; mutex _customWebRequestsMutex;
+		//friend class AuthenticateAwait;
 	};
 
 	struct TcpListener final : public IO::Sockets::ProtoServer{
 		TcpListener()ε;
 		Ω GetInstance()ε->TcpListener&;
 		Ω Start()ι->void;
-		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->up<IO::Sockets::ProtoSession> override;
+		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->sp<IO::Sockets::ProtoSession> override;
 		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )ι->uint;
 		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void;
 		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )ι->void;
-
 		α Kill( ApplicationInstancePK id )ι->void;
 		α WriteCustom( ApplicationPK id, uint32 requestId, string&& message )ε->void;
-		α FindApplications( const string& name )ι->vector<sp<Logging::Proto::Instance>>;
+		α FindApplications( str name )ι->vector<sp<Logging::Proto::Instance>>;
 	private:
 		α FindApplication( ApplicationPK applicationId )Ι->sp<Session>;
+		Ω FindApplication( str name )ι->sp<Session>;
 		α FindSessionByInstance( ApplicationInstancePK id )Ι->sp<Session>;
 	};
 

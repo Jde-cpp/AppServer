@@ -7,14 +7,14 @@
 	"db":{
 		"connectionString": "$(Jde_App_Connection)",
 		"createSchema":  true,
-		"meta": "$(ProgramData)/Jde-cpp/AppServer/meta.json",
+		"meta": "../config/AppServerMeta.json",
 		"ql_schema": "../config/ql.json"
 	},
 	"logging":{
 		"tags": {
-			"Trace":[],
+			"Trace":["sql", "ql", "app.session.receive", "threads"],
 			"Debug":[],
-			"Information":["sql","users", "settings","app.session.receive", "net","alarm", "app", "app.log", "app.session", "app.rest", "app.socket", "threads", "locks", "settings", "ql", "sockets", "io", "xml", "status", "cache", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
+			"Information":["users", "settings","net","alarm", "app", "app.log", "app.session", "app.rest", "app.socket", "locks", "settings", "sockets", "io", "xml", "status", "cache", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
 			"Warning":[],
 			"Error":[],
 			"Critical":[]

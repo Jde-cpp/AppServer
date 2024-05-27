@@ -12,6 +12,7 @@
 DISABLE_WARNINGS
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
+#include <boost/unordered/concurrent_flat_map.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 ENABLE_WARNINGS
 

@@ -1,11 +1,14 @@
 ﻿#include "Listener.h"
+#include <boost/unordered/concurrent_flat_map.hpp>
 #include <jde/Str.h>
+#include "../../Framework/source/db/GraphQL.h"
 #include "../../Public/src/web/RestServer.h"
 #include "LogData.h"
 #include "WebServer.h"
 #include "Cache.h"
 #include "LogClient.h"
 #include "WebServer.h"
+#include "types/FromServerMessage.h"
 
 #define var const auto
 #define _logClient Logging::LogClient::Instance()
@@ -27,8 +30,10 @@ namespace Jde::ApplicationServer{
 	}
 
 
-	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->up<IO::Sockets::ProtoSession>{
-		return mu<Session>( move(socket), id );
+	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->sp<IO::Sockets::ProtoSession>{
+		auto p = ms<Session>( move(socket), id );
+		p->SendAck();
+		return p;
 	}
 #define $(x) dynamic_pointer_cast<Session>(x)
 	α TcpListener::ForEachSession( std::function<void(IO::Sockets::SessionPK, const Session&)> f )ι->uint{
@@ -48,6 +53,13 @@ namespace Jde::ApplicationServer{
 		auto p = find_if( _sessions, [id](auto& p){ return $(p.second)->ApplicationId==id;} );
 		return p==_sessions.end() ? nullptr : $(p->second);
 	}
+	
+	α TcpListener::FindApplication( str name )ι->sp<Session>{
+		auto& instance = GetInstance();
+		sl _{ instance._mutex };
+		auto p = find_if( instance._sessions, [name](auto& p){ return $(p.second)->InstancePtr && $(p.second)->InstancePtr->application()==name;} );
+		return p==instance._sessions.end() ? nullptr : $(p->second);
+	}
 
 	α TcpListener::FindApplications( const string& name )ι->vector<sp<Logging::Proto::Instance>>{
 		vector<sp<Logging::Proto::Instance>> y;
@@ -55,7 +67,7 @@ namespace Jde::ApplicationServer{
 		for( auto&& s : _sessions ){
 			auto p = $(s.second);
 			if( !p->InstancePtr )
-				ERR( "[{}]InstancePtr is null."sv, p->Id );
+				ERR( "[{}]InstancePtr is null.", p->Id );
 			else if( p->InstancePtr->application()==name )
 				y.push_back( $(s.second)->InstancePtr );
 		}
@@ -105,20 +117,26 @@ namespace Jde::ApplicationServer{
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Session::Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι:
-		IO::Sockets::TProtoSession<ToServer,FromServer>{ move(socket), id }{
-		Start2();//0x7fffe0004760
-	}
+		IO::Sockets::TProtoSession<ToServer,FromServer>{ move(socket), id }
+	{}
 
-	α Session::Start2()ι->void{
-		auto pAck = mu<Logging::Proto::Acknowledgement>();
-		pAck->set_instanceid( Id );
-
-		Logging::Proto::FromServer t;
-		t.add_messages()->set_allocated_acknowledgement( pAck.release() );
+	α Session::SendAck()ι->void{
 		TRACE( "({})Sending Ack", Id );
-		Write( move(t) );
+		Write( Acknowledgement(Id) );
 	}
 
+	α Session::AddSession( string domain, string loginName, uint providerType, uint requestId )ι->Task{
+		var _ = shared_from_this();
+		try{
+			var userId = *( co_await UM::Login(loginName, providerType, domain) ).UP<UserPK>();
+			var sessionInfo = Jde::Web::Rest::ISession::AddSession( userId );
+			Write( AddSessionResult(sessionInfo->session_id(), requestId) );
+		}
+		catch( IException& e ){
+			Write( ProtoException(move(e), requestId) );
+		}
+	}
+	
 	α Session::SetLogLevel( ELogLevel dbLogLevel, ELogLevel fileLogLevel )ι->void{
 		_dbLevel = dbLogLevel;
 		_fileLogLevel = fileLogLevel;
@@ -137,9 +155,9 @@ namespace Jde::ApplicationServer{
 		Logging::Proto::FromServer t;
 		var& strings = Cache::AppStrings();
 		auto pValues = mu<Logging::Proto::Strings>();
-		strings.Files.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_files(id);} );
-		strings.Functions.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_functions(id);} );
-		strings.Messages.ForEach( [&pValues](const uint32& id, str)->void{pValues->add_messages(id);} );
+		strings.Files.ForEach( [&pValues](const uint32& id, str)->void { pValues->add_files(id); } );
+		strings.Functions.ForEach( [&pValues](const uint32& id, str)->void {pValues->add_functions(id);} );
+		strings.Messages.ForEach( [&pValues](const uint32& id, str)->void {pValues->add_messages(id);} );
 		t.add_messages()->set_allocated_strings( pValues.release() );
 
 		Write( move(t) );
@@ -188,24 +206,38 @@ namespace Jde::ApplicationServer{
 			lg _{_customWebRequestsMutex};
 			_customWebRequests.emplace( requestId, make_tuple(webRequestId, webClientId) );
 		}
-		auto pCustom = new Logging::Proto::CustomMessage();
+		auto pCustom = mu<Logging::Proto::CustomMessage>();
 		pCustom->set_requestid( (uint32)requestId );
 		pCustom->set_message( move(message) );
 		DBG( "({}) sending custom message to '{}' reqId='{}' from webClient='{}'('{}')"sv, InstanceId, InstancePtr ? InstancePtr->application() : "", requestId, webClientId, webRequestId );
-		t.add_messages()->set_allocated_custom( pCustom );
+		t.add_messages()->set_allocated_custom( pCustom.release() );
 		Write( move(t) );
 	}
 
 	α Session::SendSessionInfo( SessionPK sessionId )ι->Task{
+		var _ = shared_from_this();
 		up<SessionInfo> pInfo;
 		try{
 			pInfo = (co_await Jde::Web::Rest::ISession::FetchSessionInfo(sessionId)).UP<SessionInfo>();
 		}
-		catch( const Exception& )
+		catch( const IException& )
 		{}
 
 		Logging::Proto::FromServer t; t.add_messages()->set_allocated_session_info( pInfo ? pInfo.release() : new SessionInfo{} );
 		Write( move(t) );
+	}
+	α Session::GraphQL( string&& query, uint requestId )ι->Task{
+		var _ = shared_from_this();
+		try{
+			TRACET( _sessionReceiveTag, "({})GraphQL={}", Id, query );
+			TRACET( _sessionReceiveTag, "({})GraphQL", Threading::GetThreadId() );
+			auto j = ( co_await DB::CoQuery(move(query), 0, "Lstnr::GraphQL") ).UP<json>();
+			TRACET( _sessionReceiveTag, "({})~~GraphQL", Threading::GetThreadId() );
+			Write( GraphQLResult(*j, requestId) );
+		}
+		catch( IException& e ){
+			Write( ProtoException(move(e), requestId) );
+		}
 	}
 
 	α Session::OnReceive( Logging::Proto::ToServer&& t )ι->void{
@@ -276,6 +308,15 @@ namespace Jde::ApplicationServer{
 				case kSessionInfo:{
 					TRACE( "[{}]SessionInfo={}", Id, pMessage->session_info().session_id() );
 					SendSessionInfo( pMessage->session_info().session_id() );
+					break;}
+				case kAddSession:{
+					auto& login = *pMessage->mutable_add_session();
+					AddSession( move(login.domain()), move(login.login_name()), login.provider_id(), login.request_id() );
+					break;}					
+				case kGraphQl:{
+					auto& request = *pMessage->mutable_graph_ql();
+					GraphQL( move(*request.mutable_query()), request.request_id() );
+					TRACET( _sessionReceiveTag, "({})~GraphQL", Threading::GetThreadId() );
 					break;}
 				case VALUE_NOT_SET:
 					throw Exception( "Value not set." );

@@ -40,6 +40,7 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
 		<boost/asio.hpp>
 		<boost/asio/ssl/error.hpp>
 		<boost/exception/diagnostic_information.hpp>
+		<boost/unordered/concurrent_flat_map.hpp>
 		<jde/Exports.h>
 		"../../Public/src/web/Exports.h"
 		"TypeDefs.h"

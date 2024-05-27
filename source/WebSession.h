@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "../../Public/src/web/WebSocket.h"
+#include "../../Framework/source/um/UM.h"
 
 namespace Jde::ApplicationServer::Web
 {
@@ -9,15 +10,7 @@ namespace Jde::ApplicationServer::Web
 	using tcp = boost::asio::ip::tcp;
 	struct WebServer;
 	typedef uint32 ClientId ;
-	enum class EAuthType : uint8
-	{
-		None = 0,
-		Google=1
-	};
-	constexpr array<sv,2> AuthTypeStrings = { "None", "Google" };
-
-	struct MySession final : WebSocket::TSession<FromServer::Transmission,FromClient::Transmission>
-	{
+	struct MySession final : WebSocket::TSession<FromServer::Transmission,FromClient::Transmission>{
 		typedef WebSocket::TSession<FromServer::Transmission,FromClient::Transmission> base;
 		MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε;
 		~MySession();
@@ -40,7 +33,7 @@ namespace Jde::ApplicationServer::Web
 		α GraphQL( string&& query, ClientId clientId )ι->Task;
 
 		sp<std::atomic_flag> WriteLockPtr{ ms<std::atomic_flag>() };
-		EAuthType AuthType{EAuthType::None};
+		UM::EProviderType AuthType{UM::EProviderType::None};
 		string Email;
 		bool EmailVerified{false};
 		string Name;
