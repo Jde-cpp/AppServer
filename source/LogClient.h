@@ -9,6 +9,7 @@ namespace Jde::Logging{
 		α Close()ι->void override{};
 		α ApplicationId()ι->ApplicationPK override{return _applicationId;}
 		Ω CreateInstance()ε->void;
+		α GraphQL( string query, UserPK userPK, HCoroutine h, SL sl )ι->void override{ GraphQLTask( move(query), userPK, h, sl ); }
 		α FetchSessionInfo( SessionPK sessionId )ι->SessionInfoAwait override{CRITICALT(AppTag(), "calling GetSessionInfo from server."); return SessionInfoAwait{sessionId}; }
 		α InstanceId()ι->ApplicationInstancePK override{return _instanceId;}
 		α IsLocal()ι->bool override{ return true; }
@@ -21,6 +22,7 @@ namespace Jde::Logging{
 
 		const ApplicationPK _applicationId;
 	private:
+		Ω GraphQLTask( string query, UserPK userPK, HCoroutine h, SL sl )ι->Task;
 		ELogLevel _webLevel{ELogLevel::Critical};
 	};
 }

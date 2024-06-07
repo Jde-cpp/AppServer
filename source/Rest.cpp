@@ -9,7 +9,8 @@
 
 #define var const auto
 namespace Jde::ApplicationServer{
-	sp<LogTag> _logTag = Logging::Tag( "app.rest" );
+	static sp<LogTag> _logTag = Logging::Tag( "restRequest" );
+	static sp<LogTag> _logTagResponse = Logging::Tag( "restResponse" );
 
 	sp<TListener<RestSession>> _restListener{};//each session has a sp.
 
@@ -35,6 +36,7 @@ namespace Jde::ApplicationServer{
 					}
 					json j;
 					j["servers"] = japps;
+					TRACET( _logTagResponse, "/IotWebSocket={}", j.dump() );
 					Send( j, move(req) );
 				}
 				else

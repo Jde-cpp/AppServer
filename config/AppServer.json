@@ -12,9 +12,9 @@
 	},
 	"logging":{
 		"tags": {
-			"Trace":["sql", "ql", "app.session.receive", "threads"],
+			"Trace":["sql", "ql", "app.session.receive", "app.session", "restRequest", "restResponse" ],
 			"Debug":[],
-			"Information":["users", "settings","net","alarm", "app", "app.log", "app.session", "app.rest", "app.socket", "locks", "settings", "sockets", "io", "xml", "status", "cache", "stopwatch", "http", "http-requests", "session", "rest", "webRequests"],
+			"Information":["threads", "users", "settings","net","alarm", "app", "app.log", "app.socket", "locks", "settings", "sockets", "io", "xml", "status", "cache", "stopwatch", "http", "http-requests", "session", "webRequests"],
 			"Warning":[],
 			"Error":[],
 			"Critical":[]

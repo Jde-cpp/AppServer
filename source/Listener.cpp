@@ -128,8 +128,10 @@ namespace Jde::ApplicationServer{
 	α Session::AddSession( string domain, string loginName, uint providerType, uint requestId )ι->Task{
 		var _ = shared_from_this();
 		try{
+			TRACET( _sessionReceiveTag, "({}.{})AddSession('{}', '{}', providerType:'{}')", Id, requestId, domain, loginName, providerType );
 			var userId = *( co_await UM::Login(loginName, providerType, domain) ).UP<UserPK>();
 			var sessionInfo = Jde::Web::Rest::ISession::AddSession( userId );
+			TRACE( "({}.{})AddSessionResult=( hasSession:  '{}' )", Id, requestId, sessionInfo->session_id()>0 );
 			Write( AddSessionResult(sessionInfo->session_id(), requestId) );
 		}
 		catch( IException& e ){
@@ -230,9 +232,7 @@ namespace Jde::ApplicationServer{
 		var _ = shared_from_this();
 		try{
 			TRACET( _sessionReceiveTag, "({})GraphQL={}", Id, query );
-			TRACET( _sessionReceiveTag, "({})GraphQL", Threading::GetThreadId() );
 			auto j = ( co_await DB::CoQuery(move(query), 0, "Lstnr::GraphQL") ).UP<json>();
-			TRACET( _sessionReceiveTag, "({})~~GraphQL", Threading::GetThreadId() );
 			Write( GraphQLResult(*j, requestId) );
 		}
 		catch( IException& e ){
@@ -316,7 +316,6 @@ namespace Jde::ApplicationServer{
 				case kGraphQl:{
 					auto& request = *pMessage->mutable_graph_ql();
 					GraphQL( move(*request.mutable_query()), request.request_id() );
-					TRACET( _sessionReceiveTag, "({})~GraphQL", Threading::GetThreadId() );
 					break;}
 				case VALUE_NOT_SET:
 					throw Exception( "Value not set." );

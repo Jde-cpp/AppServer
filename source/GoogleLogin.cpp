@@ -65,7 +65,7 @@ namespace Jde::GoogleLogin
 			CRITICALT( AppTag(), "json exception - {}", e.what() );
 			y = mu<Exception>( "Authentication Failed" );
 		}
-		catch( Exception& e )
+		catch( IException& e )
 		{
 			y = e.Move();
 		}

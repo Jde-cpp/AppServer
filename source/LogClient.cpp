@@ -1,12 +1,13 @@
 ﻿#include "LogClient.h"
+#include "../../Framework/source/db/GraphQL.h"
 #include "LogData.h"
 #ifndef TESTING
 	#include "WebServer.h"
 #endif
 
 #define var const auto
-namespace Jde::Logging
-{
+namespace Jde::Logging{
+
 	α LogClient::CreateInstance()ε->void{
 		var [applicationId, applicationInstanceId, dbLogLevel, fileLogLevel] = Data::AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
 		auto p = ms<LogClient>( applicationId, applicationInstanceId, dbLogLevel );
@@ -25,6 +26,16 @@ namespace Jde::Logging
 		};
 		addMessages( Data::LoadFiles(), _filesSent );
 		addMessages( Data::LoadFunctions(), _functionsSent );
+	}
+
+	α LogClient::GraphQLTask( string query, UserPK userPK, HCoroutine h, SL sl )ι->Task{
+		try{
+			auto j = awaitp( json, DB::CoQuery( move(query), userPK, "graphQL", sl ) );
+			Resume( move(j), h );
+		}
+		catch( IException& e ){
+			Resume( move(e), h );
+		}
 	}
 	α LogClient::Log( Messages::ServerMessage& message )ι->void{
 		Log( dynamic_cast<MessageBase&>(message), message.Variables );

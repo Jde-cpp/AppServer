@@ -5,6 +5,8 @@
 #include "LogData.h"
 #include "Rest.h"
 #include <jde/io/Crc.h>
+#include <jde/db/graphQL/GraphQLHook.h>
+#include <jde/web/WebGraphQL.h>
 #include "../../Framework/source/Settings.h"
 #include "../../Framework/source/db/Database.h"
 #include "../../Ssl/source/Ssl.h"
@@ -51,10 +53,11 @@ namespace Jde
 			std::this_thread::sleep_for( 1s );
 			std::terminate();
 		}
+
 		StartRestService();
 		Web::StartWebSocket();
 		TcpListener::Start();
-		//Listener().DoAccept();
+		DB::GraphQL::Hook::Add( mu<Jde::Web::WebGraphQL>() );
 		INFOT( AppTag(), "--AppServer Started.--" );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}

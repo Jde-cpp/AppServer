@@ -134,11 +134,14 @@
 	},
 	"umEntities":{
 		"notes": "Group or User",
-		"parent": "$description",
+		"parent": "$nk",
 		"columns": [
+			{ "name": "target", "type": "$target" },
+			{ "name": "description", "type": "description?" },
 			{ "name": "is_group", "type": "bit", "default": "false" },
 			{ "name": "provider_id", "type": "umProviders?" }
 		],
+		"naturalKey":["target", "provider_id"],
 		"data": [
 			{"id":1, "attributes":5, "name":"Everyone", "target":"everyone", "isGroup":true }, 
 			{"id":2, "attributes":6, "name":"Users", "target":"users", "isGroup":true}]

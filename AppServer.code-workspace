@@ -131,7 +131,11 @@
 			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "buildTests",
 			"visualizerFile": "${workspaceFolder:tests}/../../build/gcc.natvis",
-			"showDisplayString": true
+			"showDisplayString": true,
+			"logging": {
+				"natvisDiagnostics": "error",
+				"engineLogging":"none",
+			}
 		}],
 		"compounds": []
 	},
@@ -230,7 +234,8 @@
 			"__debug": "cpp",
 			"__mutex_base": "cpp",
 			"__threading_support": "cpp",
-			"__verbose_abort": "cpp"
+			"__verbose_abort": "cpp",
+			"expected": "cpp"
 		},
 		"window.title": "App"
 	}
