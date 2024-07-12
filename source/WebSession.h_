@@ -1,5 +1,6 @@
 ﻿#pragma once
-#include "../../Public/src/web/WebSocket.h"
+#include <jde/web/socket/IWebSocketSession.h>
+#include <jde/web/socket/WebSocketServer.h>
 #include "../../Framework/source/um/UM.h"
 
 namespace Jde::ApplicationServer::Web
@@ -10,9 +11,9 @@ namespace Jde::ApplicationServer::Web
 	using tcp = boost::asio::ip::tcp;
 	struct WebServer;
 	typedef uint32 ClientId ;
-	struct MySession final : WebSocket::TSession<FromServer::Transmission,FromClient::Transmission>{
-		typedef WebSocket::TSession<FromServer::Transmission,FromClient::Transmission> base;
-		MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε;
+	struct MySession final : Jde::Web::Socket::TWebSocketSession<FromServer::Transmission,FromClient::Transmission>{
+		typedef Jde::Web::Socket::TWebSocketSession<FromServer::Transmission,FromClient::Transmission> base;
+		MySession( Jde::Web::Socket::IWebSocketServer& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε;
 		~MySession();
 		α OnConnect()ι->void;
 		α OnRead( FromClient::Transmission transmission )ι->void override;

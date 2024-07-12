@@ -13,11 +13,10 @@
 #define var const auto
 #define _listener TcpListener::GetInstance()
 
-namespace Jde::ApplicationServer::Web
-{
+namespace Jde::ApplicationServer::Web{
 	static sp<LogTag> _logTag{ Logging::Tag("app.session") };
 
-	MySession::MySession( WebSocket::WebListener& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε:
+	MySession::MySession( Jde::Web::Socket::IWebSocketServer& server, IO::Sockets::SessionPK id, tcp::socket&& socket )ε:
 		base( server, id, move(socket) )
 	{}
 

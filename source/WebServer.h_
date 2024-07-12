@@ -1,16 +1,16 @@
 ﻿#pragma once
-#include "../../Public/src/web/WebSocket.h"
+#include <jde/web/socket/_SocketServer.h>
 #include "WebSession.h"
 #include "../../Framework/source/collections/UnorderedSet.h"
 
 
 namespace Jde::ApplicationServer::Web
 {
-	using WebSocket::SessionPK;
+//	using WebSocket::SessionPK;
 
 	α StartWebSocket()ι->void;
-	struct WebServer final : WebSocket::TListener<FromServer::Transmission,MySession>{
-		using base=WebSocket::TListener<FromServer::Transmission,MySession>;
+	struct WebServer final : Jde::Web::Socket::TWebSocketServer<FromServer::Transmission,MySession>{
+		using base=Jde::Web::Socket::TWebSocketServer<FromServer::Transmission,MySession>;
 		WebServer( PortType port )ι;
 
 		Ŧ UpdateStatus( const T& app )ι->void;

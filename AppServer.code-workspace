@@ -5,6 +5,10 @@
 			"name": "AppServer"
 		},
 		{
+			"path": "../Public/src/appClient",
+			"name": "client"
+		},
+		{
 			"path": "../Public/jde",
 			"name": "headers"
 		},
@@ -22,8 +26,16 @@
 		},
 		{
 			"path": "../Public/src/web",
-			"name": "Web"
-		},		
+			"name": "web"
+		},
+		{
+			"path": "../Public/src/http",
+			"name": "http"
+		},
+		{
+			"path": "../Public/src/crypto",
+			"name": "Crypto"
+		},
 		{
 			"path": "../Public/tests/appServer",
 			"name": "tests"
@@ -44,6 +56,20 @@
 				},
 				"group": { "kind": "build", "isDefault": true }
 			},
+			{
+				"label": "compile",
+				"type": "shell",
+				"command": "tput reset;fileWorkspaceFolder=${fileWorkspaceFolder};absoluteFile=`realpath ${workspaceFolder}/${relativeFile}`;relativeFile=${absoluteFile#\"$fileWorkspaceFolder/\"}; cd ${fileWorkspaceFolder}/.obj/asan;make $relativeFile.o;",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": { "kind": "build", "isDefault": false }
+			},
+			{
+				"label": "buildProject",
+				"type": "shell",
+				"command": "tput reset;fileWorkspaceFolder=${fileWorkspaceFolder}; cd ${fileWorkspaceFolder}/.obj/asan;make -j;",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": { "kind": "build", "isDefault": false }
+			}
 			{
 				"label": "buildTests",
 				"type": "shell",
@@ -69,7 +95,7 @@
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder:AppServer}/../../bin/asan",
 			"environment": [
-				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" }, 
+				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" },
 				{ "name": "JDE_LOG_META", "value": "${workspaceFolder:AppServer}/../meta.json" },
 				{ "name": "Jde_App_Connection", "value": "${env:Jde_App_Connection}" }
 			],
@@ -121,7 +147,7 @@
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder:tests}/../../../bin/asan",
 			"environment": [
-				{ "name": "JDE_DB_DRIVER", "value": "./libJde.MySql.so" }, 
+				{ "name": "JDE_DB_DRIVER", "value": "./libJde.MySql.so" },
 				{ "name": "JDE_LOG_META", "value": "${env:JDE_DIR}/bin/config/AppServerMeta.json" },
 				{ "name": "Jde_Test_Connection", "value": "${env:Jde_Test_Connection}" }
 			],
@@ -235,7 +261,12 @@
 			"__mutex_base": "cpp",
 			"__threading_support": "cpp",
 			"__verbose_abort": "cpp",
-			"expected": "cpp"
+			"expected": "cpp",
+			"charconv": "cpp",
+			"random": "cpp",
+			"semaphore": "cpp",
+			"stop_token": "cpp",
+			"__locale": "cpp"
 		},
 		"window.title": "App"
 	}

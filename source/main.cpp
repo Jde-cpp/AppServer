@@ -1,15 +1,13 @@
-﻿#include "Listener.h"
-#include "../../Framework/source/um/UM.h"
-#include "WebServer.h"
-#include "LogClient.h"
-#include "LogData.h"
-#include "Rest.h"
-#include <jde/io/Crc.h>
-#include <jde/db/graphQL/GraphQLHook.h>
-#include <jde/web/WebGraphQL.h>
-#include "../../Framework/source/Settings.h"
+﻿#include <jde/appClient/SessionGraphQL.h>
+#include <jde/appClient/AppClient.h>
 #include "../../Framework/source/db/Database.h"
-#include "../../Ssl/source/Ssl.h"
+#include "../../Framework/source/Settings.h"
+#include "../../Framework/source/um/UM.h"
+#include "Cache.h"
+#include "ExternalLogger.h"
+#include "LogData.h"
+#include "Server.h"
+
 
 #define var const auto
 
@@ -18,7 +16,7 @@ namespace Jde{ α OSApp::CompanyName()ι->string{ return "Jde-Cpp"; } }
 namespace Jde{ α OSApp::ProductName()ι->sv{ return "AppServer"sv; } }
 #endif
 
-namespace Jde::ApplicationServer{
+namespace Jde::App{
 	α Startup()ι->void;
 }
 
@@ -26,7 +24,7 @@ int main( int argc, char** argv ){
 	using namespace Jde;
 	try{
 		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
-		IApplication::AddThread( ms<Threading::InterruptibleThread>("Startup", [&](){ApplicationServer::Startup();}) );
+		IApplication::AddThread( ms<Threading::InterruptibleThread>("Startup", [&](){App::Startup();}) );
 		IApplication::Pause();
 	}
 	catch( const IException& e ){
@@ -36,16 +34,14 @@ int main( int argc, char** argv ){
 	return EXIT_SUCCESS;
 }
 
-namespace Jde
-{
-	α ApplicationServer::Startup()ι->void{
+namespace Jde{
+	α App::Startup()ι->void{
 		try{
 				//if( Settings::TryGet<bool>("um/use").value_or(false) ) currently need to configure um so meta is loaded.
 			{
 				UM::Configure();
 			}
-			Logging::Data::SetDataSource( DB::DataSourcePtr() );
-			Logging::LogClient::CreateInstance();
+			SetDataSource( DB::DataSourcePtr() );
 		}
 		catch( IException& e ){
 			std::cerr << e.what() << std::endl;
@@ -53,11 +49,15 @@ namespace Jde
 			std::this_thread::sleep_for( 1s );
 			std::terminate();
 		}
+		var [appId, appInstanceId, dbLogLevel, fileLogLevel] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
+		SetAppId( appId );
+		SetInstanceId( appInstanceId );
 
-		StartRestService();
-		Web::StartWebSocket();
-		TcpListener::Start();
-		DB::GraphQL::Hook::Add( mu<Jde::Web::WebGraphQL>() );
+		Cache::Load();
+		StartWebServer();
+		DB::GraphQL::Hook::Add( mu<Web::SessionGraphQL>() );
+		Logging::External::Add( up<ExternalLogger>() );
+
 		INFOT( AppTag(), "--AppServer Started.--" );
 		IApplication::RemoveThread( "Startup" )->Detach();
 	}

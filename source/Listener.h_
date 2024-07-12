@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "WebServer.h"
-#include "../../Public/src/web/ProtoServer.h"
+#include <jde/web/socket/_ISocketSession.h>
+#include <jde/web/socket/_SocketServer.h>
 
 #define _logTag SessionTag()
 #define var const auto
@@ -16,7 +17,7 @@ namespace Jde::ApplicationServer
 	namespace basio=boost::asio;
 	α SessionTag()ι->sp<LogTag>;
 
-	struct Session final: IO::Sockets::TProtoSession<ToServer,FromServer>{
+	struct Session final: IO::Sockets::TSocketSession<ToServer,FromServer>{
 		Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι;
 		~Session(){DBG("({})~Session - {}", Id, InstancePtr ? InstancePtr->application() : "nullptr");}
 		α OnReceive( ToServer&& pValue )ι->void override;
@@ -34,7 +35,7 @@ namespace Jde::ApplicationServer
 		sp<Logging::Proto::Instance> InstancePtr;
 		string Status;
 		uint Memory{0};
-		using base=IO::Sockets::TProtoSession<ToServer,FromServer>;
+		using base=IO::Sockets::TSocketSession<ToServer,FromServer>;
 		using WebRequestId=uint; //
 		α WriteCustom( IO::Sockets::SessionPK webClientId, WebRequestId webRequestId, string&& message )ι->void;
 	private:
@@ -52,11 +53,11 @@ namespace Jde::ApplicationServer
 		//friend class AuthenticateAwait;
 	};
 
-	struct TcpListener final : public IO::Sockets::ProtoServer{
+	struct TcpListener final : IO::Sockets::SocketServer{
 		TcpListener()ε;
 		Ω GetInstance()ε->TcpListener&;
 		Ω Start()ι->void;
-		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->sp<IO::Sockets::ProtoSession> override;
+		α CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->sp<IO::Sockets::ISocketSession> override;
 		α ForEachSession( std::function<void(const IO::Sockets::SessionPK, const Session&)> fncn )ι->uint;
 		α SetLogLevel( ApplicationInstancePK instanceId, ELogLevel dbLevel, ELogLevel clientLevel )ι->void;
 		α WebSubscribe( ApplicationPK applicationId, ELogLevel level )ι->void;

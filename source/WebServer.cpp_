@@ -42,17 +42,18 @@ namespace Jde::ApplicationServer::Web
 		status.set_memory( IApplication::MemorySize() );
 		status.add_values( fmt::format("Web Connections:  {}", SessionCount()) );
 	}
-	α WebServer::RemoveSession( WebSocket::SessionPK id )ι->void{
+	
+	α WebServer::RemoveSession( SessionPK id )ι->void{
 		_statusSessions.erase( id );
 		base::RemoveSession( id );
 	}
 
-	α WebServer::AddLogSubscription( WebSocket::SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK /*instanceId*/, ELogLevel level )ι->bool{
+	α WebServer::AddLogSubscription( SessionPK sessionId, ApplicationPK applicationId, ApplicationInstancePK /*instanceId*/, ELogLevel level )ι->bool{
 		bool newSubscription;
 		uint minLevel = (uint)ELogLevel::Critical;
 		{
 			unique_lock l{ _logSubscriptionMutex };
-			auto& sessions = _logSubscriptions.try_emplace( applicationId, flat_map<WebSocket::SessionPK,ELogLevel>{} ).first->second;
+			auto& sessions = _logSubscriptions.try_emplace( applicationId, flat_map<SessionPK,ELogLevel>{} ).first->second;
 			newSubscription = sessions.try_emplace( sessionId, level ).second;
 			for( var& subscriber : sessions )
 				minLevel = std::min(minLevel, (uint)subscriber.second );
@@ -61,7 +62,7 @@ namespace Jde::ApplicationServer::Web
 
 		return newSubscription;
 	}
-	α WebServer::RemoveLogSubscription( WebSocket::SessionPK sessionId, ApplicationInstancePK instanceId )ι->void{
+	α WebServer::RemoveLogSubscription( SessionPK sessionId, ApplicationInstancePK instanceId )ι->void{
 		uint minLevel = (uint)ELogLevel::Critical;
 		{
 			unique_lock l{ _logSubscriptionMutex };
@@ -90,7 +91,7 @@ namespace Jde::ApplicationServer::Web
 		if( pSessions==_logSubscriptions.end() )
 			return minLevel;
 
-		WebSocket::SessionPK brokenSession{ 0 };
+		SessionPK brokenSession{ 0 };
 		for( var& [sessionId,sessionLevel] : pSessions->second ){
 			if( level<sessionLevel )
 				continue;

@@ -1,8 +1,9 @@
 ﻿#include "Listener.h"
 #include <boost/unordered/concurrent_flat_map.hpp>
 #include <jde/Str.h>
+#include <jde/web/socket/_ISocketSession.h>
 #include "../../Framework/source/db/GraphQL.h"
-#include "../../Public/src/web/RestServer.h"
+#include <jde/web/rest/IRestSession.h>
 #include "LogData.h"
 #include "WebServer.h"
 #include "Cache.h"
@@ -16,6 +17,8 @@
 #define _webServer Web::Server()
 #define _webLevelUint static_cast<uint>((Jde::ELogLevel)_webLevel)
 namespace Jde::ApplicationServer{
+	using namespace Jde::Web::Rest;
+	
 	static sp<LogTag> _logTag{ Logging::Tag("app.session") };
 	static sp<LogTag> _sessionReceiveTag{ Logging::Tag("app.session.receive") };
 	α SessionTag()ι->sp<LogTag>{ return _logTag; }
@@ -25,12 +28,12 @@ namespace Jde::ApplicationServer{
 	α TcpListener::Start()ι->void{ _listener = mu<TcpListener>(); }
 
 	TcpListener::TcpListener()ε://multiple listeners on same port
-		IO::Sockets::ProtoServer{ Settings::Get<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }{
+		IO::Sockets::SocketServer{ Settings::Get<PortType>("tcpListner/port").value_or(ServerSinkDefaultPort) }{
 		Accept();
 	}
 
 
-	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->sp<IO::Sockets::ProtoSession>{
+	α TcpListener::CreateSession( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι->sp<IO::Sockets::ISocketSession>{
 		auto p = ms<Session>( move(socket), id );
 		p->SendAck();
 		return p;
@@ -117,7 +120,7 @@ namespace Jde::ApplicationServer{
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Session::Session( basio::ip::tcp::socket&& socket, IO::Sockets::SessionPK id )ι:
-		IO::Sockets::TProtoSession<ToServer,FromServer>{ move(socket), id }
+		IO::Sockets::TSocketSession<ToServer,FromServer>{ move(socket), id }
 	{}
 
 	α Session::SendAck()ι->void{
@@ -130,7 +133,7 @@ namespace Jde::ApplicationServer{
 		try{
 			TRACET( _sessionReceiveTag, "({}.{})AddSession('{}', '{}', providerType:'{}')", Id, requestId, domain, loginName, providerType );
 			var userId = *( co_await UM::Login(loginName, providerType, domain) ).UP<UserPK>();
-			var sessionInfo = Jde::Web::Rest::ISession::AddSession( userId );
+			var sessionInfo = IRestSession::AddSession( userId );
 			TRACE( "({}.{})AddSessionResult=( hasSession:  '{}' )", Id, requestId, sessionInfo->session_id()>0 );
 			Write( AddSessionResult(sessionInfo->session_id(), requestId) );
 		}
@@ -220,7 +223,7 @@ namespace Jde::ApplicationServer{
 		var _ = shared_from_this();
 		up<SessionInfo> pInfo;
 		try{
-			pInfo = (co_await Jde::Web::Rest::ISession::FetchSessionInfo(sessionId)).UP<SessionInfo>();
+			pInfo = (co_await IRestSession::FetchSessionInfo(sessionId)).UP<SessionInfo>();
 		}
 		catch( const IException& )
 		{}

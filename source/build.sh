@@ -12,6 +12,7 @@ if [ $all -eq 1 ]; then
 	$BUILD ../../Ssl/source $type $clean $compiler || exit 1;
 	$BUILD ../../XZ/source $type $clean $compiler || exit 1;
 	$BUILD ../../Public/src/web $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/appClient $type $clean $compiler || exit 1;
 fi
 if [ ! -d .obj ];	then
 	mkdir .obj;

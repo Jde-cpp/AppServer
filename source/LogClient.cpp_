@@ -1,9 +1,6 @@
 ﻿#include "LogClient.h"
 #include "../../Framework/source/db/GraphQL.h"
 #include "LogData.h"
-#ifndef TESTING
-	#include "WebServer.h"
-#endif
 
 #define var const auto
 namespace Jde::Logging{
@@ -14,7 +11,7 @@ namespace Jde::Logging{
 		Server::Set( move(p) );
 	}
 
-	LogClient::LogClient( ApplicationPK id, ApplicationInstancePK applicationInstanceId, ELogLevel serverLevel )ε:
+	LogClient::LogClient( AppPK id, AppInstancePK applicationInstanceId, ELogLevel serverLevel )ε:
 		IServerSink{ Data::LoadMessageIds() },
 		_applicationId{id}{
 		_instanceId = applicationInstanceId;
