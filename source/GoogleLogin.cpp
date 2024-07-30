@@ -1,35 +1,37 @@
 ﻿#include "GoogleLogin.h"
+#include <jde/web/client/http/ClientHttpAwait.h>
 #include <jde/crypto/OpenSsl.h>
+#include <jde/io/Json.h>
+//#include "../../Ssl/source/Ssl.h"
 
 #define var const auto
-namespace Jde::GoogleLogin
-{
-	α Process( string credential, variant<up<Google::TokenInfo>,up<IException>>& y, HCoroutine h )ι->Task
-	{
-		//constexpr EAuthType type{ EAuthType::Google };
-		var parts = Str::Split( move(credential), '.');
-		Google::TokenInfo token;
-		//Web::FromServer::MessageUnion y;
-		try
-		{
-			var header = json::parse( Ssl::Decode64(string{parts[0]}) );//{"alg":"RS256","kid":"fed80fec56db99233d4b4f60fbafdbaeb9186c73","typ":"JWT"}
-			var body = json::parse( Ssl::Decode64(string{parts[1]}) );
-			token = body.get<Google::TokenInfo>();
+namespace Jde::App{
+	using Web::Client::ClientHttpAwait;
+	//using Web::Client::ClientHttpRes;
 
-			json jOpenidConfiguration = json::parse( Ssl::Get<string>("accounts.google.com", "/.well-known/openid-configuration") );
-			var pJwksUri = jOpenidConfiguration.find( "jwks_uri" ); THROW_IF( pJwksUri==jOpenidConfiguration.end(), "Could not find jwks_uri in '{}'", jOpenidConfiguration.dump() );
-			var uri = pJwksUri->get<string>(); THROW_IF( !uri.starts_with("https://www.googleapis.com"), "Wrong target:  '{}'", uri );
+	α GoogleLoginAwait::Execute()ι->Jde::Task{
+		try{
+			//var header = Json::Parse( Ssl::Decode64(string{parts[0]}) );//{"alg":"RS256","kid":"fed80fec56db99233d4b4f60fbafdbaeb9186c73","typ":"JWT"}
+			//var body = Json::Parse( Ssl::Decode64(string{parts[1]}) );
+			Google::TokenInfo token = _jwt.Body.get<Google::TokenInfo>();
+
 			//TODO cache this.
-			var jwks = json::parse( Ssl::Get<string>( "www.googleapis.com", uri.substr(sizeof("https://www.googleapis.com")-1)) );
-			var pKid = header.find( "kid" ); THROW_IF( pKid== header.end(), "Could not find kid in header {}", header.dump() );
-			var kidString = pKid->get<string>();
+			json jOpenidConfiguration;
+			[&]()->ClientHttpAwait::Task {
+				 jOpenidConfiguration = (co_await ClientHttpAwait{"accounts.google.com", "/.well-known/openid-configuration"}).Json();
+			}();
+			var uri = Json::Getε( jOpenidConfiguration, "jwks_uri" ); THROW_IF( !uri.starts_with("https://www.googleapis.com"), "Wrong target:  '{}'", uri ); //https://www.googleapis.com/oauth2/v3/certs
+			json jwks;
+			[&]()->ClientHttpAwait::Task {
+				 jwks = ( co_await ClientHttpAwait{"www.googleapis.com", uri.substr(sizeof("https://www.googleapis.com")-1)} ).Json();
+			}();
+			var& kid = _jwt.Kid;
+			THROW_IF( kid.empty(), "Could not find kid in header {}", Str::Decode64<string>(_jwt.HeaderBodyEncoded) );
 			var pKeys = jwks.find( "keys" );  THROW_IF( pKeys==jwks.end(), "Could not find pKeys in jwks {}", jwks.dump() );
 			json foundKey;
-			for( var& key : *pKeys )
-			{
+			for( var& key : *pKeys ){
 				var keyString = key["kid"].get<string>();
-				if( keyString==kidString )
-				{
+				if( keyString==kid ){
 					foundKey = key;
 #ifndef NDEBUG
 					try{
@@ -43,42 +45,27 @@ namespace Jde::GoogleLogin
 				//break;
 			}
 #ifndef NDEBUG
-			if( foundKey.is_null() && fs::exists(IApplication::ApplicationDataFolder()/(kidString+".json")) )
-				foundKey = json::parse( IO::FileUtilities::Load(IApplication::ApplicationDataFolder()/(kidString+".json")) );
+			if( foundKey.is_null() && fs::exists(IApplication::ApplicationDataFolder()/(kid+".json")) )
+				foundKey = json::parse( IO::FileUtilities::Load(IApplication::ApplicationDataFolder()/(kid+".json")) );
 #endif
-			THROW_IF( foundKey.is_null(), "Could not find key... '{}' in: '{}'", pKid->get<string>(), pKeys->dump() );
+			THROW_IF( foundKey.is_null(), "Could not find key... '{}' in: '{}'", kid, pKeys->dump() );
 			var alg = foundKey["alg"].get<string>();
-			var exponent = foundKey["e"].get<string>();
-			var modulus = foundKey["n"].get<string>();
-			//var token = Ssl::Get<Google::TokenInfo>( "oauth2.googleapis.com", format("/tokeninfo?id_token={}"sv, credential) );
-			Crypto::Verify( Ssl::Decode64<vector<unsigned char>>(modulus, true), Ssl::Decode64<vector<unsigned char>>(exponent, true), string{parts[0]}+'.'+string{parts[1]}, Ssl::Decode64(string{parts[2]}, true) );
+			Crypto::Verify( _jwt.Modulus, _jwt.Exponent, _jwt.HeaderBodyEncoded, _jwt.Signature );
 			THROW_IF(token.Aud != Settings::Get<string>("GoogleAuthClientId"), "Invalid client id");
 			THROW_IF(token.Iss != "accounts.google.com" && token.Iss != "https://accounts.google.com", "Invalid iss");
 #ifdef NDEBUG
-		// TODO uncomment
-		//	var expiration = Clock::from_time_t(token.Expiration);
-		//	THROW_IF(expiration < Clock::now(), "token expired");
+			var expiration = Clock::from_time_t(token.Expiration);
+			THROW_IF(expiration < Clock::now(), "token expired");
 #endif
-			y = mu<Google::TokenInfo>( move(token) );
+			Resume( move(token) );
 		}
-		catch( const nlohmann::json::exception& e ){
-			CRITICALT( AppTag(), "json exception - {}", e.what() );
-			y = mu<Exception>( "Authentication Failed" );
+		catch( IException& e ){
+			ResumeExp( move(e) );
 		}
-		catch( IException& e )
-		{
-			y = e.Move();
-		}
-		h.resume();
-		co_return;
 	}
-	α GoogleLoginAwait::await_suspend( HCoroutine h )ι->void
-	{
-		IAwait::await_suspend(h);
-		Process( move(_token), _result, h );
-	}
-	α GoogleLoginAwait::await_resume()ι->AwaitResult
-	{
-		return _result.index()==0 ? AwaitResult{ move(get<0>(_result)) } : AwaitResult{ move(get<1>(_result)) };
+
+	α GoogleLoginAwait::await_suspend( base::Handle h )ι->void{
+		base::await_suspend( h );
+		Execute();
 	}
 }

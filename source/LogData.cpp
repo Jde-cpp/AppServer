@@ -1,116 +1,57 @@
 ﻿#include "LogData.h"
-
+#include <jde/app/shared/StringCache.h>
+#include <jde/app/shared/proto/App.FromServer.h>
+#include "../../Framework/source/db/Database.h"
 #include "../../Framework/source/db/DBQueue.h"
 #include "../../Framework/source/db/Syntax.h"
+#include "../../Framework/source/db/GraphQL.h"
+#include "../../Framework/source/db/GraphQuery.h"
 
-/*
-#pragma warning( disable : 4715)
-#include <nlohmann/json.hpp>
-#pragma warning( default : 4715)
-
-#include "../../Framework/source/DateTime.h"
-#include "../../Framework/source/db/Database.h"
-#include "../../Framework/source/db/DataSource.h"
-#include "../../Framework/source/db/Row.h"
-#include <jde/Str.h>
-#include <jde/io/File.h>
-#include "../../Framework/source/Settings.h"
-*/
 #define var const auto
 
-namespace Jde{
-	using boost::concurrent_flat_map;
-	using nlohmann::json;
-	//using ApplicationServer::Web::FromServer::Traces;
-	//using ApplicationServer::Web::FromServer::Applications;
-	sp<DB::IDataSource> _dataSource;
+namespace Jde::App{
 	sp<DB::DBQueue> _pDbQueue;
 	static sp<LogTag> _logTag = Logging::Tag( "app.log" );
 	α Configure()ε->void{
-		if( auto p = Settings::Get<fs::path>( "db/meta" ); p ){
-			INFO( "db meta='{}'"sv, p->string() );
+		if( auto dbMetaPath = Settings::Get<fs::path>( "db/meta" ); dbMetaPath ){
+			INFO( "db meta='{}'"sv, dbMetaPath->string() );
 			json j;
 			try{
-				if( !fs::exists(*p) )
-					*p = _debug && _msvc ? "../config/meta.json" : IApplication::ApplicationDataFolder() / *p;//TODO combine with UM.cpp and move somewhere else.
-				j = json::parse( IO::FileUtilities::Load(*p) );
+				if( !fs::exists(*dbMetaPath) )
+					*dbMetaPath = _debug && _msvc ? "../config/meta.json" : IApplication::ApplicationDataFolder() / *dbMetaPath;//TODO combine with UM.cpp and move somewhere else.
+				j = json::parse( IO::FileUtilities::Load(*dbMetaPath) );
 			}
 			catch( const nlohmann::json::exception& e ){
-				throw IOException( SRCE_CUR, *p, ELogLevel::Critical, "Error reading '{}'", e.what() );
+				throw IOException( SRCE_CUR, *dbMetaPath, ELogLevel::Critical, "Error reading '{}'", e.what() );
 			}
-			if( _dataSource && Settings::Get<bool>("db/createSchema").value_or(true) )
-				_dataSource->SchemaProc()->CreateSchema( j, fs::path{*p}.parent_path() );
+			if( auto p = Settings::Get<bool>("db/createSchema").value_or(true) ? DB::DataSourcePtr() : nullptr; p  )
+				p->SchemaProc()->CreateSchema( j, fs::path{*dbMetaPath}.parent_path() );
 		}
 		else
 			INFO( "db/meta not specified" );
 	}
-}
-namespace Jde{
-	α App::SetDataSource( sp<DB::IDataSource> dataSource )ε->void{
-		//TRACE( "SetDataSource='{}'"sv, dataSource ? "on" : "off" );
-		_dataSource = dataSource;
-		function<void()> clean =  [](){ DBG( "LogData::_dataSource = nullptr;"sv ); _dataSource = nullptr;  };
-		DB::ShutdownClean( clean );
-		_pDbQueue = ms<DB::DBQueue>( dataSource );
-		IApplication::AddShutdown( _pDbQueue );
-		IApplication::AddShutdownFunction( [](){_pDbQueue=nullptr;} );
 
-
+	α Server::ConfigureDatasource()ε->void{
+//		App::SetDatasource( datasource );
+//		auto clean =  [](){ DBG( "LogData::_dataSource = nullptr;"sv ); App::SetDatasource( nullptr ); };
+//		DB::ShutdownClean( clean );
+		_pDbQueue = ms<DB::DBQueue>( DB::DataSourcePtr() );
+		Process::AddShutdown( _pDbQueue );
+		Process::AddShutdownFunction( [](bool terminate){_pDbQueue=nullptr;} );
 		Configure();
 	}
-	α App::AddInstance( sv applicationName, sv hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK,ELogLevel,ELogLevel>{
-		AppPK applicationId;
-		AppInstancePK applicationInstanceId;
-		optional<uint> dbLogLevelInt; optional<uint> fileLogLevelInt;
-		auto fnctn = [&applicationId, &applicationInstanceId, &dbLogLevelInt,&fileLogLevelInt](const DB::IRow& row){
-			row >> applicationId >> applicationInstanceId >> dbLogLevelInt >> fileLogLevelInt;
-		};
-		while( !_dataSource )
-			std::this_thread::sleep_for( 1s );
-		_dataSource->ExecuteProc( "log_application_instance_insert(?,?,?)", {applicationName, hostName, processId}, fnctn );
-
-		ELogLevel dbLogLevel = dbLogLevelInt.has_value() ? (ELogLevel)dbLogLevelInt.value() : ELogLevel::Information;
-		ELogLevel fileLogLevel = fileLogLevelInt.has_value() ? (ELogLevel)fileLogLevelInt.value() : ELogLevel::Information;
-
-		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
-	}
-
-	α Fetch( string sql, SRCE )ε->concurrent_flat_map<uint32,string>{
-		concurrent_flat_map<uint32,string> map;
-		_dataSource->Select( move(sql), [&map]( const DB::IRow& row ){ map.emplace( row.GetUInt32(0), row.GetString(1) ); }, {}, sl );
-		return map;
-	}
-
-	α App::LoadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{
-		return Fetch( "select id, value from log_files", sl );
-	}
-	α App::LoadFunctions( SL sl )ε->concurrent_flat_map<uint32,string>{
-		return Fetch( "select id, value from log_functions", sl );
-	}
-	α App::LoadMessages( SL sl )ε->concurrent_flat_map<uint32,string>{
-		return Fetch( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id", sl );
-	}
-	α App::LoadMessageIds( SL sl )ε->concurrent_flat_set<uint32>{
-		concurrent_flat_set<uint32> y;
-		_dataSource->Select( "select log_messages.id from log_messages", [&y]( const DB::IRow& row ){ y.emplace( row.GetUInt32(0) ); }, sl );
-		return y;
-	}
 	#define _pQueue if( auto p = _pDbQueue; p )p
-	α App::SaveString( AppPK /*applicationId*/, Proto::FromClient::EFields field, StringPK id, string value, SL sl )ι->void{
-
+	α Server::SaveString( Proto::FromClient::EFields field, StringPK id, string value, SL sl )ι->void{
 		sv table = "log_messages";
-		sv frmt = "insert into {}(id,value)values(?,?)";
-		if( field==Proto::FromClient::EFields::MessageId )
-			frmt = "insert into {}(id,value)values(?,?)";
-		else if( field==Proto::FromClient::EFields::FileId )
+		if( field==Proto::FromClient::EFields::FileId )
 			table = "log_files";
 		else if( field==Proto::FromClient::EFields::FunctionId )
 			table = "log_functions";
-		else{
+		else if( field!=Proto::FromClient::EFields::MessageId ){
 			ERRX( "unknown field '{}'.", (int)field );
 			return;
 		}
-		var sql = Jde::format( fmt::runtime(frmt), table );
+		var sql = 𐢜( "insert into {}(id,value)values(?,?)", table );
 		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
 		//ASSERT( Calc32RunTime(*pValue)==id );
 		if( Calc32RunTime(value)!=id )
@@ -119,74 +60,27 @@ namespace Jde{
 		pParameters->push_back( move(value) );
 		_pQueue->Push( sql, pParameters, false, sl );
 	}
-#define _syntax DB::DefaultSyntax()
-	α App::LoadEntries( AppPK applicationId, AppInstancePK instanceId, ELogLevel /*level*/, const std::optional<TimePoint>& pStart, uint limit )ι->up<Proto::FromServer::Traces>{
-		auto pTraces = mu<Proto::FromServer::Traces>();
-		flat_map<LogPK,Proto::FromServer::TraceMessage*> mapTraces;
-		auto fnctn = [&pTraces, &mapTraces]( const DB::IRow& row )
-		{
-			auto pTrace = pTraces->add_values();
-
-			uint i=0;
-			var id = row.GetUInt32(i++);
-			pTrace->set_id( id );
-			pTrace->set_instance_id( row.GetUInt32(i++) );
-			pTrace->set_file_id( row.GetUInt32(i++) );
-			pTrace->set_function_id( row.GetUInt32(i++) );
-			pTrace->set_line_number( row.GetUInt32(i++) );
-			pTrace->set_message_id( row.GetUInt32(i++) );
-			pTrace->set_level( (Jde::Proto::ELogLevel)row.GetUInt16(i++) );
-			pTrace->set_thread_id( row.GetUInt32(i++) );
-			*pTrace->mutable_time() = IO::Proto::ToTimestamp( row.GetTimePoint(i++) );
-			pTrace->set_user_pk( row.GetUInt32(i++) );
-			mapTraces.emplace( id, pTrace );
+}
+namespace Jde{
+	α App::AddInstance( sv applicationName, sv hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK,ELogLevel,ELogLevel>{
+		AppPK applicationId;
+		AppInstancePK applicationInstanceId;
+		optional<uint> dbLogLevelInt; optional<uint> fileLogLevelInt;
+		auto fnctn = [&applicationId, &applicationInstanceId, &dbLogLevelInt,&fileLogLevelInt](const DB::IRow& row){
+			row >> applicationId >> applicationInstanceId >> dbLogLevelInt >> fileLogLevelInt;
 		};
+		while( !DB::DataSourcePtr() )
+			std::this_thread::sleep_for( 50ms );
+		DB::DataSource().ExecuteProc( "log_application_instance_insert(?,?,?)", {applicationName, hostName, processId}, fnctn );
 
-		try
-		{
-			vector<string> where;
-			if( pStart )
-				where.push_back( Jde::format("CONVERT_TZ(time, @@session.time_zone, '+00:00')>'{}'", ToIsoString(*pStart)) );
-			std::vector<DB::object> params;
-			if( applicationId>0 )
-			{
-				where.push_back( "application_id=?" );
-				params.push_back( applicationId );
-			}
-			if( instanceId>0 )
-			{
-				where.push_back( "application_instance_id=?" );
-				params.push_back( instanceId );
-			}
+		ELogLevel dbLogLevel = dbLogLevelInt.has_value() ? (ELogLevel)dbLogLevelInt.value() : ELogLevel::Information;
+		ELogLevel fileLogLevel = fileLogLevelInt.has_value() ? (ELogLevel)fileLogLevelInt.value() : ELogLevel::Information;
 
-			var sql = Jde::format( "select id, application_instance_id, file_id, function_id, line_number, message_id, severity, thread_id, {}, user_id from logs", _syntax.DateTimeSelect("time") );
-			auto whereString = where.size() ? Jde::format( " where {}", Str::AddSeparators(where, " and ") ) : string{};
-			var orderDirection = pStart ? "asc"sv : "desc"sv;
-			_dataSource->Select( _syntax.Limit(Jde::format("{}{} order by id {}", sql, whereString, orderDirection), limit), fnctn, params );
-			//_dataSource->Select( _syntax.Limit( Jde::format("{}{} order by id {} limit {}", sql, whereString, orderDirection, limit), fnctn, params );
-			if( mapTraces.size() )
-			{
-				auto fnctn2 = [&mapTraces]( const DB::IRow& row )
-				{
-					var id = row.GetUInt32( 0 );
-					auto pTrace = mapTraces.find( id );
-					if( pTrace!=mapTraces.end() )
-						*pTrace->second->add_variables() = row.GetString( 1 );
-				};
-				constexpr sv variableSql = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id"sv;
-				if( whereString.size() && mapTraces.size()==limit )
-				{
-					whereString += " and logs.id>=?";
-					params.push_back( mapTraces.begin()->first );
-				}
-				_dataSource->Select( Jde::format("{}{} order by log_id {}, variable_index", variableSql, whereString, orderDirection), fnctn2, params );
-			}
-		}
-		catch(const std::exception& /*e*/)
-		{}
-
-		return pTraces;
+		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
 	}
+
+#define _syntax DB::DefaultSyntax()
+/*
 	α App::LoadApplications( AppPK id )ι->up<Proto::FromServer::Applications>
 	{
 		auto pApplications = mu<Proto::FromServer::Applications>();
@@ -201,17 +95,16 @@ namespace Jde{
 			pApplication->set_file_level( fileLevel.has_value() ? (Jde::Proto::ELogLevel)fileLevel.value() : Jde::Proto::ELogLevel::Information );
 		};
 
-		constexpr sv sql = "select id, name, db_log_level, file_log_level from log_applications"sv;
-		Try( [&]()
-		{
-			if( id )
-				_dataSource->Select( Jde::format("{} where id=?"sv, sql), fnctn, {id} );
-			else
-				_dataSource->Select( string{sql}, fnctn, {} );
+		constexpr sv baseSql = "select id, name, db_log_level, file_log_level from log_applications"sv;
+		Try( [&](){
+			string sql = id ? 𐢜("{} where id=?", baseSql) : string{baseSql};
+			var params = id ? vector<DB::object>{id} : vector<DB::object>{};
+			if( auto p = Datasource(); p )
+				p->Select( sql, fnctn, params );
 		} );
 		return pApplications;
 	}
-
+*/
 	α App::SaveMessage( AppPK applicationId, AppInstancePK instanceId, const Proto::FromClient::LogEntry& m, const vector<string>* variables, SL sl )ι->void{
 		var variableCount = std::min( (uint)5, variables ? variables->size() : 0 );
 		auto pParameters = ms<vector<DB::object>>(); pParameters->reserve( 10+variableCount );
@@ -239,5 +132,57 @@ namespace Jde{
 		}
 		os << ")";
 		_pQueue->Push( os.str(), pParameters, true, sl );
+	}
+	namespace App{
+		α Data::LoadEntries( DB::TableQL table )ε->Proto::FromServer::Traces{
+			string whereString;
+			auto [sql,params] = DB::GraphQL::SelectStatement( table, true, &whereString );
+			flat_map<LogPK,Proto::FromServer::Trace> mapTraces;
+			auto fnctn = [&mapTraces, &table]( const DB::IRow& row ){
+				auto t=FromServer::ToTrace( row, table.Columns );
+				auto id = t.id();
+				mapTraces.emplace( id, move(t) );
+			};
+			uint limit = 1000;//TODO apply limit rows.
+			//var orderDirection = pStart ? "asc"sv : "desc"sv;
+
+			DB::DataSource().Select( _syntax.Limit(sql, limit), fnctn, params ); //TODO awaitable
+			if( mapTraces.size() ){
+				auto addVariables = [&mapTraces]( const DB::IRow& row ){
+					var id = row.GetUInt32( 0 );
+					if( auto pTrace = mapTraces.find(id); pTrace!=mapTraces.end() )
+						*pTrace->second.add_args() = row.GetString( 1 );
+				};
+				constexpr sv variableSql = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id";
+				if( whereString.size() && mapTraces.size()==limit ){
+					whereString += " and logs.id>=?";
+					params.push_back( mapTraces.begin()->first );
+				}
+				DB::DataSource().Select( 𐢜("{}{}, variable_index", variableSql, whereString), addVariables, params );
+			}
+			Proto::FromServer::Traces traces;
+			for( auto& [id,trace] : mapTraces )
+				*traces.add_values() = move(trace);
+			return traces;
+		}
+
+		α LoadStrings( string sql, SRCE )ε->concurrent_flat_map<uint32,string>{
+			concurrent_flat_map<uint32,string> map;
+			DB::DataSource().Select( move(sql), [&map]( const DB::IRow& row ){ map.emplace( row.GetUInt32(0), row.GetString(1) ); }, {}, sl );
+			return map;
+		}
+		α LoadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{
+			return LoadStrings( "select id, value from log_files", sl );
+		}
+		α LoadFunctions( SL sl )ε->concurrent_flat_map<uint32,string>{
+			return LoadStrings( "select id, value from log_functions", sl );
+		}
+		α LoadMessages( SL sl )ε->concurrent_flat_map<uint32,string>{
+			return LoadStrings( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id", sl );
+		}
+
+		α Data::LoadStrings( SL sl )ε->void{
+			StringCache::Merge( LoadFiles(sl), LoadFunctions(sl), LoadMessages(sl) );
+		}
 	}
 }

@@ -9,26 +9,15 @@ BUILD=../../Public/build/so.sh;
 if [ $all -eq 1 ]; then
 	$BUILD ../../Framework/source $type $clean $compiler || exit 1;
 	$BUILD ../../MySql/source $type $clean $compiler || exit 1;
-	$BUILD ../../Ssl/source $type $clean $compiler || exit 1;
-	$BUILD ../../XZ/source $type $clean $compiler || exit 1;
-	$BUILD ../../Public/src/web $type $clean $compiler || exit 1;
-	$BUILD ../../Public/src/appClient $type $clean $compiler || exit 1;
+#	$BUILD ../../Ssl/source $type $clean $compiler || exit 1;
+#	$BUILD ../../XZ/source $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/crypto $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/web/client $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/web/server $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/app/shared $type $clean $compiler || exit 1;
+	$BUILD ../../Public/src/app/client $type $clean $compiler || exit 1;
+	$BUILD `pwd` $type $clean $compiler || exit 1;
+	$BUILD .. $type $clean $compiler || exit 1;
+	$BUILD ../tests $type $clean $compiler || exit 1;
 fi
-if [ ! -d .obj ];	then
-	mkdir .obj;
-	clean=1;
-fi;
-cd .obj;
-if [ ! -d $type ]; then
-	mkdir $type;
-	clean=1;
-fi;
-cd $type;
-if (( $clean == 1 )) || [ ! -f CMakeCache.txt ]; then
-	rm -f CMakeCache.txt;
-	cmake -DCMAKE_CXX_COMPILER=$compiler -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
-	make clean;
-fi
-make -j;
-cd - > /dev/null;
 exit $?;

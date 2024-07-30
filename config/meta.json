@@ -46,7 +46,7 @@
 		],
 		"naturalKey":["target"]
 	},
-	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql", 
+	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql",
 		"sql/um_providers_ql.sql", "sql/um_user_insert.sql", "sql/um_user_insert_login.sql"],
 	"$smallValues":{
 		"columns": [
@@ -143,7 +143,7 @@
 		],
 		"naturalKey":["target", "provider_id"],
 		"data": [
-			{"id":1, "attributes":5, "name":"Everyone", "target":"everyone", "isGroup":true }, 
+			{"id":1, "attributes":5, "name":"Everyone", "target":"everyone", "isGroup":true },
 			{"id":2, "attributes":6, "name":"Users", "target":"users", "isGroup":true}]
 	},
 	"umProviders":{
@@ -154,7 +154,7 @@
 		],
 		"surrogateKey":["id"],
 		"naturalKey":["provider_type_id","target"],
-		"data": [{"id":1, "providerTypeId":1}, {"id":2, "providerTypeId":2}, {"id":3, "providerTypeId":3}, {"id":4, "providerTypeId":4}, {"id":5, "providerTypeId":5} ],
+		"data": [{"id":1, "providerTypeId":1}, {"id":2, "providerTypeId":2}, {"id":3, "providerTypeId":3}, {"id":4, "providerTypeId":4}, {"id":5, "providerTypeId":5}, {"id":6, "providerTypeId":6}, {"id":7, "providerTypeId":7} ],
 		"qlView": "um_providers_ql"
 	},
 	"um_providers_ql":{
@@ -172,13 +172,17 @@
 			{"id":3, "name":"Amazon"},
 			{"id":4, "name":"Microsoft"},
 			{"id":5, "name":"VK"},
-			{"id":6, "name":"OpcServer"}]
+			{"id":6, "name":"Key"},
+			{"id":7, "name":"Certificate"},
+			{"id":8, "name":"OpcServer"}]
 	},
 	"umUsers":{
 		"columns": [
 			{ "name": "entityId", "type": "umEntities", "criteria": "not is_group" },
-			{ "name": "login_name", "type": "name" },
-			{ "name": "password", "type": "password?" }
+			{ "name": "login_name", "type": "name?" },
+			{ "name": "password", "type": "password?" },
+			{ "name": "modulus", "length": 2048, "notes": "Used for RSA" },
+			{ "name": "exponent", "type": "uint32?", "notes": "Used for RSA" }
 		],
 		"surrogateKey":["entityId"]
 	},

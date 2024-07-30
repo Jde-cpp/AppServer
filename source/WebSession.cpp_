@@ -68,7 +68,7 @@ namespace Jde::ApplicationServer::Web{
 					Server().RemoveStatusSession( Id );
 					TRACE( "({})Remove status subscription.", Id );
 				}
-				else if( request.type() == FromClient::ERequest::Applications )
+				else if( request.type() == FromClient::ERequest::Applications )//Just use GraphQL
 				{
 					auto pApplications = Logging::Data::LoadApplications();
 					TRACE( "({})Writing Applications count='{}'", Id, pApplications->values_size() );
@@ -83,7 +83,7 @@ namespace Jde::ApplicationServer::Web{
 				var instanceId = (ApplicationInstancePK)request.instance_id();
 				var value = (int)request.type();
 				if( value == -2 )//(int)(FromClient::ERequest::Power | FromClient::ERequest::Negate);
-					_listener.Kill( instanceId );
+					_listener.Kill( instanceId );//TODO! Rest
 				else if( value == -3 )//(int)(FromClient::ERequest::Logs | FromClient::ERequest::Negate);
 					Server().RemoveLogSubscription( Id, instanceId );
 				else if( value == FromClient::ERequest::Power )
@@ -91,7 +91,7 @@ namespace Jde::ApplicationServer::Web{
 				else
 					WARN( "unsupported request '{}'", (int)request.type() );
 			}
-			else if( m.has_log_values() ){
+			else if( m.has_log_values() ){//Implement later with tags
 				var& values = m.log_values();
 				if( values.db_value()<ELogLevelStrings.size() && values.client_value()<ELogLevelStrings.size() )
 					TRACE( "({})SetLogLevel for instance='{}', db='{}', client='{}'"sv, Id, values.instance_id(), ELogLevelStrings[values.db_value()], ELogLevelStrings[values.client_value()] );

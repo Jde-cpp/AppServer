@@ -5,8 +5,12 @@
 			"name": "AppServer"
 		},
 		{
-			"path": "../Public/src/appClient",
+			"path": "../Public/src/app/client",
 			"name": "client"
+		},
+		{
+			"path": "../Public/src/app/shared",
+			"name": "shared"
 		},
 		{
 			"path": "../Public/jde",
@@ -25,19 +29,19 @@
 			"name": "MySql"
 		},
 		{
-			"path": "../Public/src/web",
-			"name": "web"
+			"path": "../Public/src/web/server",
+			"name": "webServer"
 		},
 		{
-			"path": "../Public/src/http",
-			"name": "http"
+			"path": "../Public/src/web/client",
+			"name": "webClient"
 		},
 		{
 			"path": "../Public/src/crypto",
 			"name": "Crypto"
 		},
 		{
-			"path": "../Public/tests/appServer",
+			"path": "tests",
 			"name": "tests"
 		}
 	],
@@ -69,7 +73,7 @@
 				"command": "tput reset;fileWorkspaceFolder=${fileWorkspaceFolder}; cd ${fileWorkspaceFolder}/.obj/asan;make -j;",
 				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": false }
-			}
+			},
 			{
 				"label": "buildTests",
 				"type": "shell",
@@ -90,7 +94,7 @@
 			"name": "Asan",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder:AppServer}/../../bin/asan/Jde.AppServer",
+			"program": "${workspaceFolder:AppServer}/../../bin/asan/Jde.App.Server",
 			"args": ["-c"],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder:AppServer}/../../bin/asan",
@@ -104,7 +108,7 @@
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
 			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "build",
-			"visualizerFile": "${workspaceFolder:AppServer}/../../Public/build/gcc.natvis",
+			"visualizerFile": "${env:JDE_DIR}/Public/build/gcc.natvis",
 			"showDisplayString": true
 		},
 		{
@@ -142,10 +146,10 @@
 			"name": "Tests Asan",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder:tests}/../../../bin/asan/Tests.AppServer",
+			"program": "${workspaceFolder:tests}/../../bin/asan/Tests.AppServer",
 			"args": ["-c"],
 			"stopAtEntry": false,
-			"cwd": "${workspaceFolder:tests}/../../../bin/asan",
+			"cwd": "${workspaceFolder:tests}/../../bin/asan",
 			"environment": [
 				{ "name": "JDE_DB_DRIVER", "value": "./libJde.MySql.so" },
 				{ "name": "JDE_LOG_META", "value": "${env:JDE_DIR}/bin/config/AppServerMeta.json" },
@@ -156,7 +160,7 @@
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
 			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "buildTests",
-			"visualizerFile": "${workspaceFolder:tests}/../../build/gcc.natvis",
+			"visualizerFile": "${env:JDE_DIR}/Public/build/gcc.natvis",
 			"showDisplayString": true,
 			"logging": {
 				"natvisDiagnostics": "error",
@@ -266,7 +270,11 @@
 			"random": "cpp",
 			"semaphore": "cpp",
 			"stop_token": "cpp",
-			"__locale": "cpp"
+			"__locale": "cpp",
+			"regex": "cpp",
+			"rope": "cpp",
+			"__memory": "cpp",
+			"stacktrace": "cpp"
 		},
 		"window.title": "App"
 	}
