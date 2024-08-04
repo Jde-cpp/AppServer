@@ -1,4 +1,4 @@
-#include "CertificateLogin.h"
+#include "CertificateLoginAwait.h"
 #include <jde/io/Json.h>
 //#include "../../Ssl/source/Ssl.h"
 #include <jde/web/client/Jwt.h>
@@ -7,9 +7,6 @@
 namespace Jde::App{
 
 	α CertificateLoginAwait::Execute()ι->UM::LoginAwait::Task{
-		//Web::Jwt jwt{ _jwtString };
-		//if( jwt.Host!=_endpoint )
-		//	THROW( "Invalid host.  Expected '{}', found '{}'.", _endpoint, jwt.Host );
 		if( std::abs(time(nullptr)-_jwt.Iat)>60*10 )
 			THROW( "Invalid iat.  Expected ~'{}', found '{}'.", time(nullptr), _jwt.Iat );
 

@@ -52,7 +52,7 @@ namespace Jde::App{
 		var _ = shared_from_this();
 		try{
 			LogRead( 𐢜("GraphQL: {}", query), requestId );
-			auto j = ( co_await DB::CoQuery(move(query), 0, "Sock::GraphQL") ).UP<json>();
+			auto j = ( co_await DB::CoQuery(query, 0, "Sock::GraphQL") ).UP<json>();
 			LogWrite( 𐢜("GraphQL: {}", sv{query}.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(*j, requestId) );
 		}
@@ -89,7 +89,7 @@ namespace Jde::App{
 		LogRead( 𐢜("SessionInfo={:x}", sessionId), requestId );
 		if( auto info = Web::Server::Sessions::Find( sessionId ); info ){
 			LogWrite( 𐢜("SessionInfo userPK: {}, endpoint: {}, hasSocket: {}", info->UserPK, info->UserEndpoint, info->HasSocket), requestId );
-			Write( FromServer::SessionInfo( move(*info), 0 ) );
+			Write( FromServer::SessionInfo(move(*info), requestId) );
 		}else
 			WriteException( Exception{"Session not found."}, requestId );
 	}

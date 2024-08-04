@@ -11,21 +11,22 @@
 
 namespace Jde::App{
 	sp<DB::DBQueue> _pDbQueue;
-	static sp<LogTag> _logTag = Logging::Tag( "app.log" );
+	static sp<LogTag> _logTag = Logging::Tag( "app" );
+	constexpr ELogTags _tags{ ELogTags::App };
 	α Configure()ε->void{
 		if( auto dbMetaPath = Settings::Get<fs::path>( "db/meta" ); dbMetaPath ){
-			INFO( "db meta='{}'"sv, dbMetaPath->string() );
+			Information( _tags, "db meta='{}'"sv, dbMetaPath->string() );
 			json j;
 			try{
 				if( !fs::exists(*dbMetaPath) )
-					*dbMetaPath = _debug && _msvc ? "../config/meta.json" : IApplication::ApplicationDataFolder() / *dbMetaPath;//TODO combine with UM.cpp and move somewhere else.
+					*dbMetaPath = _debug && _msvc ? "../config/meta.json" : IApplication::ApplicationDataFolder() / *dbMetaPath;//TODONext combine with UM.cpp and move somewhere else.
 				j = json::parse( IO::FileUtilities::Load(*dbMetaPath) );
 			}
 			catch( const nlohmann::json::exception& e ){
 				throw IOException( SRCE_CUR, *dbMetaPath, ELogLevel::Critical, "Error reading '{}'", e.what() );
 			}
 			if( auto p = Settings::Get<bool>("db/createSchema").value_or(true) ? DB::DataSourcePtr() : nullptr; p  )
-				p->SchemaProc()->CreateSchema( j, fs::path{*dbMetaPath}.parent_path() );
+				DB::DefaultSchema() = p->SchemaProc()->CreateSchema( j, fs::path{*dbMetaPath}.parent_path() );
 		}
 		else
 			INFO( "db/meta not specified" );

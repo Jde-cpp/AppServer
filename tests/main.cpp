@@ -29,9 +29,8 @@ int main(int argc, char **argv){
 		var p=Settings::Get<string>( "testing/tests" );
 		var filter = p ? *p : "*";
 		::testing::GTEST_FLAG( filter ) = filter;
-	   result = RUN_ALL_TESTS();
-		IApplication::Shutdown( result );
-		IApplication::Cleanup();
+	  result = RUN_ALL_TESTS();
+		Process::Shutdown( result );
 	}
 	return result;
 }

@@ -32,7 +32,7 @@
 	"logging":{
 		"defaultLevel": "Information",
 		"tags": {
-			"Trace":["tests",
+			"Trace":["test",
 				"http.client.write", "http.client.read", "http.server.write", "http.server.read", "socket.client.write", "socket.client.read", "socket.server.write", "socket.server.read"
 			],
 			"Debug":["settings"],

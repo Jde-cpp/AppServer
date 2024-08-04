@@ -55,3 +55,4 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
 		"../../Framework/source/db/Database.h"
 		"../../Framework/source/io/ProtoUtilities.h"
 )
+add_custom_command( TARGET ${CMAKE_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Jde.App.Server" COMMENT "Remove exe" )

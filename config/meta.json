@@ -47,7 +47,7 @@
 		"naturalKey":["target"]
 	},
 	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql",
-		"sql/um_providers_ql.sql", "sql/um_user_insert.sql", "sql/um_user_insert_login.sql"],
+		"sql/um_providers_ql.sql", "sql/um_user_insert.sql", "sql/um_user_insert_login.sql", "sql/um_user_insert_key.sql"],
 	"$smallValues":{
 		"columns": [
 			{ "name": "id", "type": "smallId", "sequence": true },
