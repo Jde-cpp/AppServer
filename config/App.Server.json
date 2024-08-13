@@ -32,7 +32,7 @@
 	"logging":{
 		"defaultLevel": "Information",
 		"tags": {
-			"Trace":["test",
+			"Trace":["test", "sql", "sessions",
 				"http.client.write", "http.client.read", "http.server.write", "http.server.read", "socket.client.write", "socket.client.read", "socket.server.write", "socket.server.read"
 			],
 			"Debug":["settings"],
@@ -47,6 +47,7 @@
 	},
 	"workers":{
 		"drive": {"threads": 1},
-		"Alarm": {"threads": 1}
+		"Alarm": {"threads": 1},
+		"executor": 1
 	}
 }

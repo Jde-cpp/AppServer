@@ -87,7 +87,7 @@ namespace Jde::App{
 			if( pRest )
 				pRest->Throw();
 			else
-				throw RestException<http::status::internal_server_error>{ SRCE_CUR, move(_request), move(*e), "" };
+				throw RestException<http::status::internal_server_error>{ move(*e), move(_request) };
 		}
 		return _readyResult
 			? HttpTaskResult{ move(*_readyResult), move(_request) }

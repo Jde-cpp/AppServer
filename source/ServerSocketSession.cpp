@@ -12,14 +12,14 @@ namespace Jde::App{
 		base{ move(stream), move(buffer), move(request), move(userEndpoint), connectionIndex }
 	{}
 
-	α ServerSocketSession::AddSession( Proto::FromClient::AddSession&& m, RequestId requestId, SL sl )ι->Task{
+	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL sl )ι->Task{
 		var _ = shared_from_this();
 		try{
-			LogRead( 𐢜("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_id(), m.is_socket()), requestId );
-			var userPK = *( co_await UM::Login(m.login_name(), m.provider_id(), m.domain()) ).UP<UserPK>();
+			LogRead( 𐢜("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
+			var userPK = *( co_await UM::Login(m.login_name(), m.provider_pk(), m.domain()) ).UP<UserPK>();
 
 			auto sessionInfo = Web::Server::Sessions::Add( userPK, move(*m.mutable_user_endpoint()), m.is_socket() );
-			LogWrite( 𐢜("AddSession id: {}", sessionInfo->SessionId), requestId );
+			LogWrite( 𐢜("AddSession id: {:x}", sessionInfo->SessionId), requestId );
 			Write( FromServer::SessionInfo(*sessionInfo, requestId) );
 		}
 		catch( IException& e ){
@@ -52,9 +52,10 @@ namespace Jde::App{
 		var _ = shared_from_this();
 		try{
 			LogRead( 𐢜("GraphQL: {}", query), requestId );
-			auto j = ( co_await DB::CoQuery(query, 0, "Sock::GraphQL") ).UP<json>();
-			LogWrite( 𐢜("GraphQL: {}", sv{query}.substr(0,100)), requestId );
-			Write( FromServer::GraphQL(*j, requestId) );
+			auto j = ( co_await DB::CoQuery(move(query), 0, "Sock::GraphQL") ).UP<json>();
+			auto y = j->dump();
+			LogWrite( 𐢜("GraphQL: {}", y.substr(0,100)), requestId );
+			Write( FromServer::GraphQL(move(y), requestId) );
 		}
 		catch( IException& e ){
 			WriteException( move(e), requestId );
@@ -119,12 +120,12 @@ namespace Jde::App{
 			auto& m = *transmission.mutable_messages( i );
 			using enum Proto::FromClient::Message::ValueCase;
 			var requestId = clientRequestId.value_or( m.request_id() );
-			LogRead( 𐢜("Value_case: {}", underlying(m.Value_case())), requestId );
 			switch( m.Value_case() ){
 			[[unlikely]]case kInstance:{
 				_instance = move( *m.mutable_instance() );
 				var [appPK,instancePK, dbLogLevel_, fileLogLevel_] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
-				INFOT( SocketServerReadTag(), "[{:x}]Adding application app:{}@{} pid:{} instancePK:{:x}", Id(), _instance.application(), _instance.host(), _instance.pid(), instancePK );//TODO! add sessionId  endpoint:{}
+				INFOT( SocketServerReadTag(), "[{:x}]Adding application app:{}@{}:{} pid:{} instancePK:{:x}", Id(), _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK );//TODO! add sessionId  endpoint:{}
+
 				_instancePK = instancePK; _appPK = appPK;
 				//WriteStrings(); Before this was sending down file/functions/messages/etc for every application.
 				break;}
