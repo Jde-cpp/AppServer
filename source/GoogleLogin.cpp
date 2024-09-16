@@ -64,8 +64,7 @@ namespace Jde::App{
 		}
 	}
 
-	α GoogleLoginAwait::await_suspend( base::Handle h )ι->void{
-		base::await_suspend( h );
+	α GoogleLoginAwait::Suspend()ι->void{
 		Execute();
 	}
 }

@@ -6,7 +6,7 @@ namespace Jde::App{
 	struct ForwardExecutionAwait final: TAwait<string>{//kCustomResponse
 		using base = TAwait<string>;
 		ForwardExecutionAwait( UserPK userPK, Proto::FromClient::ForwardExecution&& customRequest, sp<ServerSocketSession> serverSocketSession, SRCE )ι;
-		α await_suspend( base::Handle h )ε->void;
+		α Suspend()ι->void;
 		Ω OnCloseConnection( AppInstancePK instancePK )ι->void;
 		Ω Resume( string&& results, RequestId serverRequestId )ι->bool;
 

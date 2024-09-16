@@ -11,7 +11,7 @@ namespace Jde::App{
 		base{ move(req), sl }
 	{}
 
-	α ValueJson( string&& value )ι{ return Json::Parse( 𐢜("{{\"value\": \"{}\"}}", value) ); }
+	α ValueJson( string&& value )ι{ return Json::Parse( Ƒ("{{\"value\": \"{}\"}}", value) ); }
 
 	α CertificateLogin( HttpRequest req, HttpRequestAwait::Handle h )ι->CertificateLoginAwait::Task{
 		try{
@@ -33,7 +33,7 @@ namespace Jde::App{
 			var info = co_await GoogleLoginAwait{ Json::Getε(req.Body(), "value") };
 			[&]()->Jde::Task {
 				req.SessionInfo->UserPK = *( co_await UM::Login(info.Email, underlying(UM::EProviderType::Google)) ).UP<UserPK>();
-				h.promise().SetValue( {ValueJson(𐢜("{:x}", req.SessionInfo->SessionId)), move(req)} );
+				h.promise().SetValue( {ValueJson(Ƒ("{:x}", req.SessionInfo->SessionId)), move(req)} );
 			}();
 		}
 		catch( IException& e ){
@@ -64,20 +64,18 @@ namespace Jde::App{
 		}
 		return _readyResult!=nullptr;
 	}
-	α HttpRequestAwait::await_suspend( base::Handle h )ε->void{
-		base::await_suspend(h);
+	α HttpRequestAwait::Suspend()ι->void{
 		up<IException> pException;
 		if( _request.Method() == http::verb::post ){
 			if( _request.Target()=="/GoogleLogin" )
-				GoogleLogin( move(_request), h );
+				GoogleLogin( move(_request), _h );
 			else if( _request.Target()=="/CertificateLogin" )
-				CertificateLogin( move(_request), h );
+				CertificateLogin( move(_request), _h );
 		}
 		if( _request.Target().size() ){
 			_request.LogRead();
 			RestException<http::status::not_found> e{ SRCE_CUR, move(_request), "Unknown target '{}'", _request.Target() };
-			h.promise().SetError( RestException<http::status::not_found>(move(e)) );
-			h.resume();
+			ResumeExp( RestException<http::status::not_found>(move(e)) );
 		}
 	}
 

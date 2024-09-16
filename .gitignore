@@ -56,3 +56,5 @@ tests/.vscode/settings.json
 *.pdb
 *.aps
 config/ql.json
+**/.build/*
+tests/.vs/*

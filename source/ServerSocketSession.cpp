@@ -8,6 +8,8 @@
 #define var const auto
 
 namespace Jde::App{
+	α ToProto( const Web::Server::SessionInfo& session, RequestId requestId )ι->Proto::FromServer::Transmission;
+
 	ServerSocketSession::ServerSocketSession( sp<RestStream> stream, beast::flat_buffer&& buffer, TRequestType&& request, tcp::endpoint&& userEndpoint, uint32 connectionIndex )ι:
 		base{ move(stream), move(buffer), move(request), move(userEndpoint), connectionIndex }
 	{}
@@ -15,12 +17,12 @@ namespace Jde::App{
 	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL sl )ι->Task{
 		var _ = shared_from_this();
 		try{
-			LogRead( 𐢜("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
+			LogRead( Ƒ("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
 			var userPK = *( co_await UM::Login(m.login_name(), m.provider_pk(), m.domain()) ).UP<UserPK>();
 
 			auto sessionInfo = Web::Server::Sessions::Add( userPK, move(*m.mutable_user_endpoint()), m.is_socket() );
-			LogWrite( 𐢜("AddSession id: {:x}", sessionInfo->SessionId), requestId );
-			Write( FromServer::SessionInfo(*sessionInfo, requestId) );
+			LogWrite( Ƒ("AddSession id: {:x}", sessionInfo->SessionId), requestId );
+			Write( ToProto(*sessionInfo, requestId) );
 		}
 		catch( IException& e ){
 			WriteException( move(e), requestId );
@@ -38,23 +40,23 @@ namespace Jde::App{
 
 	α ServerSocketSession::ForwardExecution( Proto::FromClient::ForwardExecution&& m, bool anonymous, RequestId requestId, SL sl )ι->ForwardExecutionAwait::Task{
 		sv functionSuffix = anonymous ? "Anonymous" : "";
-		LogRead( 𐢜("ForwardExecution{} appPK: {}, appInstancePK: {:x}, size: {:10L}", functionSuffix, m.app_pk(), m.app_instance_pk(), m.execution_transmission().size()), requestId );
+		LogRead( Ƒ("ForwardExecution{} appPK: {}, appInstancePK: {:x}, size: {:10L}", functionSuffix, m.app_pk(), m.app_instance_pk(), m.execution_transmission().size()), requestId );
 		try{
 			string result = co_await ForwardExecutionAwait{ _userPK.value_or(0), move(m), SharedFromThis(), sl };
-			LogWrite( 𐢜("ForwardExecution{} size: {:10L}", functionSuffix, result.size()), requestId );
+			LogWrite( Ƒ("ForwardExecution{} size: {:10L}", functionSuffix, result.size()), requestId );
 			Write( FromServer::Execute(move(result), requestId) );
 		}
 		catch( IException& e ){
 			WriteException( move(e), requestId );
 		}
 	}
-	α ServerSocketSession::GraphQL( string&& query, uint requestId )ι->Task{
+	α ServerSocketSession::GraphQL( string&& query, RequestId requestId )ι->Task{
 		var _ = shared_from_this();
 		try{
-			LogRead( 𐢜("GraphQL: {}", query), requestId );
+			LogRead( Ƒ("GraphQL: {}", query), requestId );
 			auto j = ( co_await DB::CoQuery(move(query), 0, "Sock::GraphQL") ).UP<json>();
 			auto y = j->dump();
-			LogWrite( 𐢜("GraphQL: {}", y.substr(0,100)), requestId );
+			LogWrite( Ƒ("GraphQL: {}", y.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(move(y), requestId) );
 		}
 		catch( IException& e ){
@@ -82,22 +84,22 @@ namespace Jde::App{
 			Server::BroadcastLogEntry( 0, _appPK, _instancePK, y, move(args) );
 		}
 	}
-	α ServerSocketSession::SendAck( uint id )ι->void{
+	α ServerSocketSession::SendAck( uint32 id )ι->void{
 		Write( FromServer::Ack(id) );
 	}
 
 	α ServerSocketSession::SessionInfo( SessionPK sessionId, RequestId requestId )ι->void{
-		LogRead( 𐢜("SessionInfo={:x}", sessionId), requestId );
+		LogRead( Ƒ("SessionInfo={:x}", sessionId), requestId );
 		if( auto info = Web::Server::Sessions::Find( sessionId ); info ){
-			LogWrite( 𐢜("SessionInfo userPK: {}, endpoint: {}, hasSocket: {}", info->UserPK, info->UserEndpoint, info->HasSocket), requestId );
-			Write( FromServer::SessionInfo(move(*info), requestId) );
+			LogWrite( Ƒ("SessionInfo userPK: {}, endpoint: {}, hasSocket: {}", info->UserPK, info->UserEndpoint, info->HasSocket), requestId );
+			Write( ToProto(move(*info), requestId) );
 		}else
 			WriteException( Exception{"Session not found."}, requestId );
 	}
 	α ServerSocketSession::SetSessionId( SessionPK sessionId, RequestId requestId )->Web::Server::Sessions::UpsertAwait::Task{
 		try{
-			LogRead( 𐢜("SetSessionId={:x}", sessionId), requestId );
-			co_await Web::Server::Sessions::UpsertAwait( 𐢜("{:x}", sessionId), _userEndpoint.address().to_string(), true );
+			LogRead( Ƒ("SetSessionId={:x}", sessionId), requestId );
+			co_await Web::Server::Sessions::UpsertAwait( Ƒ("{:x}", sessionId), _userEndpoint.address().to_string(), true );
 			base::SetSessionId( sessionId );
 			Write( FromServer::Complete(requestId) );
 		}
@@ -111,7 +113,7 @@ namespace Jde::App{
 		ProcessTransmission( move(t), _userPK, nullopt );
 	}
 
-	α ServerSocketSession::ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<UserPK> userPK, optional<RequestId> clientRequestId )ι->void{
+	α ServerSocketSession::ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<UserPK> /*userPK*/, optional<RequestId> clientRequestId )ι->void{
 		uint cLog{}, cString{};
 		if( transmission.messages_size()==0 )
 			LogRead( "No messages in transmission.", 0, ELogLevel::Error );
@@ -136,19 +138,19 @@ namespace Jde::App{
 				if( !requestId )
 					Debug( ELogTags::SocketServerRead | ELogTags::Exception, "[{:x}.{:x}]Exception - {}", Id(), 0, m.exception().what() );
 				else if( !ForwardExecutionAwait::Resume( move(*m.mutable_execute_response()), requestId) )
-					LogRead( 𐢜("Exception not handled - {}", m.exception().what()), requestId, ELogLevel::Critical );
+					LogRead( Ƒ("Exception not handled - {}", m.exception().what()), requestId, ELogLevel::Critical );
 				break;
 			case kExecute:
 			case kExecuteAnonymous:{
 				bool isAnonymous = m.Value_case()==kExecuteAnonymous;
 				auto bytes = isAnonymous ? move( *m.mutable_execute_anonymous() ) : move( *m.mutable_execute()->mutable_transmission() );
-				optional<UserPK> userPK = m.Value_case()==kExecuteAnonymous ? nullopt : optional<UserPK>(m.execute().user_pk() );
-				LogRead( 𐢜("Execute{} size: {:10L}", isAnonymous ? "Anonymous" : "", bytes.size()), requestId );
-				Execute( move(bytes), userPK, requestId );
+				optional<UserPK> executor = m.Value_case()==kExecuteAnonymous ? nullopt : optional<UserPK>(m.execute().user_pk() );
+				LogRead( Ƒ("Execute{} size: {:10L}", isAnonymous ? "Anonymous" : "", bytes.size()), requestId );
+				Execute( move(bytes), executor, requestId );
 				break;}
 			case kExecuteResponse:
 				if( !ForwardExecutionAwait::Resume( move(*m.mutable_execute_response()), requestId) )
-					LogRead( 𐢜("ExecuteResponse requestId:{} not found.", requestId), requestId, ELogLevel::Critical );
+					LogRead( Ƒ("ExecuteResponse requestId:{} not found.", requestId), requestId, ELogLevel::Critical );
 				break;
 			case kForwardExecution:
 			case kForwardExecutionAnonymous:{
@@ -190,12 +192,12 @@ namespace Jde::App{
 				break;}
 			case kSubscribeLogs:{
 				if( m.subscribe_logs().empty() ){
-					LogRead( 𐢜("SubscribeLogs unsubscribe"), requestId );
+					LogRead( Ƒ("SubscribeLogs unsubscribe"), requestId );
 					Server::UnsubscribeLogs( InstancePK() );
 				}
 				else{
 					try{
-						LogRead( 𐢜("SubscribeLogs subscribe - {}", m.subscribe_logs()), requestId );
+						LogRead( Ƒ("SubscribeLogs subscribe - {}", m.subscribe_logs()), requestId );
 						Server::SubscribeLogs( move(*m.mutable_subscribe_logs()), SharedFromThis() );
 					}
 					catch( IException& e ){
@@ -204,7 +206,7 @@ namespace Jde::App{
 				}
 				break;}
 			case kSubscribeStatus:
-				LogRead( 𐢜("SubscribeStatus - {}", m.subscribe_status()), requestId );
+				LogRead( Ƒ("SubscribeStatus - {}", m.subscribe_status()), requestId );
 				BREAK;
 				if( m.subscribe_status() )
 					Server::SubscribeStatus( *this );
@@ -212,7 +214,7 @@ namespace Jde::App{
 					Server::UnsubscribeStatus( InstancePK() );
 				break;
 			default:
-				LogRead( 𐢜("Unknown message type '{}'", underlying(m.Value_case())), requestId, ELogLevel::Critical );
+				LogRead( Ƒ("Unknown message type '{}'", underlying(m.Value_case())), requestId, ELogLevel::Critical );
 			}
 		}
 	}
@@ -228,4 +230,16 @@ namespace Jde::App{
 		Write( FromServer::Exception(move(e), requestId) );
 	}
 
+	α ToProto( const Web::Server::SessionInfo& session, RequestId requestId )ι->Proto::FromServer::Transmission{
+		Proto::FromServer::Transmission t;
+		auto& m = *t.add_messages();
+		m.set_request_id( requestId );
+		auto& response = *m.mutable_session_info();
+		*response.mutable_expiration() = IO::Proto::ToTimestamp( Chrono::ToClock<Clock,steady_clock>(session.Expiration) );
+		response.set_session_id( session.SessionId );
+		response.set_user_pk( session.UserPK );
+		response.set_user_endpoint( session.UserEndpoint );
+		response.set_has_socket( session.HasSocket );
+		return t;
+	}
 }

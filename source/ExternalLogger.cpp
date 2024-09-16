@@ -5,10 +5,10 @@
 #include "LogData.h"
 
 namespace Jde::App{
-	α ExternalLogger::Log( Logging::ExternalMessage&& m, SL sl )ι->void{
+	α ExternalLogger::Log( Logging::ExternalMessage&& m, SL )ι->void{
 		Log( m );
 	}
-	α ExternalLogger::Log( const Logging::ExternalMessage& m, const vector<string>* args, SL sl )ι->void{
+	α ExternalLogger::Log( const Logging::ExternalMessage& m, const vector<string>* args, SL )ι->void{
 		if( _minLevel==ELogLevel::NoLog || m.Level<_minLevel )
 			return;
 		Server::BroadcastLogEntry( 0, GetAppPK(), InstancePK(), m, *args );

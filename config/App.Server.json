@@ -24,18 +24,19 @@
 		}
 	},
 	"db":{
-		"connectionString": "$(Jde_App_Connection)",
+		"connectionString": "DSN=Jde_Log_Connection",
 		"createSchema":  true,
 		"meta": "../config/AppServerMeta.json",
-		"ql_schema": "../config/ql.json"
+		"qlSchema": "../config/ql.json",
+		"scriptDir": "$(JDE_DIR)/AppServer/sql"
 	},
 	"logging":{
 		"defaultLevel": "Information",
 		"tags": {
-			"Trace":["test", "sql", "sessions",
+			"Trace":["test", "sessions",
 				"http.client.write", "http.client.read", "http.server.write", "http.server.read", "socket.client.write", "socket.client.read", "socket.server.write", "socket.server.read"
 			],
-			"Debug":["settings"],
+			"Debug":["settings", "sql"],
 			"Information":[],
 			"Warning":[],
 			"Error":[],

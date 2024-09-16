@@ -1,58 +1,40 @@
-cmake_minimum_required(VERSION 3.16)
-project(Jde.App.ServerLib)
-set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Public/build )
+cmake_minimum_required(VERSION 3.20)
+set( CMAKE_MODULE_PATH $ENV{JDE_DIR}/Public/build )
 include(common)
+findBoost()
+if( ${VCPKG} )
+	SET( CMAKE_TOOLCHAIN_FILE $ENV{REPO_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake  CACHE STRING "Vcpkg toolchain file" )
+endif()
+project(Jde.App.ServerLib)
+include( compiler )
 #######################################################
-#link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
-#link_directories( ${Protobuf_DIR}/../.. )
-#find_package(ZLIB)
-get_cmake_property(_variableNames VARIABLES)
+if( MSVC )
+	link_directories( $ENV{JDE_DIR}/Public/src/web/client/.build/.bin )
+endif()
+#######################################################
 add_library( ${CMAKE_PROJECT_NAME} )
-file(GLOB src_files *.cpp **/*.cpp )
-get_filename_component(main_cpp ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ABSOLUTE)
-list(REMOVE_ITEM src_files "${main_cpp}")
-
-file(GLOB hdr_files   "**/*.h")
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-target_sources("${CMAKE_PROJECT_NAME}"
-    PRIVATE
-        "${src_files}"
-        "${hdr_files}"
-)
-
+file(GLOB sources *.cpp **/*.cpp )
+get_filename_component( main_cpp ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ABSOLUTE )
+list( REMOVE_ITEM sources ${main_cpp} )
+file( GLOB headers **/*.h )
+target_sources( ${CMAKE_PROJECT_NAME} PRIVATE ${sources} ${headers} )
 #######################################################
+if( MSVC )
+	find_package( OpenSsl REQUIRED )
+	find_package( protobuf REQUIRED )
+	include_directories( ${OPENSSL_INCLUDE_DIR} )
+#	include_directories( ${installDir}/include )
+endif()
 include_directories( "../../Public" )
-
-#target_link_libraries( ${CMAKE_PROJECT_NAME} ZLIB::ZLIB )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized libfmt.a )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} Threads::Threads )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} Jde Jde.App.Client Jde.Crypto Jde.Web.Server Jde.Web.Client )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} dl )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} lzma )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} crypto )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} ssl )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} protobuf::libprotobuf )
-#target_link_libraries( ${CMAKE_PROJECT_NAME} stdc++ )
 #######################################################
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-	PRIVATE
-		<filesystem>
-		<boost/beast.hpp>
-		<boost/asio.hpp>
-		<boost/asio/ssl/error.hpp>
-		<boost/beast/ssl/ssl_stream.hpp>
-		<boost/exception/diagnostic_information.hpp>
-		<boost/unordered/concurrent_flat_map.hpp>
-		<boost/unordered/concurrent_flat_set.hpp>
-		"usings.h"
-		<jde/log/Log.h>
-		<jde/Exception.h>
-		<jde/Str.h>
-		<jde/web/server/exports.h>
-		<jde/app/shared/proto/App.FromServer.pb.h>
-		<jde/app/shared/proto/App.FromClient.pb.h>
-		<jde/app/shared/proto/Common.pb.h>
-		"../../Framework/source/db/Database.h"
-		"../../Framework/source/io/ProtoUtilities.h"
+target_precompile_headers( ${CMAKE_PROJECT_NAME} PRIVATE
+	<jde/TypeDefs.h>
+	"externals.h"
+	"usings.h"
+	<jde/log/Log.h>
+	<jde/Exception.h>
+	<jde/Str.h>
+	"../../Framework/source/db/Database.h"
+	"../../Framework/source/io/ProtoUtilities.h"
 )
 add_custom_command( TARGET ${CMAKE_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Jde.App.Server" COMMENT "Remove exe" )

@@ -25,9 +25,9 @@ namespace Jde::App{
 		α AddSession( Proto::FromClient::AddSession addSession, RequestId clientRequestId, SL sl )ι->Task;
 		α Execute( string&& bytes, optional<UserPK> userPK, RequestId clientRequestId )ι->void;
 		α ForwardExecution( Proto::FromClient::ForwardExecution&& clientMsg, bool anonymous, RequestId clientRequestId, SRCE )ι->ForwardExecutionAwait::Task;
-		α GraphQL( string&& query, uint requestId )ι->Task;
+		α GraphQL( string&& query, RequestId requestId )ι->Task;
 		α SaveLogEntry( Proto::FromClient::LogEntry logEntry, RequestId requestId )->void;
-		α SendAck( uint id )ι->void override;
+		α SendAck( uint32 id )ι->void override;
 		α SessionInfo( SessionPK sessionId, RequestId requestId )ι->void;
 		α SetSessionId( SessionPK sessionId, RequestId requestId )->Web::Server::Sessions::UpsertAwait::Task;
 

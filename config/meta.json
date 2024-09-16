@@ -46,9 +46,9 @@
 		],
 		"naturalKey":["target"]
 	},
-	"$scripts": ["sql/log_application_insert.sql", "sql/log_application_instance_insert.sql", "sql/log_message_insert.sql",
-		"sql/um_providers_ql.sql", "sql/um_provider_purge.sql",
-		"sql/um_user_insert.sql", "sql/um_user_insert_login.sql", "sql/um_user_insert_key.sql"],
+	"$scripts": ["log_application_insert.sql", "log_application_instance_insert.sql", "log_message_insert.sql",
+		"um_providers_ql.sql", "um_provider_purge.sql",
+		"um_user_insert.sql", "um_user_insert_login.sql", "um_user_insert_key.sql"],
 	"$smallValues":{
 		"columns": [
 			{ "name": "id", "type": "smallId", "sequence": true },
@@ -180,7 +180,7 @@
 	},
 	"umUsers":{
 		"columns": [
-			{ "name": "entityId", "type": "umEntities", "criteria": "not is_group" },
+			{ "name": "entityId", "type": "umEntities", "criteria": "is_group=0" },
 			{ "name": "login_name", "type": "name?" },
 			{ "name": "password", "type": "password?" },
 			{ "name": "modulus", "type": "varchar?", "length": 2048, "notes": "Used for RSA" },

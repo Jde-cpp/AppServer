@@ -4,7 +4,7 @@
 
 #define var const auto
 namespace Jde{
-	static sp<Jde::LogTag> _logTag{ Logging::Tag( "tests" ) };
+	static sp<Jde::LogTag> _logTag{ Logging::Tag( "test" ) };
 
 	class DBTests : public ::testing::Test{
 	protected:

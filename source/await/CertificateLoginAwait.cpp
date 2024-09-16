@@ -15,8 +15,7 @@ namespace Jde::App{
 		Resume( move(userPK) );
 	}
 
-	α CertificateLoginAwait::await_suspend( base::Handle h )ε->void{
-		base::await_suspend( h );
+	α CertificateLoginAwait::Suspend()ι->void{
 		Execute();
 	}
 }

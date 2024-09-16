@@ -26,7 +26,7 @@ namespace Jde::App{
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
 		α GraphQL( string&& q, UserPK userPK, SL sl )ι->up<TAwait<json>> override{ return mu<Server::GraphQLAwait>( move(q), userPK, sl ); }
-		α SessionInfoAwait( SessionPK sessionPK, SL sl )ι->up<TAwait<Web::Server::SessionInfo>> override{ return {}; }
+		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<App::Proto::FromServer::SessionInfo>> override{ return {}; }
 	};
 }
 namespace Jde{
@@ -37,7 +37,7 @@ namespace Jde{
 	α UpdateStatuses()ι->Task;
 	α App::StartWebServer()ε->void{
 		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>() );
-		Process::AddShutdownFunction( [](bool terminate){App::StopWebServer();} );//TODO move to Web::Server
+		Process::AddShutdownFunction( [](bool /*terminate*/){App::StopWebServer();} );//TODO move to Web::Server
 		UpdateStatuses();
 	}
 
@@ -53,7 +53,7 @@ namespace Jde{
 	}
 
 	namespace App{
-		α TestLogPub( const DB::FilterQL& subscriptionFilter, AppPK appId, AppInstancePK instancePK, const Logging::ExternalMessage& m )ι->bool{
+		α TestLogPub( const DB::FilterQL& subscriptionFilter, AppPK /*appId*/, AppInstancePK /*instancePK*/, const Logging::ExternalMessage& m )ι->bool{
 			bool passesFilter{ true };
 			var logTags = ELogTags::Socket | ELogTags::Server | ELogTags::Subscription;
 			for( var [jsonColName, columnFilters] : subscriptionFilter.ColumnFilters ){

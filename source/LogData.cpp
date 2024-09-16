@@ -38,7 +38,7 @@ namespace Jde::App{
 //		DB::ShutdownClean( clean );
 		_pDbQueue = ms<DB::DBQueue>( DB::DataSourcePtr() );
 		Process::AddShutdown( _pDbQueue );
-		Process::AddShutdownFunction( [](bool terminate){_pDbQueue=nullptr;} );
+		Process::AddShutdownFunction( [](bool /*terminate*/){_pDbQueue=nullptr;} );
 		Configure();
 	}
 	#define _pQueue if( auto p = _pDbQueue; p )p
@@ -52,7 +52,7 @@ namespace Jde::App{
 			ERRX( "unknown field '{}'.", (int)field );
 			return;
 		}
-		var sql = 𐢜( "insert into {}(id,value)values(?,?)", table );
+		var sql = Ƒ( "insert into {}(id,value)values(?,?)", table );
 		auto pParameters = ms<vector<DB::object>>();  pParameters->reserve(3);
 		//ASSERT( Calc32RunTime(*pValue)==id );
 		if( Calc32RunTime(value)!=id )
@@ -98,7 +98,7 @@ namespace Jde{
 
 		constexpr sv baseSql = "select id, name, db_log_level, file_log_level from log_applications"sv;
 		Try( [&](){
-			string sql = id ? 𐢜("{} where id=?", baseSql) : string{baseSql};
+			string sql = id ? Ƒ("{} where id=?", baseSql) : string{baseSql};
 			var params = id ? vector<DB::object>{id} : vector<DB::object>{};
 			if( auto p = Datasource(); p )
 				p->Select( sql, fnctn, params );
@@ -159,7 +159,7 @@ namespace Jde{
 					whereString += " and logs.id>=?";
 					params.push_back( mapTraces.begin()->first );
 				}
-				DB::DataSource().Select( 𐢜("{}{}, variable_index", variableSql, whereString), addVariables, params );
+				DB::DataSource().Select( Ƒ("{}{}, variable_index", variableSql, whereString), addVariables, params );
 			}
 			Proto::FromServer::Traces traces;
 			for( auto& [id,trace] : mapTraces )
