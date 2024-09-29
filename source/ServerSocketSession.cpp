@@ -4,7 +4,7 @@
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/StringCache.h>
 #include "LogData.h"
-#include "Server.h"
+#include "WebServer.h"
 #define var const auto
 
 namespace Jde::App{
@@ -126,7 +126,7 @@ namespace Jde::App{
 			[[unlikely]]case kInstance:{
 				_instance = move( *m.mutable_instance() );
 				var [appPK,instancePK, dbLogLevel_, fileLogLevel_] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
-				INFOT( SocketServerReadTag(), "[{:x}]Adding application app:{}@{}:{} pid:{} instancePK:{:x}", Id(), _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK );//TODO! add sessionId  endpoint:{}
+				Information{ ELogTags::SocketServerRead, "[{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
 
 				_instancePK = instancePK; _appPK = appPK;
 				//WriteStrings(); Before this was sending down file/functions/messages/etc for every application.
@@ -185,7 +185,7 @@ namespace Jde::App{
 					WriteException( Exception{"ApplicationId or InstanceId not set.", ELogLevel::Warning}, requestId );
 					continue;
 				}
-				++cString; //TODO! log
+				++cString;
 				auto& s = *m.mutable_string_value();
 				if( StringCache::Add( s.field(), s.id(), s.value(), ELogTags::SocketServerRead) )
 					Server::SaveString( (Proto::FromClient::EFields)s.field(), s.id(), move(*s.mutable_value()) );
@@ -207,7 +207,6 @@ namespace Jde::App{
 				break;}
 			case kSubscribeStatus:
 				LogRead( Ƒ("SubscribeStatus - {}", m.subscribe_status()), requestId );
-				BREAK;
 				if( m.subscribe_status() )
 					Server::SubscribeStatus( *this );
 				else
@@ -217,6 +216,8 @@ namespace Jde::App{
 				LogRead( Ƒ("Unknown message type '{}'", underlying(m.Value_case())), requestId, ELogLevel::Critical );
 			}
 		}
+		if( cLog || cString )
+			Trace{ ELogTags::SocketServerRead, "[{:x}] log entries recieved: {} strings received: {}.", Id(), cLog, cString };
 	}
 
 	α ServerSocketSession::OnClose()ι->void{

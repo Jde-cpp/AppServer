@@ -1,7 +1,7 @@
 #include "ForwardExecutionAwait.h"
 #include <jde/app/shared/proto/App.FromServer.h>
 #include "../ServerSocketSession.h"
-#include "../Server.h"
+#include "../WebServer.h"
 #define var const auto
 
 namespace Jde::App{

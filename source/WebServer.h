@@ -1,19 +1,24 @@
 #pragma once
 #include "HttpRequestAwait.h"
-#include <jde/web/server/Flex.h>
+#include <jde/web/server/Server.h>
+#include <jde/web/server/IApplicationServer.h>
+#include <jde/web/server/IRequestHandler.h>
 
+namespace Jde::Web::Server{
+	struct RestStream;
+}
 namespace Jde::App{
 	using namespace Jde::Web::Server;
-//TODO! move to Server ns
-	α GetAppPK()ι->AppPK;
-	α SetAppPK( AppPK x )ι->void;
-	α InstancePK()ι->AppInstancePK;
-	α SetInstancePK( AppInstancePK x )ι->void;
-
-	α StartWebServer()ε->void;
-	α StopWebServer()ι->void;
 	struct ServerSocketSession;
 	namespace Server{
+		α GetAppPK()ι->AppPK;
+		α SetAppPK( AppPK x )ι->void;
+		α InstancePK()ι->AppInstancePK;
+		α SetInstancePK( AppInstancePK x )ι->void;
+
+		α StartWebServer()ε->void;
+		α StopWebServer()ι->void;
+
 		α BroadcastLogEntry( LogPK id, AppPK logAppPK, AppInstancePK logInstancePK, const Logging::ExternalMessage& m, const vector<string>& args )ι->void;
 		α BroadcastStatus( AppPK appId, AppInstancePK statusInstancePK, str hostName, Proto::FromClient::Status&& status )ι->void;
 		α BroadcastAppStatus()ι->void;

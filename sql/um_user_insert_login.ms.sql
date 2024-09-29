@@ -17,7 +17,7 @@ begin
 	else
 		set @provider_target = @login_name;
 
-	exec um_entity_insert @login_name, 0, @provider_target, null, false, @provider_id;
+	exec um_entity_insert @login_name, @provider_target, @provider_id, 0, null, false;
 	SET @entity_id = @@IDENTITY;
 
 	insert into um_users(entity_id, login_name) values(@entity_id, @login_name);

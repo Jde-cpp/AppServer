@@ -134,18 +134,24 @@
 		"data": ["None","UM", "Web", "Tws", "Blockly"]
 	},
 	"umEntities":{
-		"notes": "Group or User",
-		"parent": "$nk",
+		"notes": "Group or User, TODO add name/provider_id to nk",
 		"columns": [
+			{ "name": "id", "sequence": true },
+			{ "name": "name", "type": "name"},
 			{ "name": "target", "type": "$target" },
+			{ "name": "provider_id", "type": "umProviders?" },
+			{ "name": "attributes", "type": "uint16?" },
+			{ "name": "created", "type": "created" },
+			{ "name": "updated", "type": "dateTime?", "insertable": false, "updateable": false },
+			{ "name": "deleted", "type": "dateTime?", "insertable": false, "updateable": false },
 			{ "name": "description", "type": "description?" },
-			{ "name": "is_group", "type": "bit", "default": "false" },
-			{ "name": "provider_id", "type": "umProviders?" }
+			{ "name": "is_group", "type": "bit", "default": "false" }
 		],
-		"naturalKey":["target", "provider_id"],
+		"surrogateKey":["id"],
+		"naturalKey":["target"],
 		"data": [
-			{"id":1, "attributes":5, "name":"Everyone", "target":"everyone", "isGroup":true },
-			{"id":2, "attributes":6, "name":"Users", "target":"users", "isGroup":true}]
+			{ "id":1, "attributes":5, "name":"Everyone", "target":"everyone", "isGroup":true },
+			{ "id":2, "attributes":6, "name":"Users", "target":"users", "isGroup":true }]
 	},
 	"umProviders":{
 		"columns": [

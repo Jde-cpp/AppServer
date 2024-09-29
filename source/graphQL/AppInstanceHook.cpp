@@ -1,6 +1,6 @@
 #include "AppInstanceHook.h"
 #include <jde/db/graphQL/TableQL.h>
-#include "../Server.h"
+#include "../WebServer.h"
 #include "../ServerSocketSession.h"
 
 #define var const auto
@@ -29,7 +29,7 @@ namespace Jde::App{
 		{}
 		α Suspend()ι->void override{
 			var id = _mutation->Id<AppInstancePK>( ELogTags::SocketServerRead );
-			auto pid = id==InstancePK() ? OSApp::ProcessId() : 0;
+			auto pid = id==Server::InstancePK() ? OSApp::ProcessId() : 0;
 			if( auto p = pid ? sp<ServerSocketSession>{} : Server::FindInstance( id ); p )
 				pid = p->Instance().pid();
 			if( pid ){

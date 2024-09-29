@@ -2,7 +2,7 @@
 #include <jde/thread/Execution.h>
 #include "await/CertificateLoginAwait.h"
 #include "GoogleLogin.h"
-#include "Server.h"
+#include "WebServer.h"
 #include "types/rest/json.h"
 #define var const auto
 

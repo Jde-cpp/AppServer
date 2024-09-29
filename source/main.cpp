@@ -18,7 +18,7 @@ ENABLE_WARNINGS
 #include "graphQL/AppInstanceHook.h"
 #include "ExternalLogger.h"
 #include "LogData.h"
-#include "Server.h"
+#include "WebServer.h"
 
 #define var const auto
 
@@ -55,17 +55,19 @@ namespace Jde{
 			}*/
 			Server::ConfigureDatasource();
 			var [appId, appInstanceId, dbLogLevel, fileLogLevel] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
-			SetAppPK( appId );
-			SetInstancePK( appInstanceId );
+			Server::SetAppPK( appId );
+			Server::SetInstancePK( appInstanceId );
 
 			Data::LoadStrings();
-			StartWebServer();
+			Server::StartWebServer();
 			DB::GraphQL::Hook::Add( mu<AppInstanceHook>() );
 			DB::GraphQL::Hook::Add( mu<Web::Server::SessionGraphQL>() );
 			Logging::External::Add( mu<ExternalLogger>() );
 		}
 		catch( IException& e ){
 			Process::Shutdown( e.Code==0 ? -1 : e.Code );
+			e.Log();
+			OSApp::UnPause();
 			return;
 		}
 		Information( ELogTags::App, "--AppServer Started.--" );
