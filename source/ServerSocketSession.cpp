@@ -1,11 +1,11 @@
 #include "ServerSocketSession.h"
-#include "../../Framework/source/db/GraphQL.h"
-#include "../../Framework/source/um/UM.h"
+#include <jde/access/access.h>
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/StringCache.h>
+#include "../../Framework/source/DateTime.h"
 #include "LogData.h"
 #include "WebServer.h"
-#define var const auto
+#define let const auto
 
 namespace Jde::App{
 	α ToProto( const Web::Server::SessionInfo& session, RequestId requestId )ι->Proto::FromServer::Transmission;
@@ -15,10 +15,10 @@ namespace Jde::App{
 	{}
 
 	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL sl )ι->Task{
-		var _ = shared_from_this();
+		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
-			var userPK = *( co_await UM::Login(m.login_name(), m.provider_pk(), m.domain()) ).UP<UserPK>();
+			let userPK = *( co_await Access::Authenticate(m.login_name(), m.provider_pk(), m.domain()) ).UP<UserPK>();
 
 			auto sessionInfo = Web::Server::Sessions::Add( userPK, move(*m.mutable_user_endpoint()), m.is_socket() );
 			LogWrite( Ƒ("AddSession id: {:x}", sessionInfo->SessionId), requestId );
@@ -50,12 +50,12 @@ namespace Jde::App{
 			WriteException( move(e), requestId );
 		}
 	}
-	α ServerSocketSession::GraphQL( string&& query, RequestId requestId )ι->Task{
-		var _ = shared_from_this();
+	α ServerSocketSession::GraphQL( string&& query, RequestId requestId )ι->QL::QLAwait::Task{
+		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("GraphQL: {}", query), requestId );
-			auto j = ( co_await DB::CoQuery(move(query), 0, "Sock::GraphQL") ).UP<json>();
-			auto y = j->dump();
+			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(0) );
+			auto y = serialize( j );
 			LogWrite( Ƒ("GraphQL: {}", y.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(move(y), requestId) );
 		}
@@ -68,7 +68,7 @@ namespace Jde::App{
 			WriteException( Exception{"ApplicationId or InstanceId not set.", ELogLevel::Warning}, requestId );
 			return;
 		}
-		var level = (ELogLevel)l.level();
+		let level = (ELogLevel)l.level();
 		vector<string> args = IO::Proto::ToVector( move(*l.mutable_args()) );
 		if( _dbLevel!=ELogLevel::NoLog && _dbLevel<=level )
 			SaveMessage( _appPK, _instancePK, l, &args );//TODO don't block
@@ -121,11 +121,11 @@ namespace Jde::App{
 		for( auto i=0; i<transmission.messages_size(); ++i ){
 			auto& m = *transmission.mutable_messages( i );
 			using enum Proto::FromClient::Message::ValueCase;
-			var requestId = clientRequestId.value_or( m.request_id() );
+			let requestId = clientRequestId.value_or( m.request_id() );
 			switch( m.Value_case() ){
 			[[unlikely]]case kInstance:{
 				_instance = move( *m.mutable_instance() );
-				var [appPK,instancePK, dbLogLevel_, fileLogLevel_] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
+				let [appPK,instancePK, dbLogLevel_, fileLogLevel_] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
 				Information{ ELogTags::SocketServerRead, "[{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
 
 				_instancePK = instancePK; _appPK = appPK;
@@ -154,7 +154,7 @@ namespace Jde::App{
 				break;
 			case kForwardExecution:
 			case kForwardExecutionAnonymous:{
-				var anonymous = m.Value_case()==kForwardExecutionAnonymous;
+				let anonymous = m.Value_case()==kForwardExecutionAnonymous;
 				auto forward = anonymous ? m.mutable_forward_execution_anonymous() : m.mutable_forward_execution();
 				ForwardExecution( move(*forward), anonymous, requestId );
 				break;}

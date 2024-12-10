@@ -1,5 +1,5 @@
 #pragma once
-#include <jde/log/Log.h>
+//#include <jde/log/Log.h>
 
 namespace Jde::App{
 	//Log server messages to db

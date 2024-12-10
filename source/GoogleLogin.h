@@ -1,4 +1,5 @@
-﻿#include <jde/coroutine/Await.h>
+﻿#pragma once
+#include <jde/framework/coroutine/Await.h>
 #include "../../Google/source/TokenInfo.h"
 #include <jde/web/client/Jwt.h>
 

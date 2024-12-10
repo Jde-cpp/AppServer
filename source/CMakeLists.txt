@@ -28,13 +28,9 @@ endif()
 include_directories( "../../Public" )
 #######################################################
 target_precompile_headers( ${CMAKE_PROJECT_NAME} PRIVATE
-	<jde/TypeDefs.h>
+	<jde/framework.h>
+	<jde/framework/io/proto.h>
 	"externals.h"
 	"usings.h"
-	<jde/log/Log.h>
-	<jde/Exception.h>
-	<jde/Str.h>
-	"../../Framework/source/db/Database.h"
-	"../../Framework/source/io/ProtoUtilities.h"
 )
 add_custom_command( TARGET ${CMAKE_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Jde.App.Server" COMMENT "Remove exe" )

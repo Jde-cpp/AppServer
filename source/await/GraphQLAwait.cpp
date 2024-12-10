@@ -1,13 +1,13 @@
 #include "GraphQLAwait.h"
-#include "../../../Framework/source/db/GraphQL.h"
+#include <jde/ql/ql.h>
 
 namespace Jde::App::Server{
 
 	α GraphQLAwait::Suspend()ι->void{
-		[this]( GraphQLAwait& self )->Coroutine::Task {
+		[this]( GraphQLAwait& self )->QL::QLAwait::Task {
 			try{
-				auto j = (co_await DB::CoQuery(move(_query), _userPK, "CoQuery", _sl) ).UP<json>();
-				self.Resume( move(*j) );
+				auto j = co_await QL::QLAwait( move(_query), _userPK, _sl );
+				self.Resume( move(j) );
 			}
 			catch( IException& e ){
 				self.ResumeExp( move(e) );

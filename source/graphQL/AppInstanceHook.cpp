@@ -1,34 +1,34 @@
 #include "AppInstanceHook.h"
-#include <jde/db/graphQL/TableQL.h>
+#include <jde/ql/types/TableQL.h>
 #include "../WebServer.h"
 #include "../ServerSocketSession.h"
 
-#define var const auto
+#define let const auto
 
 namespace Jde::App{
-	struct StartAwait : DB::GraphQL::IMutationAwait{
-		StartAwait( sp<DB::MutationQL> mutation, UserPK userPK, SRCE )ι:
-			DB::GraphQL::IMutationAwait{ mutation, userPK, sl }
+	struct StartAwait : TAwait<jvalue>{
+		StartAwait( QL::MutationQL mutation, UserPK, SL sl )ι:
+			TAwait<jvalue>{ sl }
 		{}
-		α await_ready()ι->bool override{ return true; }
 		α Suspend()ι->void override{}
-		[[noreturn]] α await_resume()ε->uint override{
+		[[noreturn]] α await_resume()ε->jvalue override{
 			throw Exception{ _sl, Jde::ELogLevel::Critical, "Start instance not implemented" };
 		}
 	};
 
-	α AppInstanceHook::Start( sp<DB::MutationQL> mutation, UserPK userPK, SL )ι->up<DB::GraphQL::IMutationAwait>{
-		if( mutation->JsonName!="applicationInstance" )
-			return {};
-		return mu<StartAwait>( mutation, userPK );
+	α AppInstanceHook::Start( const QL::MutationQL& m, UserPK userPK, SL sl )ι->up<TAwait<jvalue>>{
+		//StartAwait( m, userPK, sl );
+		return m.JsonName=="applicationInstance" ? mu<StartAwait>( m, userPK, sl ) : nullptr;
 	}
 
-	struct StopAwait : DB::GraphQL::IMutationAwait{
-		StopAwait( sp<DB::MutationQL> mutation, UserPK userPK, SRCE )ι:
-			DB::GraphQL::IMutationAwait{ mutation, userPK, sl }
+	struct StopAwait : TAwait<jvalue>{
+		StopAwait( QL::MutationQL mutation, UserPK userPK, SL sl )ι:
+			TAwait<jvalue>{ sl },
+			_mutation{mutation},
+			_userPK{userPK}
 		{}
 		α Suspend()ι->void override{
-			var id = _mutation->Id<AppInstancePK>( ELogTags::SocketServerRead );
+			let id = _mutation.Id<AppInstancePK>( ELogTags::SocketServerRead );
 			auto pid = id==Server::InstancePK() ? OSApp::ProcessId() : 0;
 			if( auto p = pid ? sp<ServerSocketSession>{} : Server::FindInstance( id ); p )
 				pid = p->Instance().pid();
@@ -41,11 +41,11 @@ namespace Jde::App{
 			else
 				ResumeExp( Exception{ELogTags::SocketServerRead, _sl, "Instance not found."} );
 		}
+		QL::MutationQL _mutation;
+		UserPK _userPK;
 	};
 
-	α AppInstanceHook::Stop( sp<DB::MutationQL> mutation, UserPK userPK, SL )ι->up<DB::GraphQL::IMutationAwait>{
-		if( mutation->JsonName!="applicationInstance" )
-			return {};
-		return mu<StopAwait>( mutation, userPK );
+	α AppInstanceHook::Stop( const QL::MutationQL& m, UserPK userPK, SL sl )ι->up<TAwait<jvalue>>{
+		return m.JsonName=="applicationInstance" ? mu<StopAwait>( m, userPK, sl ) : nullptr;
 	}
 }

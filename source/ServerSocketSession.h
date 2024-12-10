@@ -1,4 +1,5 @@
 #pragma once
+#include <jde/ql/ql.h>
 #include <jde/web/client/usings.h>
 #include <jde/web/server/IWebsocketSession.h>
 #include <jde/web/server/Sessions.h>
@@ -25,7 +26,7 @@ namespace Jde::App{
 		α AddSession( Proto::FromClient::AddSession addSession, RequestId clientRequestId, SL sl )ι->Task;
 		α Execute( string&& bytes, optional<UserPK> userPK, RequestId clientRequestId )ι->void;
 		α ForwardExecution( Proto::FromClient::ForwardExecution&& clientMsg, bool anonymous, RequestId clientRequestId, SRCE )ι->ForwardExecutionAwait::Task;
-		α GraphQL( string&& query, RequestId requestId )ι->Task;
+		α GraphQL( string&& query, RequestId requestId )ι->QL::QLAwait::Task;
 		α SaveLogEntry( Proto::FromClient::LogEntry logEntry, RequestId requestId )->void;
 		α SendAck( uint32 id )ι->void override;
 		α SessionInfo( SessionPK sessionId, RequestId requestId )ι->void;

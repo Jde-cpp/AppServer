@@ -2,7 +2,7 @@
 #include <jde/app/shared/proto/App.FromServer.h>
 #include "../ServerSocketSession.h"
 #include "../WebServer.h"
-#define var const auto
+#define let const auto
 
 namespace Jde::App{
 	struct SessionHandle final{
@@ -17,7 +17,7 @@ namespace Jde::App{
 	{}
 
 	α ForwardExecutionAwait::Suspend()ι->void{
-		var serverRequestId = Server::NextRequestId();
+		let serverRequestId = Server::NextRequestId();
 		_forwardExecutionMessages.emplace( serverRequestId, SessionHandle{move(_requestSocketSession), _h} );
 		try{
 			Server::Write( _forwardExecutionMessage.app_pk(), _forwardExecutionMessage.app_instance_pk(), FromServer::ExecuteRequest(serverRequestId, _userPK, move(*_forwardExecutionMessage.mutable_execution_transmission())) );

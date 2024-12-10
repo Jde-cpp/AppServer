@@ -6,7 +6,7 @@
 #include "../../AppServer/source/LogData.h"
 #include "../../Framework/source/db/Database.h"
 
-#define var const auto
+#define let const auto
 namespace Jde{
 	α OSApp::ProductName()ι->sv{ return "Tests.Crypto"; }
  	void Startup( int argc, char **argv )ι{
@@ -26,8 +26,8 @@ int main(int argc, char **argv){
 	Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
-		var p=Settings::Get<string>( "testing/tests" );
-		var filter = p ? *p : "*";
+		let p=Settings::Get<string>( "testing/tests" );
+		let filter = p ? *p : "*";
 		::testing::GTEST_FLAG( filter ) = filter;
 	  result = RUN_ALL_TESTS();
 		Process::Shutdown( result );

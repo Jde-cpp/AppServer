@@ -1,10 +1,11 @@
 #pragma once
-#include <jde/db/graphQL/GraphQLHook.h>
+#include <jde/ql/QLHook.h>
 
 namespace Jde::App{
-	struct AppInstanceHook final : DB::GraphQL::IGraphQLHook{
+	//namespace Jde::QL{ struct MutationQL; }
+	struct AppInstanceHook final : QL::IQLHook{
 		//using namespace Jde::DB;
-		α Start( sp<DB::MutationQL> mu, UserPK userPK, SRCE )ι->up<DB::GraphQL::IMutationAwait>;
-		α Stop( sp<DB::MutationQL> mu, UserPK userPK, SRCE )ι->up<DB::GraphQL::IMutationAwait>;
+		α Start( const QL::MutationQL& mu, UserPK userPK, SRCE )ι->HookResult;
+		α Stop( const QL::MutationQL& mu, UserPK userPK, SRCE )ι->HookResult;
 	};
 }

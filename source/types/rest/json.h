@@ -1,9 +1,9 @@
 ﻿#pragma once
-
+#include "../../../../Framework/source/DateTime.h"
 namespace Jde::App{
 
-	Ξ to_json( nlohmann::json& j, const Proto::FromClient::Instance& x )ε->void{
-		j = json{
+	Ξ ToJson( const Proto::FromClient::Instance& x )ι->jobject{
+		return jobject{
 			{"application", x.application()},
 			{"host", x.host()},
 			{"pid", x.pid()},

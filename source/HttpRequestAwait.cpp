@@ -1,10 +1,11 @@
 #include "HttpRequestAwait.h"
-#include <jde/thread/Execution.h>
+#include <jde/framework/thread/execution.h>
+#include <jde/access/access.h>
 #include "await/CertificateLoginAwait.h"
 #include "GoogleLogin.h"
 #include "WebServer.h"
 #include "types/rest/json.h"
-#define var const auto
+#define let const auto
 
 namespace Jde::App{
 	HttpRequestAwait::HttpRequestAwait( HttpRequest&& req, SL sl )ι:
@@ -16,9 +17,9 @@ namespace Jde::App{
 	α CertificateLogin( HttpRequest req, HttpRequestAwait::Handle h )ι->CertificateLoginAwait::Task{
 		try{
 			req.LogRead();
-			auto token = Json::Get( req.Body(), "jwt" );
+			let token = Json::AsSV( req.Body(), "jwt" );
 			req.SessionInfo->UserPK = co_await CertificateLoginAwait( token, req.UserEndpoint.address().to_string() );
-			json j{ {"expiration", ToIsoString(req.SessionInfo->Expiration)} };
+			jobject j{ {"expiration", ToIsoString(req.SessionInfo->Expiration)} };
 			req.SessionInfo->IsInitialRequest = true;  //expecting sessionId to be set.
 			h.promise().Resume( {move(j), move(req)}, h );
 		}
@@ -30,9 +31,9 @@ namespace Jde::App{
 	α GoogleLogin( HttpRequest&& req, HttpRequestAwait::Handle h )ι->GoogleLoginAwait::Task{
 		try{
 			req.LogRead();
-			var info = co_await GoogleLoginAwait{ Json::Getε(req.Body(), "value") };
+			let info = co_await GoogleLoginAwait{ Json::AsString(req.Body(), "value") };
 			[&]()->Jde::Task {
-				req.SessionInfo->UserPK = *( co_await UM::Login(info.Email, underlying(UM::EProviderType::Google)) ).UP<UserPK>();
+				req.SessionInfo->UserPK = *( co_await Access::Authenticate(info.Email, underlying(Access::EProviderType::Google)) ).UP<UserPK>();
 				h.promise().SetValue( {ValueJson(Ƒ("{:x}", req.SessionInfo->SessionId)), move(req)} );
 			}();
 		}
@@ -43,23 +44,19 @@ namespace Jde::App{
 	}
 
 	α HttpRequestAwait::await_ready()ι->bool{
-		optional<json> result;
 		if( _request.Method() == http::verb::get ){
 			if( _request.Target()=="/GoogleAuthClientId" ){
 				_request.LogRead();
-				_readyResult = mu<json>( ValueJson(Settings::Get<string>("GoogleAuthClientId").value_or("GoogleAuthClientId Not Configured.")) );
+				_readyResult = mu<jobject>( ValueJson(Settings::FindString("GoogleAuthClientId").value_or("GoogleAuthClientId Not Configured.")) );
 			}
 			else if( _request.Target()=="/IotWebSocket" ){
 				_request.LogRead();
-				var apps = Server::FindApplications( "Jde.IotWebSocket" );
-				json japps = json::array();
-				for( auto& app : apps ){
-					json a;
-					to_json( a, app );
-					japps.push_back( a );
-				}
-				_readyResult = mu<json>();
-				(*_readyResult)["servers"] = japps;
+				let apps = Server::FindApplications( "Jde.IotWebSocket" );
+				jarray japps;
+				for( auto& app : apps )
+					japps.push_back( ToJson(app) );
+				jobject y{ {"servers", japps} };
+				_readyResult = mu<jobject>( move(y) );
 			}
 		}
 		return _readyResult!=nullptr;
@@ -89,6 +86,6 @@ namespace Jde::App{
 		}
 		return _readyResult
 			? HttpTaskResult{ move(*_readyResult), move(_request) }
-			: Promise()->Value() ? move( *Promise()->Value() ) : HttpTaskResult{ json{}, move(_request) };
+			: Promise()->Value() ? move( *Promise()->Value() ) : HttpTaskResult{ {}, move(_request) };
 	}
 }
