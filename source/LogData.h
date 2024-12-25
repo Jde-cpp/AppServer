@@ -15,7 +15,7 @@ namespace Jde::App::Server{
 	α SaveString( App::Proto::FromClient::EFields field, uint32 id, string value, SRCE )ι->void;
 }
 namespace Jde::App{
-	α AddInstance( str applicationName, str hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK,ELogLevel,ELogLevel>;
+	α AddInstance( str applicationName, str hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK>;
 
 	//α LoadApplications( AppPK pk=0 )ι->up<Proto::FromServer::Applications>;
 	namespace Data{

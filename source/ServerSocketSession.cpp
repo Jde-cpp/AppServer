@@ -14,11 +14,11 @@ namespace Jde::App{
 		base{ move(stream), move(buffer), move(request), move(userEndpoint), connectionIndex }
 	{}
 
-	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL sl )ι->Task{
+	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL sl )ι->Access::AuthenticateAwait::Task{
 		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
-			let userPK = *( co_await Access::Authenticate(m.login_name(), m.provider_pk(), m.domain()) ).UP<UserPK>();
+			let userPK = co_await Access::Authenticate(m.login_name(), m.provider_pk(), m.domain());
 
 			auto sessionInfo = Web::Server::Sessions::Add( userPK, move(*m.mutable_user_endpoint()), m.is_socket() );
 			LogWrite( Ƒ("AddSession id: {:x}", sessionInfo->SessionId), requestId );
@@ -42,7 +42,7 @@ namespace Jde::App{
 		sv functionSuffix = anonymous ? "Anonymous" : "";
 		LogRead( Ƒ("ForwardExecution{} appPK: {}, appInstancePK: {:x}, size: {:10L}", functionSuffix, m.app_pk(), m.app_instance_pk(), m.execution_transmission().size()), requestId );
 		try{
-			string result = co_await ForwardExecutionAwait{ _userPK.value_or(0), move(m), SharedFromThis(), sl };
+			string result = co_await ForwardExecutionAwait{ _userPK.value_or(UserPK{0}), move(m), SharedFromThis(), sl };
 			LogWrite( Ƒ("ForwardExecution{} size: {:10L}", functionSuffix, result.size()), requestId );
 			Write( FromServer::Execute(move(result), requestId) );
 		}
@@ -54,7 +54,7 @@ namespace Jde::App{
 		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("GraphQL: {}", query), requestId );
-			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(0) );
+			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(UserPK{0}) );
 			auto y = serialize( j );
 			LogWrite( Ƒ("GraphQL: {}", y.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(move(y), requestId) );
@@ -73,7 +73,7 @@ namespace Jde::App{
 		if( _dbLevel!=ELogLevel::NoLog && _dbLevel<=level )
 			SaveMessage( _appPK, _instancePK, l, &args );//TODO don't block
 		if( _webLevel!=ELogLevel::NoLog && _webLevel<=level ){
-			Logging::ExternalMessage y{ Logging::MessageBase{ (ELogLevel)l.level(), l.message_id(), l.file_id(), l.function_id(), l.line(), l.user_pk(), l.thread_id()}, IO::Proto::ToVector(l.args()), IO::Proto::ToTimePoint(l.time()) };
+			Logging::ExternalMessage y{ Logging::MessageBase{ (ELogLevel)l.level(), l.message_id(), l.file_id(), l.function_id(), l.line(), {l.user_pk()}, l.thread_id()}, IO::Proto::ToVector(l.args()), IO::Proto::ToTimePoint(l.time()) };
 			using enum Logging::EFields;
 			y._pMessage = mu<string>( StringCache::GetMessage(l.message_id()) );
 			y.MessageView = *y._pMessage;
@@ -91,7 +91,7 @@ namespace Jde::App{
 	α ServerSocketSession::SessionInfo( SessionPK sessionId, RequestId requestId )ι->void{
 		LogRead( Ƒ("SessionInfo={:x}", sessionId), requestId );
 		if( auto info = Web::Server::Sessions::Find( sessionId ); info ){
-			LogWrite( Ƒ("SessionInfo userPK: {}, endpoint: {}, hasSocket: {}", info->UserPK, info->UserEndpoint, info->HasSocket), requestId );
+			LogWrite( Ƒ("SessionInfo userPK: {}, endpoint: {}, hasSocket: {}", info->UserPK.Value, info->UserEndpoint, info->HasSocket), requestId );
 			Write( ToProto(move(*info), requestId) );
 		}else
 			WriteException( Exception{"Session not found."}, requestId );
@@ -125,7 +125,7 @@ namespace Jde::App{
 			switch( m.Value_case() ){
 			[[unlikely]]case kInstance:{
 				_instance = move( *m.mutable_instance() );
-				let [appPK,instancePK, dbLogLevel_, fileLogLevel_] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
+				let [appPK,instancePK] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
 				Information{ ELogTags::SocketServerRead, "[{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
 
 				_instancePK = instancePK; _appPK = appPK;
@@ -144,7 +144,7 @@ namespace Jde::App{
 			case kExecuteAnonymous:{
 				bool isAnonymous = m.Value_case()==kExecuteAnonymous;
 				auto bytes = isAnonymous ? move( *m.mutable_execute_anonymous() ) : move( *m.mutable_execute()->mutable_transmission() );
-				optional<UserPK> executor = m.Value_case()==kExecuteAnonymous ? nullopt : optional<UserPK>(m.execute().user_pk() );
+				optional<UserPK> executor = m.Value_case()==kExecuteAnonymous ? nullopt : optional<UserPK>( {m.execute().user_pk()} );
 				LogRead( Ƒ("Execute{} size: {:10L}", isAnonymous ? "Anonymous" : "", bytes.size()), requestId );
 				Execute( move(bytes), executor, requestId );
 				break;}

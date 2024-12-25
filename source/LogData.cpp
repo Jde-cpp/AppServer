@@ -27,18 +27,14 @@ namespace Server{
 		sp<Access::IAcl> authorize = Access::LocalAcl();
 		try{
 			auto accessSchema = DB::GetAppSchema( "access", authorize );
-			co_await Access::Configure( accessSchema );
-			_logSchema = DB::GetAppSchema( "logs", authorize );
-			co_await Access::Configure( _logSchema );
-			auto appSchema = DB::GetAppSchema( "app", authorize );
-			co_await Access::Configure( appSchema );
-
-			QL::Configure( {accessSchema, _logSchema, appSchema} );
+			_logSchema = DB::GetAppSchema( "log", authorize );
+			QL::Configure( {accessSchema, _logSchema} );
 			if( auto sync = Settings::FindBool("/db/sync").value_or(true); sync ){
 				DB::SyncSchema( *accessSchema );
 				DB::SyncSchema( *_logSchema );
-				DB::SyncSchema( *appSchema );
 			}
+			auto await = Access::Configure( accessSchema, vector<string>{accessSchema->Name, _logSchema->Name}, QL::Local(), UserPK{UserPK::System} );
+			co_await await;
 			_pDbQueue = ms<DB::DBQueue>( _logSchema->DS() );
 			Process::AddShutdown( _pDbQueue );
 			Resume();
@@ -70,22 +66,16 @@ namespace Server{
 	}
 }
 namespace Jde{
-	α App::AddInstance( str applicationName, str hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK,ELogLevel,ELogLevel>{
+	α App::AddInstance( str applicationName, str hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK>{
 		AppPK applicationId;
 		AppInstancePK applicationInstanceId;
-		optional<uint> dbLogLevelInt; optional<uint> fileLogLevelInt;
-		auto fnctn = [&applicationId, &applicationInstanceId, &dbLogLevelInt,&fileLogLevelInt](const DB::IRow& row){
+		auto fnctn = [&applicationId, &applicationInstanceId](const DB::IRow& row){
 			applicationId = row.GetUInt32(0);
 			applicationInstanceId = row.GetUInt32(1);
-			dbLogLevelInt = row.GetUIntOpt(2);
-			fileLogLevelInt = row.GetUIntOpt(3);
 		};
-		_logSchema->DS()->ExecuteProc( "log_application_instance_insert(?,?,?)", {DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn );
+		_logSchema->DS()->ExecuteProc( "log_app_instance_insert(?,?,?)", {DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn );
 
-		ELogLevel dbLogLevel = dbLogLevelInt.has_value() ? (ELogLevel)dbLogLevelInt.value() : ELogLevel::Information;
-		ELogLevel fileLogLevel = fileLogLevelInt.has_value() ? (ELogLevel)fileLogLevelInt.value() : ELogLevel::Information;
-
-		return make_tuple( applicationId, applicationInstanceId, dbLogLevel, fileLogLevel );
+		return make_tuple( applicationId, applicationInstanceId );
 	}
 
 /*
@@ -174,23 +164,30 @@ namespace Jde{
 			return traces;
 		}
 
-		α LoadStrings( string sql, SRCE )ε->concurrent_flat_map<uint32,string>{
+		Ω loadStrings( str tableName, SRCE )ε->concurrent_flat_map<uint,string>{
+			let& table = _logSchema->GetTable( tableName );
+			DB::Statement statement{table.Columns,{GetTable("entries"), files, true}}
+			let rows = _logSchema->DS()->Select( statement.Move(), false, sl );
 			concurrent_flat_map<uint32,string> map;
-			_logSchema->DS()->Select( move(sql), [&map]( DB::IRow& row ){ map.emplace( row.GetUInt32(0), row.MoveString(1) ); }, {}, sl );
+			for( auto& row : rows )
+				map.emplace( row->GetUInt(0), row->MoveString(1) );
 			return map;
 		}
-		α LoadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{
-			return LoadStrings( "select id, value from log_files", sl );
+		Ω loadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{
+			LoadStrings( "source_files" );
+			return LoadStrings( DB::Statement{files->Columns,{GetTable("entries"), files, true}}, sl );
 		}
-		α LoadFunctions( SL sl )ε->concurrent_flat_map<uint32,string>{
+		Ω loadFunctions( SL sl )ε->concurrent_flat_map<uint32,string>{
 			return LoadStrings( "select id, value from log_functions", sl );
 		}
-		α LoadMessages( SL sl )ε->concurrent_flat_map<uint32,string>{
-			return LoadStrings( "select log_messages.id, value from logs join log_messages on logs.message_id=log_messages.id", sl );
+		Ω loadMessages( SL sl )ε->concurrent_flat_map<uint32,string>{
+			let messages = GetTable("messages");
+			DB::Statement statement{ {messages->Columns}, {GetTable("entries"), messages, true} };
+			return LoadStrings( statement, sl );
 		}
 
 		α Data::LoadStrings( SL sl )ε->void{
-			StringCache::Merge( LoadFiles(sl), LoadFunctions(sl), LoadMessages(sl) );
+			StringCache::Merge( loadFiles(sl), LoadFunctions(sl), LoadMessages(sl) );
 		}
 	}
 }

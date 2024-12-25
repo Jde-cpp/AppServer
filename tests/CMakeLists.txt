@@ -22,7 +22,10 @@ else()
 	link_directories( ${Protobuf_DIR}/../.. )
 endif()
 
-add_executable( ${CMAKE_PROJECT_NAME} main.cpp ThreadingTest.cpp DBTests.cpp um/UserTests.cpp um/GroupTests.cpp )
+add_executable( ${CMAKE_PROJECT_NAME} )
+file( GLOB sources *.cpp )
+file( GLOB_RECURSE headers  *.h )
+target_sources( ${CMAKE_PROJECT_NAME} PRIVATE ${sources} ${headers} )
 
 find_package( GTest REQUIRED )
 target_link_libraries( ${CMAKE_PROJECT_NAME}  GTest::gtest_main )
@@ -43,10 +46,8 @@ else()
 endif()
 
 target_precompile_headers( ${CMAKE_PROJECT_NAME} PRIVATE
-	<jde/TypeDefs.h>
+	<jde/framework.h>
 	"externals.h"
-	<jde/log/Log.h>
-	<jde/Exception.h>
 )
 
 if( MSVC )

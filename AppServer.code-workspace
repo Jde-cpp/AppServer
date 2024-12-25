@@ -13,7 +13,7 @@
 			"name": "shared"
 		},
 		{
-			"path": "../Public/libs/db",
+			"path": "../Public/libs/db/src",
 			"name": "db"
 		},
 		{
@@ -33,7 +33,7 @@
 			"name": "Framework"
 		},
 		{
-			"path": "../Public/libs/db/drivers/mysql",
+			"path": "../Public/libs/db/src/drivers/mysql",
 			"name": "MySql"
 		},
 		{
@@ -109,7 +109,8 @@
 			"environment": [
 				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" },
 				{ "name": "JDE_LOG_META", "value": "${workspaceFolder:AppServer}/../meta.json" },
-				{ "name": "Jde_App_Connection", "value": "${env:Jde_App_Connection}" }
+				{ "name": "Jde_App_Connection", "value": "${env:Jde_App_Connection}" },
+				{ "name":"LD_LIBRARY_PATH","value":"/home/duffyj/code/jde/bin/asan" }
 			],
 			"externalConsole": false,
 			"MIMode": "gdb",

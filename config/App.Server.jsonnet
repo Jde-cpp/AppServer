@@ -23,28 +23,46 @@
 			_passcode: "$(JDE_PASSCODE)"
 		}
 	},
-	db:{
-		connectionString: "DSN=jde_app",
-		createSchema:  true,
-		metax: "../config/AppServerMeta.json",
-		meta: "$(ProgramData)/Jde-cpp/AppServer/meta.json",
-		qlSchemax: "../config/ql.json",
-		qlSchema: "$(ProgramData)/Jde-cpp/AppServer/ql.json",
-		scriptDir: "$(ProgramData)/Jde-cpp/AppServer/sql"
+	dbServers: {
+		scriptPath: "$(JDE_DIR)/bin/config/sql/mysql/appServer",
+		sync:: false,
+		localhost:{
+			driver: "$(JDE_DIR)/bin/asan/libJde.MySql.so",
+			connectionString: "mysqlx://$(JDE_MYSQL_CREDS)@127.0.0.1:33060/jde?ssl-mode=disabled",
+			catalogs: {
+				jde: {
+					schemas:{
+						jde:{ //for sqlserver, test with schema, debug with default schema ie dbo.
+							access:{
+								meta: "$(JDE_DIR)/Public/libs/access/config/access-meta.jsonnet",
+								ql: "$(JDE_DIR)/Public/libs/access/config/access-ql.jsonnet",
+								prefix: "access_"  //test with null prefix, debug with prefix
+							},
+							log:{
+								meta: "$(JDE_DIR)/AppServer/config/log-meta.jsonnet",
+								prefix: "log_"  //test with null prefix, debug with prefix
+							}
+						}
+					}
+				}
+			}
+		}
 	},
 	logging:{
 		defaultLevel: "Information",
 		tags: {
-			trace:[
+			trace:["sql",
 				"http.client.write", "http.client.read", "http.server.write", "http.server.read", "socket.client.write", "socket.client.read", "socket.server.write", "socket.server.read"
 			],
-			debug:["sessions", "settings", "sql"],
+			debug:["sessions", "settings"],
 			information:[],
 			warning:[],
 			"error":[],
-			Critical:[]
+			critical:[]
 		},
-		console:{},
+		sinks:{
+			console:{}
+		},
 		file:{ path: "$(ProgramData)/Jde-cpp/AppServer/logs", md: false },
 		breakLevel: "Warning"
 	},

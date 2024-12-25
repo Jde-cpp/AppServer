@@ -1,5 +1,6 @@
 #pragma once
 #include <jde/ql/ql.h>
+#include <jde/access/awaits/AuthenticateAwait.h>
 #include <jde/web/client/usings.h>
 #include <jde/web/server/IWebsocketSession.h>
 #include <jde/web/server/Sessions.h>
@@ -23,7 +24,7 @@ namespace Jde::App{
 		α WriteException( IException&& e )ι->void override{ WriteException( move(e), 0 ); }
 		α WriteException( IException&& e, RequestId requestId )ι->void;
 
-		α AddSession( Proto::FromClient::AddSession addSession, RequestId clientRequestId, SL sl )ι->Task;
+		α AddSession( Proto::FromClient::AddSession addSession, RequestId clientRequestId, SL sl )ι->Access::AuthenticateAwait::Task;
 		α Execute( string&& bytes, optional<UserPK> userPK, RequestId clientRequestId )ι->void;
 		α ForwardExecution( Proto::FromClient::ForwardExecution&& clientMsg, bool anonymous, RequestId clientRequestId, SRCE )ι->ForwardExecutionAwait::Task;
 		α GraphQL( string&& query, RequestId requestId )ι->QL::QLAwait::Task;

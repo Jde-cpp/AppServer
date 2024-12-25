@@ -32,8 +32,8 @@ namespace Jde::App{
 		try{
 			req.LogRead();
 			let info = co_await GoogleLoginAwait{ Json::AsString(req.Body(), "value") };
-			[&]()->Jde::Task {
-				req.SessionInfo->UserPK = *( co_await Access::Authenticate(info.Email, underlying(Access::EProviderType::Google)) ).UP<UserPK>();
+			[&]()->Access::AuthenticateAwait::Task {
+				req.SessionInfo->UserPK = co_await Access::Authenticate( info.Email, underlying(Access::EProviderType::Google) );
 				h.promise().SetValue( {ValueJson(Ƒ("{:x}", req.SessionInfo->SessionId)), move(req)} );
 			}();
 		}

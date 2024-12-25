@@ -58,3 +58,4 @@ tests/.vscode/settings.json
 config/ql.json
 **/.build/*
 tests/.vs/*
+config/common-meta.libsonnet

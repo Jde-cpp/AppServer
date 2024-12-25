@@ -34,7 +34,7 @@ int main( int argc, char** argv ){
 	optional<int> exitCode;
 	try{
 		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
-		IApplication::AddThread( ms<Threading::InterruptibleThread>("Startup", [&](){App::Startup();}) );
+		App::Startup();
 		exitCode = IApplication::Pause();
 	}
 	catch( const IException& e ){
@@ -47,12 +47,8 @@ int main( int argc, char** argv ){
 namespace Jde{
 	α App::Startup()ι->Server::ConfigureDSAwait::Task{
 		try{
-/*				//if( Settings::TryGet<bool>("um/use").value_or(false) ) currently need to configure um so meta is loaded.
-			{
-				UM::Configure();
-			}*/
 			co_await Server::ConfigureDSAwait{};
-			let [appId, appInstanceId, dbLogLevel, fileLogLevel] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
+			let [appId, appInstanceId] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
 			Server::SetAppPK( appId );
 			Server::SetInstancePK( appInstanceId );
 
