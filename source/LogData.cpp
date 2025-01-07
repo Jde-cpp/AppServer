@@ -1,16 +1,13 @@
 ﻿#include "LogData.h"
 #include <jde/app/shared/StringCache.h>
 #include <jde/app/shared/proto/App.FromServer.h>
-//#include "../../Framework/source/db/Database.h"
 #include <jde/db/DBQueue.h>
 #include <jde/db/generators/Syntax.h>
 #include <jde/db/db.h>
 #include <jde/db/IDataSource.h>
 #include <jde/db/IRow.h>
+#include <jde/db/meta/Table.h>
 #include <jde/ql/ql.h>
-//#include <jde/ql/types/TableQL.h>
-//#include "../../Framework/source/db/GraphQL.h"
-//#include "../../Framework/source/db/GraphQuery.h"
 
 #define let const auto
 
@@ -29,17 +26,17 @@ namespace Server{
 			auto accessSchema = DB::GetAppSchema( "access", authorize );
 			_logSchema = DB::GetAppSchema( "log", authorize );
 			QL::Configure( {accessSchema, _logSchema} );
-			if( auto sync = Settings::FindBool("/db/sync").value_or(true); sync ){
+			if( auto sync = Settings::FindBool("/dbServers/sync").value_or(true); sync ){
 				DB::SyncSchema( *accessSchema );
 				DB::SyncSchema( *_logSchema );
 			}
-			auto await = Access::Configure( accessSchema, vector<string>{accessSchema->Name, _logSchema->Name}, QL::Local(), UserPK{UserPK::System} );
+			auto await = Access::Configure( accessSchema, {accessSchema, _logSchema}, QL::Local(), UserPK{UserPK::System} );
 			co_await await;
 			_pDbQueue = ms<DB::DBQueue>( _logSchema->DS() );
 			Process::AddShutdown( _pDbQueue );
 			Resume();
 		}
-		catch( Exception& e ){
+		catch( IException& e ){
 			ResumeExp( move(e) );
 		}
 	}
@@ -114,7 +111,7 @@ namespace Jde{
 		pParameters->push_back( {m.message_id()} );
 		pParameters->push_back( {(uint8)m.level()} );
 		pParameters->push_back( {m.thread_id()} );
-		pParameters->push_back( {IO::Proto::ToTimePoint(m.time())} );
+		pParameters->push_back( {Jde::Proto::ToTimePoint(m.time())} );
 		pParameters->push_back( {m.user_pk()} );
 		constexpr sv procedure = "log_message_insert"sv;
 		constexpr sv args = "(?,?,?,?,?,?,?,?,?,?"sv;
@@ -165,8 +162,8 @@ namespace Jde{
 		}
 
 		Ω loadStrings( str tableName, SRCE )ε->concurrent_flat_map<uint,string>{
-			let& table = _logSchema->GetTable( tableName );
-			DB::Statement statement{table.Columns,{GetTable("entries"), files, true}}
+			let& table = _logSchema->GetTablePtr( tableName );
+			DB::Statement statement{ table->Columns, DB::FromClause{DB::Join{table->GetPK(), _logSchema->GetTablePtr("entries")->GetPK(), true}}, {} };
 			let rows = _logSchema->DS()->Select( statement.Move(), false, sl );
 			concurrent_flat_map<uint32,string> map;
 			for( auto& row : rows )
@@ -174,20 +171,17 @@ namespace Jde{
 			return map;
 		}
 		Ω loadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{
-			LoadStrings( "source_files" );
-			return LoadStrings( DB::Statement{files->Columns,{GetTable("entries"), files, true}}, sl );
+			return loadStrings( "source_files", sl );
 		}
 		Ω loadFunctions( SL sl )ε->concurrent_flat_map<uint32,string>{
-			return LoadStrings( "select id, value from log_functions", sl );
+			return loadStrings( "source_functions", sl );
 		}
 		Ω loadMessages( SL sl )ε->concurrent_flat_map<uint32,string>{
-			let messages = GetTable("messages");
-			DB::Statement statement{ {messages->Columns}, {GetTable("entries"), messages, true} };
-			return LoadStrings( statement, sl );
+			return loadStrings( "messages", sl );
 		}
 
 		α Data::LoadStrings( SL sl )ε->void{
-			StringCache::Merge( loadFiles(sl), LoadFunctions(sl), LoadMessages(sl) );
+			StringCache::Merge( loadFiles(sl), loadFunctions(sl), loadMessages(sl) );
 		}
 	}
 }

@@ -25,7 +25,7 @@
 	},
 	dbServers: {
 		scriptPath: "$(JDE_DIR)/bin/config/sql/mysql/appServer",
-		sync:: false,
+		sync: true,
 		localhost:{
 			driver: "$(JDE_DIR)/bin/asan/libJde.MySql.so",
 			connectionString: "mysqlx://$(JDE_MYSQL_CREDS)@127.0.0.1:33060/jde?ssl-mode=disabled",
@@ -51,7 +51,7 @@
 	logging:{
 		defaultLevel: "Information",
 		tags: {
-			trace:["sql",
+			trace:["sql", "parsing",
 				"http.client.write", "http.client.read", "http.server.write", "http.server.read", "socket.client.write", "socket.client.read", "socket.server.write", "socket.server.read"
 			],
 			debug:["sessions", "settings"],
@@ -68,7 +68,7 @@
 	},
 	workers:{
 		drive: {threads: 1},
-		Alarm: {threads: 1},
+		alarm: {threads: 1},
 		executor: 1
 	}
 }

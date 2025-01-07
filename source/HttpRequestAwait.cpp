@@ -1,7 +1,7 @@
 #include "HttpRequestAwait.h"
 #include <jde/framework/thread/execution.h>
 #include <jde/access/access.h>
-#include "await/CertificateLoginAwait.h"
+#include "awaits/CertificateLoginAwait.h"
 #include "GoogleLogin.h"
 #include "WebServer.h"
 #include "types/rest/json.h"
@@ -17,7 +17,7 @@ namespace Jde::App{
 	α CertificateLogin( HttpRequest req, HttpRequestAwait::Handle h )ι->CertificateLoginAwait::Task{
 		try{
 			req.LogRead();
-			let token = Json::AsSV( req.Body(), "jwt" );
+			let token = Json::AsString( req.Body(), "jwt" );
 			req.SessionInfo->UserPK = co_await CertificateLoginAwait( token, req.UserEndpoint.address().to_string() );
 			jobject j{ {"expiration", ToIsoString(req.SessionInfo->Expiration)} };
 			req.SessionInfo->IsInitialRequest = true;  //expecting sessionId to be set.

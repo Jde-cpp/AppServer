@@ -4,15 +4,14 @@ DISABLE_WARNINGS
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
+#include <jde/web/client/exports.h>
+#include <jde/web/client/proto/Web.FromServer.pb.h>
 #include <jde/app/shared/exports.h>
 #include <jde/app/shared/proto/App.FromClient.pb.h>
 #include <jde/app/shared/proto/App.FromServer.pb.h>
 ENABLE_WARNINGS
 #include <jde/app/shared/StringCache.h>
 #include <jde/web/server/SessionGraphQL.h>
-//#include "../../Framework/source/db/Database.h"
-//#include "../../Framework/source/Settings.h"
-//#include "../../Framework/source/um/UM.h"
 #include "graphQL/AppInstanceHook.h"
 #include "ExternalLogger.h"
 #include "LogData.h"
@@ -59,10 +58,8 @@ namespace Jde{
 			Logging::External::Add( mu<ExternalLogger>() );
 
 			Information( ELogTags::App, "--AppServer Started.--" );
-			IApplication::RemoveThread( "Startup" )->Detach();
 		}
 		catch( IException& e ){
-			Process::Shutdown( e.Code==0 ? -1 : e.Code );
 			e.Log();
 			OSApp::UnPause();
 		}

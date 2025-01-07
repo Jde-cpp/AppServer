@@ -9,7 +9,7 @@ namespace Jde::App{
 			{"pid", x.pid()},
 			{"serverLogLevel", (uint32)x.server_log_level()},
 			{"clientLogLevel", (uint32)x.client_log_level()},
-			{ "startTime", ToIsoString(IO::Proto::ToTimePoint(x.start_time())) },
+			{ "startTime", ToIsoString(Jde::Proto::ToTimePoint(x.start_time())) },
 			{"port", x.web_port()},
 			{"instanceName", x.instance_name()}
 		};

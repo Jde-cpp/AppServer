@@ -18,7 +18,7 @@ namespace Jde::App{
 
 	α AppInstanceHook::Start( const QL::MutationQL& m, UserPK userPK, SL sl )ι->up<TAwait<jvalue>>{
 		//StartAwait( m, userPK, sl );
-		return m.JsonName=="applicationInstance" ? mu<StartAwait>( m, userPK, sl ) : nullptr;
+		return m.JsonTableName=="applicationInstance" ? mu<StartAwait>( m, userPK, sl ) : nullptr;
 	}
 
 	struct StopAwait : TAwait<jvalue>{
@@ -46,6 +46,6 @@ namespace Jde::App{
 	};
 
 	α AppInstanceHook::Stop( const QL::MutationQL& m, UserPK userPK, SL sl )ι->up<TAwait<jvalue>>{
-		return m.JsonName=="applicationInstance" ? mu<StopAwait>( m, userPK, sl ) : nullptr;
+		return m.JsonTableName=="applicationInstance" ? mu<StopAwait>( m, userPK, sl ) : nullptr;
 	}
 }

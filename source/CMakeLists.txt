@@ -18,6 +18,7 @@ get_filename_component( main_cpp ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ABSOLUTE )
 list( REMOVE_ITEM sources ${main_cpp} )
 file( GLOB headers **/*.h )
 target_sources( ${CMAKE_PROJECT_NAME} PRIVATE ${sources} ${headers} )
+include_directories( $ENV{JDE_DIR}/Public/include/jde/web/client/proto )
 #######################################################
 if( MSVC )
 	find_package( OpenSsl REQUIRED )

@@ -25,8 +25,8 @@ namespace Jde::App{
 	atomic<RequestId> _requestId{0};
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
-		α GraphQL( string&& q, UserPK userPK, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait>( move(q), userPK, sl ); }
-		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<App::Proto::FromServer::SessionInfo>> override{ return {}; }
+		α GraphQL( string&& q, UserPK userPK, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait<jvalue>>( move(q), userPK, sl ); }
+		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<Web::FromServer::SessionInfo>> override{ return {}; }
 	};
 
 	α Server::GetAppPK()ι->AppPK{ return _appId; }
@@ -146,7 +146,7 @@ namespace Jde::App{
 
 	α Server::SubscribeLogs( string&& qlText, sp<ServerSocketSession> session )ε->void{
 		auto ql = QL::Parse( qlText );
-		auto tables = ql.index()==0 ? get<0>( move(ql) ) : vector<QL::TableQL>{};
+		auto tables = ql.IsTableQL() ? move(ql.TableQLs()) : vector<QL::TableQL>{};
 		THROW_IF( tables.size()!=1, "Invalid query, expecting single table" );
 		auto table = move( tables.front() );
 		THROW_IF( table.JsonName!="logs", "Invalid query, expecting logs query" );

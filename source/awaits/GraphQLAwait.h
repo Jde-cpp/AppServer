@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include <jde/framework/coroutine/Await.h>
 
 namespace Jde::App::Server{
@@ -10,3 +11,4 @@ namespace Jde::App::Server{
 		UserPK _userPK;
 	};
 }
+*/
