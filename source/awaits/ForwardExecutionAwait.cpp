@@ -32,7 +32,7 @@ namespace Jde::App{
 			if( kv.second.RequestSocketSession->InstancePK() != instancePK )
 				return false;
 			auto h = kv.second.Handle;
-			h.promise().ResumeWithError( Exception{"Connection closed."}, h );
+			h.promise().ResumeExp( Exception{"Connection closed."}, h );
 			return true;
 		} );
 	}

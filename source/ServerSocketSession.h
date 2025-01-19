@@ -23,9 +23,9 @@ namespace Jde::App{
 		α ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<Jde::UserPK> userPK, optional<RequestId> clientRequestId )ι->void;
 		α SharedFromThis()ι->sp<ServerSocketSession>{ return std::dynamic_pointer_cast<ServerSocketSession>(shared_from_this()); }
 		//α WriteException( IException&& e, Request )ι->void override{ WriteException( move(e), 0 ); }
-		α WriteException( IException&& e, RequestId requestId )ι->void override;
+		α WriteException( exception&& e, RequestId requestId )ι->void override;
 		α WriteSubscriptionAck( vector<QL::SubscriptionId>&& subscriptionIds, RequestId requestId )ι->void override;
-		α WriteSubscription( jvalue&& j, RequestId requestId )ι->void override;
+		α WriteSubscription( const jvalue& j, RequestId requestId )ι->void override;
 		α WriteComplete( RequestId requestId )ι->void override;
 
 		α AddSession( Proto::FromClient::AddSession addSession, RequestId clientRequestId, SL sl )ι->Access::AuthenticateAwait::Task;

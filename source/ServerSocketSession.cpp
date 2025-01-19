@@ -184,15 +184,20 @@ namespace Jde::App{
 				break;}
 			case kSubscription:{
 				auto& s = *m.mutable_subscription();
-				LogRead( Ƒ("Subscription - {}", s), requestId );
-				Web::Server::Subscriptions::Add( move(s), requestId, SharedFromThis() );
+				LogRead( Ƒ("Subscription - {}", s.substr(0, MaxLogLength())), requestId );
+				try{
+					Write( FromServer::SubscriptionAck(AddSubscription(move(s), requestId), requestId) );
+				}
+				catch( std::exception& e ){
+					WriteException( move(e), requestId );
+				}
 				break;}
 			case kUnsubscription:{
 				auto& v = *m.mutable_unsubscription();
 				LogRead( Ƒ("Unsubscription - {}", v.request_ids().size()), requestId );
-				vector<RequestId> requestIds;
-				for_each( v.request_ids(), [&]( auto id ){ requestIds.emplace_back(id); } );
-				Web::Server::Subscriptions::Remove( move(requestIds), requestId, SharedFromThis() );
+				vector<QL::SubscriptionId> subIds;
+				for_each( v.request_ids(), [&]( auto id ){ subIds.emplace_back(id); } );
+				RemoveSubscription( move(subIds), requestId );
 				break;}
 			[[likely]]case kStringValue:{
 				if( !_appPK || !_instancePK ){
@@ -236,7 +241,6 @@ namespace Jde::App{
 
 	α ServerSocketSession::OnClose()ι->void{
 		LogRead( "OnClose", 0 );
-		Web::Server::Subscriptions::Close( Id() );
 		Server::RemoveSession( Id() );
 		base::OnClose();
 	}
@@ -245,15 +249,15 @@ namespace Jde::App{
 		LogWrite( "Complete", requestId );
 		Write( FromServer::Complete(requestId) );
 	}
-	α ServerSocketSession::WriteException( IException&& e, RequestId requestId )ι->void{
+	α ServerSocketSession::WriteException( exception&& e, RequestId requestId )ι->void{
 		LogWriteException( e, requestId );
 		Write( FromServer::Exception(move(e), requestId) );
 	}
 	α ServerSocketSession::WriteSubscriptionAck( vector<QL::SubscriptionId>&& subscriptionIds, RequestId requestId )ι->void{
 		Write( FromServer::SubscriptionAck(move(subscriptionIds), requestId) );
 	}
-	α ServerSocketSession::WriteSubscription( jvalue&& j, RequestId requestId )ι->void{
-		auto serialized = serialize( move(j) );
+	α ServerSocketSession::WriteSubscription( const jvalue& j, RequestId requestId )ι->void{
+		auto serialized = serialize( j );
 		LogWrite( Ƒ("Subscription: {}", serialized.substr(0,100)), requestId );
 		Write( FromServer::Subscription(move(serialized), requestId) );
 	}

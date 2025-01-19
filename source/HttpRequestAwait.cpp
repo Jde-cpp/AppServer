@@ -24,7 +24,7 @@ namespace Jde::App{
 			h.promise().Resume( {move(j), move(req)}, h );
 		}
 		catch( IException& e ){
-			h.promise().ResumeWithError( move(e), h );
+			h.promise().ResumeExp( move(e), h );
 		}
 	}
 
@@ -38,7 +38,7 @@ namespace Jde::App{
 			}();
 		}
 		catch( IException& e ){
-			h.promise().SetError( move(e) );
+			h.promise().SetExp( move(e) );
 		}
 		h.resume();
 	}
@@ -77,7 +77,7 @@ namespace Jde::App{
 	}
 
 	α HttpRequestAwait::await_resume()ε->HttpTaskResult{
-		if( auto e = Promise() ? Promise()->MoveError() : nullptr; e ){
+		if( auto e = Promise() ? Promise()->MoveExp() : nullptr; e ){
 			auto pRest = dynamic_cast<IRestException*>( e.get() );
 			if( pRest )
 				pRest->Throw();
