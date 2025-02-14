@@ -25,7 +25,7 @@ fi
 popd  > /dev/null;
 #$BUILD ../tests $type $clean $compiler || exit 1;
 $BUILD `pwd` $type $clean $compiler || exit 1;
-rm $JDE_DIR/bin/$type/Jde.App.Server;
+#rm $JDE_DIR/bin/$type/Jde.App.Server;
 $BUILD .. $type $clean $compiler || exit 1;
 
 exit $?;

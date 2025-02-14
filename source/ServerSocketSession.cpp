@@ -3,7 +3,6 @@
 #include <jde/app/shared/StringCache.h>
 #include "../../Framework/source/DateTime.h"
 #include <jde/access/access.h>
-#include <jde/web/server/ServerSubscriptions.h>
 #include "LogData.h"
 #include "WebServer.h"
 #include "ServerSocketSession.h"
@@ -52,11 +51,11 @@ namespace Jde::App{
 			WriteException( move(e), requestId );
 		}
 	}
-	α ServerSocketSession::GraphQL( string&& query, RequestId requestId )ι->QL::QLAwait<jvalue>::Task{
+	α ServerSocketSession::GraphQL( string&& query, bool returnRaw, RequestId requestId )ι->QL::QLAwait<jvalue>::Task{
 		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("GraphQL: {}", query), requestId );
-			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(Jde::UserPK{0}) );
+			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(Jde::UserPK{0}), false );
 			auto y = serialize( j );
 			LogWrite( Ƒ("GraphQL: {}", y.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(move(y), requestId) );
@@ -160,9 +159,10 @@ namespace Jde::App{
 				auto forward = anonymous ? m.mutable_forward_execution_anonymous() : m.mutable_forward_execution();
 				ForwardExecution( move(*forward), anonymous, requestId );
 				break;}
-			[[likely]]case kQuery:
-				GraphQL( move(*m.mutable_query()), requestId );
-				break;
+			[[likely]]case kQuery:{
+				auto& query = *m.mutable_query();
+				GraphQL( move(*query.mutable_text()), requestId, query.return_raw() );
+				break;}
 			[[likely]]case kLogEntry:
 				++cLog;
 				SaveLogEntry( move(*m.mutable_log_entry()), requestId );

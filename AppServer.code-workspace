@@ -105,6 +105,7 @@
 			"program": "${workspaceFolder:AppServer}/../../bin/asan/Jde.App.Server",
 			"args": ["-c"],
 			"stopAtEntry": false,
+			"additionalSOLibSearchPath": "/lib/x86_64-linux-gnu",
 			"cwd": "${workspaceFolder:AppServer}/../../bin/asan",
 			"environment": [
 				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" },

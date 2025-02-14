@@ -1,6 +1,5 @@
 local common = import 'common-meta.libsonnet';
 
-//local crc = common.types.uint+{ i:0 };
 local crc64 = common.types.ulong+{ i:0 };
 {
 	local tables = self.tables,
@@ -11,7 +10,8 @@ local crc64 = common.types.ulong+{ i:0 };
 				name: common.valuesColumns.name,
 				attributes: common.targetColumns.attributes
 			},
-			customInsertProc: true
+			customInsertProc: true,
+			ops: ["None"]
 		},
 		appInstances:{
 			columns: {
@@ -22,51 +22,58 @@ local crc64 = common.types.ulong+{ i:0 };
 				pid: common.types.ulong+{ i:4 },
 				startTime: common.types.dateTime+{ i:5 }
 			},
-			customInsertProc: true
+			customInsertProc: true,
+			ops: ["None"]
 		},
 		hosts:{
 			columns: {
 				hostId: common.smallSequenced,
 				name: common.valuesColumns.name
 			},
-			naturalKeys:[["name"]]
+			naturalKeys:[["name"]],
+			ops: ["None"]
 		},
 		sourceFiles:{
 			columns: {
 				sourceFileId: crc64+{sk:0},
 				path: common.valuesColumns.name
 			},
-			naturalKeys:[["path"]]
+			naturalKeys:[["path"]],
+			ops: ["None"]
 		},
 		sourceFunctions:{
 			columns: {
 				sourceFunctionId: crc64+{sk:0},
 				name: common.valuesColumns.name
 			},
-			naturalKeys:[["name"]]
+			naturalKeys:[["name"]],
+			ops: ["None"]
 		},
 		messages:{
 			columns: {
 				messageId: crc64+{sk:0},
 				text: common.types.varchar+{ length: 4096, i:1 }
 			},
-			naturalKeys::[["text"]]
+			naturalKeys::[["text"]],
+			ops: ["None"]
 		},
 		args:{
 			columns: {
 				argId: crc64+{sk:0},
 				text: common.types.varchar+{ length: 4096, i:1 },
 			},
-			naturalKeys::[["text"]]
+			naturalKeys::[["text"]],
+			ops: ["None"]
 		},
 		entryArgMap:{
 			columns: {
 				entryId: tables.entries.columns.entryId+{ pkTable: "entries", sk:0, i:0 },
 				arg_index: common.types.uint8+{ sk:1, i:2, },
-				argId: tables.args.columns.argId+{ pkTable: "args", sk:1, i:2 }
+				argId: tables.args.columns.argId+{ pkTable: "args", i:3 }
 			},
 			map: {parentId:"entry_id", childId:"arg_id"},
-			naturalKeys::[["entry_id", "arg_index"]]
+			naturalKeys:: [["entry_id", "arg_index"]],
+			ops: ["None"]
 		},
 		entries:{
 			columns: {
@@ -81,24 +88,22 @@ local crc64 = common.types.ulong+{ i:0 };
 				time: common.types.dateTime+{ i:8 },
 				threadId: common.types.ulong+{ i:9 },
 				userId: common.types.uint+{ i:10 }
-			}
+			},
+			ops: ["None"]
 		},
 		tags:{
 			columns: {
 				tagId: common.types.long+{ sk:0, i:0 },
 				name: common.valuesColumns.name
 			},
-			flagsData: ["None", "Access", "App", "Cache", "Client", "Exception", "ExternalLogger", "Http", "IO",
-			"Locks", "Parsing", "Pedantic", "QL", "Read", "Scheduler", "Server", "Sessions",
-			"Settings", "Shutdown", "Socket", "Sql", "Startup", "Subscription", "Test", "Threads",
-			"Write"]
+			ops: ["None"]
 		},
 		severities:{
 			columns: {
 				severityId: common.types.uint8+{ sk:0, i:0 },
 				name: common.types.varchar+{ length: 11, i:1 }
 			},
-			data: ["Trace", "Debug", "Information", "Warning", "Error", "Critical"]
+			ops: ["None"]
 		}
 	}
 }

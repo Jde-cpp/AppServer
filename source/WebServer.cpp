@@ -25,7 +25,7 @@ namespace Jde::App{
 	atomic<RequestId> _requestId{0};
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
-		α GraphQL( string&& q, UserPK userPK, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait<jvalue>>( move(q), userPK, sl ); }
+		α GraphQL( string&& q, UserPK userPK, bool returnRaw, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait<jvalue>>( move(q), userPK, returnRaw, sl ); }
 		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<Web::FromServer::SessionInfo>> override{ return {}; }
 	};
 

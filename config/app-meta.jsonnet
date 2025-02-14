@@ -9,7 +9,8 @@ local common = import 'common-meta.libsonnet';
 				name: common.valuesColumns.name,
 				attributes: common.targetColumns.attributes
 			},
-			customInsertProc: true
+			customInsertProc: true,
+			ops: ["None"]
 		},
 		appInstances:{
 			columns: {
@@ -20,12 +21,14 @@ local common = import 'common-meta.libsonnet';
 				pid: common.types.ulong+{ i:4 },
 				startTime: common.types.dateTime+{ i:5 }
 			},
-			customInsertProc: true
+			customInsertProc: true,
+			ops: ["None"]
 		},
 		hosts:{
 			hostId: common.smallSequenced,
 			name: common.valuesColumns.name,
-			naturalKeys:[["name"]]
+			naturalKeys:[["name"]],
+			ops: ["None"]
 		},
 	}
 }

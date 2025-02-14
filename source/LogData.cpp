@@ -27,8 +27,8 @@ namespace Server{
 			_logSchema = DB::GetAppSchema( "log", authorize );
 			QL::Configure( {accessSchema, _logSchema} );
 			if( auto sync = Settings::FindBool("/dbServers/sync").value_or(true); sync ){
-				DB::SyncSchema( *accessSchema );
-				DB::SyncSchema( *_logSchema );
+				DB::SyncSchema( *accessSchema, QL::Local() );
+				DB::SyncSchema( *_logSchema, QL::Local() );
 			}
 			auto await = Access::Configure( accessSchema, {accessSchema, _logSchema}, QL::Local(), UserPK{UserPK::System} );
 			co_await await;
