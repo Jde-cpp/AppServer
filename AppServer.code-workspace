@@ -1,4 +1,13 @@
 {
+	"settings": {
+		"window.title": "App",
+		"name": "AppServer",
+		"sourceDir": "${env:JDE_DIR}/AppServer",
+		"buildRoot": "/mnt/ram/jde",
+		"buildTarget": "Debug",
+		"buildDir": "${config:buildRoot}/${config:name}/${config:buildTarget}",
+		"sourceBash": "source ${env:JDE_DIR}/Public/build/buildFunctions.sh",
+	},
 	"folders": [
 		{
 			"path": "./source",
@@ -29,7 +38,7 @@
 			"name": "Framework"
 		},
 		{
-			"path": "../Public/libs/db/src/drivers/mysql",
+			"path": "../Public/libs/db/drivers/mysql",
 			"name": "MySql"
 		},
 		{
@@ -59,26 +68,21 @@
 			{
 				"label": "build",
 				"type": "shell",
-				"command": "tput reset;./build.sh",
-				"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder:AppServer}"],
-					"pattern": {
-						"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-						"file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
-					}
-				},
+				"command": "cd ${config:buildDir}; tput reset;make -j;",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": true }
 			},
 			{
 				"label": "compile",
 				"type": "shell",
-				"command": "tput reset;fileWorkspaceFolder=${fileWorkspaceFolder};absoluteFile=`realpath ${workspaceFolder}/${relativeFile}`;relativeFile=${absoluteFile#\"$fileWorkspaceFolder/\"}; cd ${fileWorkspaceFolder}/.obj/asan;make $relativeFile.o;",
+				"command": "tput reset;${config:sourceBash};compile ${workspaceFolder} ${fileWorkspaceFolder} ${relativeFile} ${config:buildDir};",
 				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": false }
 			},
 			{
 				"label": "buildProject",
 				"type": "shell",
-				"command": "tput reset;fileWorkspaceFolder=${fileWorkspaceFolder}; cd ${fileWorkspaceFolder}/.obj/asan;make -j;",
+				"command": "tput reset; source $JDE_DIR/Public/build/buildFunctions.sh;buildProject ${fileWorkspaceFolder} ${config:buildDir};",
 				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": false }
 			},
@@ -93,25 +97,32 @@
 					}
 				},
 				"group": { "kind": "build", "isDefault": false }
+			},
+			{
+				"label": "cmake",
+				"type": "shell",
+				"command": "cd ${config:buildRoot}; tput reset; rm CMakeCache.txt; cmake $JDE_DIR/AppServer --preset linux-jde-debug",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": { "kind": "build", "isDefault": false }
 			}
 		]
 	},
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [{
-			"name": "Asan",
+			"name": "Debug",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder:AppServer}/../../bin/asan/Jde.App.Server",
-			"args": ["-c"],
+			"program": "${config:buildDir}/Jde.App.Server",
+			"args": ["-c", "-settings=$JDE_DIR/AppServer/config/App.Server.jsonnet"],
 			"stopAtEntry": false,
 			"additionalSOLibSearchPath": "/lib/x86_64-linux-gnu",
-			"cwd": "${workspaceFolder:AppServer}/../../bin/asan",
+			"cwd": "${config:buildDir}",
 			"environment": [
 				{ "name": "JDE_DB_DRIVER", "value": "libJde.MySql.so" },
 				{ "name": "JDE_LOG_META", "value": "${workspaceFolder:AppServer}/../meta.json" },
 				{ "name": "Jde_App_Connection", "value": "${env:Jde_App_Connection}" },
-				{ "name":"LD_LIBRARY_PATH","value":"/home/duffyj/code/jde/bin/asan" }
+				{ "name": "JDE_MYSQL_CREDS", "value": "root:abcdef" }
 			],
 			"externalConsole": false,
 			"MIMode": "gdb",
@@ -135,8 +146,7 @@
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
 			"sourceFileMap": { "/build/glibc-negH51/glibc-2.27":"$(REPO_DIR)/glibc-2.27" },
 			"preLaunchTask": "release"
-		}
-		,
+		},
 		{
 			"name": "RelWithDebInfo",
 			"type": "cppdbg",
@@ -178,129 +188,5 @@
 			}
 		}],
 		"compounds": []
-	},
-	"settings": {
-		"window.title": "App",
-		"C_Cpp.default.includePath": [
-			"${env:JDE_DIR}/Public/include",
-			"${env:REPO_DIR}/install/g++-13/asan/boost/include/",
-			"${env:REPO_DIR}/install/g++-13/asan/fmt/include/",
-			"${env:REPO_DIR}/install/g++-13/asan/GTest/include/",
-			"${env:REPO_DIR}/install/g++-13/asan/absl/include",
-			"${env:REPO_DIR}/install/g++-13/asan/protobuf/include/",
-			"${env:REPO_DIR}/install/g++-13/asan/spdlog/include/",
-			"${env:REPO_DIR}/json/include"
-		],
-		"C_Cpp.default.forcedInclude": ["${workspaceFolder}/pc.h", "${env:JDE_DIR}/Public/include/jde/framework.h"],
-		"C_Cpp.default.compilerPath": "/usr/bin/g++-13",
-		"C_Cpp.default.cStandard": "c17",
-		"C_Cpp.default.cppStandard": "c++23",
-		"C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
-		"C_Cpp.default.defines": [],
-		"files.associations": {
-			"thread": "cpp",
-			"__locale": "cpp",
-			"locale": "cpp",
-			"__bit_reference": "cpp",
-			"future": "cpp",
-			"ios": "cpp",
-			"ranges": "cpp",
-			"chrono": "cpp",
-			"array": "cpp",
-			"atomic": "cpp",
-			"bit": "cpp",
-			"*.tcc": "cpp",
-			"cmath": "cpp",
-			"compare": "cpp",
-			"concepts": "cpp",
-			"condition_variable": "cpp",
-			"cstddef": "cpp",
-			"cstdint": "cpp",
-			"cstdlib": "cpp",
-			"cstring": "cpp",
-			"ctime": "cpp",
-			"list": "cpp",
-			"unordered_map": "cpp",
-			"vector": "cpp",
-			"exception": "cpp",
-			"algorithm": "cpp",
-			"functional": "cpp",
-			"iterator": "cpp",
-			"memory": "cpp",
-			"memory_resource": "cpp",
-			"random": "cpp",
-			"ratio": "cpp",
-			"string_view": "cpp",
-			"tuple": "cpp",
-			"type_traits": "cpp",
-			"utility": "cpp",
-			"initializer_list": "cpp",
-			"iosfwd": "cpp",
-			"limits": "cpp",
-			"mutex": "cpp",
-			"new": "cpp",
-			"shared_mutex": "cpp",
-			"stdexcept": "cpp",
-			"typeinfo": "cpp",
-			"variant": "cpp",
-			"cctype": "cpp",
-			"charconv": "cpp",
-			"clocale": "cpp",
-			"cstdio": "cpp",
-			"cwchar": "cpp",
-			"cwctype": "cpp",
-			"deque": "cpp",
-			"format": "cpp",
-			"iomanip": "cpp",
-			"istream": "cpp",
-			"numbers": "cpp",
-			"optional": "cpp",
-			"ostream": "cpp",
-			"semaphore": "cpp",
-			"span": "cpp",
-			"sstream": "cpp",
-			"stop_token": "cpp",
-			"streambuf": "cpp",
-			"string": "cpp",
-			"system_error": "cpp",
-			"__config": "cpp",
-			"__debug": "cpp",
-			"__threading_support": "cpp",
-			"__verbose_abort": "cpp",
-			"queue": "cpp",
-			"regex": "cpp",
-			"*.ipp": "cpp",
-			"cstdarg": "cpp",
-			"codecvt": "cpp",
-			"coroutine": "cpp",
-			"map": "cpp",
-			"set": "cpp",
-			"source_location": "cpp",
-			"iostream": "cpp",
-			"__errc": "cpp",
-			"bitset": "cpp",
-			"rope": "cpp",
-			"slist": "cpp",
-			"valarray": "cpp",
-			"__hash_table": "cpp",
-			"__split_buffer": "cpp",
-			"__tree": "cpp",
-			"stack": "cpp",
-			"unordered_set": "cpp",
-			"__node_handle": "cpp",
-			"__memory": "cpp",
-			"numeric": "cpp",
-			"strstream": "cpp",
-			"*.inc": "cpp",
-			"any": "cpp",
-			"stacktrace": "cpp",
-			"forward_list": "cpp",
-			"scoped_allocator": "cpp",
-			"typeindex": "cpp",
-			"fstream": "cpp",
-			"expected": "cpp",
-			"__mutex_base": "cpp"
-		},
-		"C_Cpp.loggingLevelx": "Debug"
 	}
 }

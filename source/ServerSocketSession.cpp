@@ -54,8 +54,8 @@ namespace Jde::App{
 	α ServerSocketSession::GraphQL( string&& query, bool returnRaw, RequestId requestId )ι->QL::QLAwait<jvalue>::Task{
 		let _ = shared_from_this();
 		try{
-			LogRead( Ƒ("GraphQL: {}", query), requestId );
-			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(Jde::UserPK{0}), false );
+			LogRead( Ƒ("GraphQL{}: {}", returnRaw ? "*" : "", query), requestId );
+			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(Jde::UserPK{0}), returnRaw );
 			auto y = serialize( j );
 			LogWrite( Ƒ("GraphQL: {}", y.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(move(y), requestId) );
@@ -127,10 +127,9 @@ namespace Jde::App{
 			[[unlikely]]case kInstance:{
 				_instance = move( *m.mutable_instance() );
 				let [appPK,instancePK] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
-				Information{ ELogTags::SocketServerRead, "[{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
-
-				_instancePK = instancePK; _appPK = appPK;
-				//WriteStrings(); Before this was sending down file/functions/messages/etc for every application.
+				Information{ ELogTags::SocketServerRead, "[{:x}.{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), requestId, _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
+				_instancePK = instancePK; _appPK = appPK;//TODO return something
+				Write( FromServer::ConnectionInfo( appPK, instancePK, requestId ) );
 				break;}
 			case kAddSession:{
 				AddSession( move(*m.mutable_add_session()), requestId, SRCE_CUR );
@@ -161,7 +160,7 @@ namespace Jde::App{
 				break;}
 			[[likely]]case kQuery:{
 				auto& query = *m.mutable_query();
-				GraphQL( move(*query.mutable_text()), requestId, query.return_raw() );
+				GraphQL( move(*query.mutable_text()), query.return_raw(), requestId );
 				break;}
 			[[likely]]case kLogEntry:
 				++cLog;

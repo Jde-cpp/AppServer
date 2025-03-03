@@ -24,11 +24,11 @@
 		}
 	},
 	dbServers: {
-		dataPath: "$(JDE_DIR)/bin/config",
-		scriptPath: "$(JDE_DIR)/bin/config/sql/mysql/appServer",
-		sync: false,
+		dataPaths: ["$(JDE_DIR)/AppServer/config", "$(JDE_DIR)/Public/libs/access/config"],
+		scriptPaths: ["$(JDE_DIR)/AppServer/sql/mysql", "$(JDE_DIR)/Public/libs/access/config/sql/mysql"],
+		sync:: false,
 		localhost:{
-			driver: "$(JDE_DIR)/bin/asan/libJde.MySql.so",
+			driver: "db/drivers/mysql/libJde.DB.MySql.so",
 			connectionString: "mysqlx://$(JDE_MYSQL_CREDS)@127.0.0.1:33060/jde?ssl-mode=disabled",
 			catalogs: {
 				jde: {
