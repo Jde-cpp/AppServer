@@ -7,7 +7,7 @@ link_directories( ${JSONNET_DIR}/lib )
 
 add_subdirectory( $ENV{JDE_DIR}/Framework/source framework )
 add_subdirectory( $ENV{JDE_DIR}/Public/libs/crypto/src crypto )
-add_subdirectory( $ENV{JDE_DIR}/Public/libs/db/src db )
+add_subdirectory( $ENV{JDE_DIR}/Public/libs/db/src db/framework )
 if( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
 	add_subdirectory( $ENV{JDE_DIR}/Public/libs/db/drivers/mysql db/drivers/mysql )
 endif()

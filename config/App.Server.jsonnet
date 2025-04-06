@@ -37,12 +37,13 @@
 							access:{
 								meta: "$(JDE_DIR)/Public/libs/access/config/access-meta.jsonnet",
 								ql: "$(JDE_DIR)/Public/libs/access/config/access-ql.jsonnet",
-								prefix: "access_"  //test with null prefix, debug with prefix
+								prefix: "access_",  //test with null prefix, debug with prefix
+								dataPrefixes: ["access", "test"]
 							},
 							log:{
 								meta: "$(JDE_DIR)/AppServer/config/log-meta.jsonnet",
 								prefix: "log_"  //test with null prefix, debug with prefix
-							}
+							},
 						}
 					}
 				}
