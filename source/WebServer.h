@@ -13,8 +13,6 @@ namespace Jde::App{
 	namespace Server{
 		α GetAppPK()ι->AppPK;
 		α SetAppPK( AppPK x )ι->void;
-		α InstancePK()ι->AppInstancePK;
-		α SetInstancePK( AppInstancePK x )ι->void;
 
 		α StartWebServer()ε->void;
 		α StopWebServer()ι->void;

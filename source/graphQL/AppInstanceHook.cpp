@@ -29,7 +29,7 @@ namespace Jde::App{
 		{}
 		α Suspend()ι->void override{
 			let id = _mutation.Id<AppInstancePK>();
-			auto pid = id==Server::InstancePK() ? OSApp::ProcessId() : 0;
+			auto pid = id==IApplicationServer::InstancePK() ? OSApp::ProcessId() : 0;
 			if( auto p = pid ? sp<ServerSocketSession>{} : Server::FindInstance( id ); p )
 				pid = p->Instance().pid();
 			if( pid ){

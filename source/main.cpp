@@ -12,6 +12,7 @@ DISABLE_WARNINGS
 ENABLE_WARNINGS
 #include <jde/app/shared/StringCache.h>
 #include <jde/web/server/SessionGraphQL.h>
+#include <jde/web/server/SettingQL.h>
 #include "graphQL/AppInstanceHook.h"
 #include "ExternalLogger.h"
 #include "LogData.h"
@@ -49,11 +50,12 @@ namespace Jde{
 			co_await Server::ConfigureDSAwait{};
 			let [appId, appInstanceId] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
 			Server::SetAppPK( appId );
-			Server::SetInstancePK( appInstanceId );
+			IApplicationServer::SetInstancePK( appInstanceId );
 
 			Data::LoadStrings();
 			Server::StartWebServer();
 			QL::Hook::Add( mu<AppInstanceHook>() );
+			QL::Hook::Add( mu<Web::Server::SettingQL>() );
 			QL::Hook::Add( mu<Web::Server::SessionGraphQL>() );
 			Logging::External::Add( mu<ExternalLogger>() );
 

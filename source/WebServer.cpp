@@ -21,7 +21,6 @@ namespace Jde::App{
 	concurrent_flat_set<AppInstancePK> _statusSubscriptions;
 
 	AppPK _appId;
-	AppInstancePK _instanceId;
 	atomic<RequestId> _requestId{0};
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
@@ -31,8 +30,6 @@ namespace Jde::App{
 
 	α Server::GetAppPK()ι->AppPK{ return _appId; }
 	α Server::SetAppPK( AppPK x )ι->void{ _appId=x; }
-	α Server::InstancePK()ι->AppInstancePK{ return _instanceId;}
-	α Server::SetInstancePK( AppInstancePK x )ι->void{ _instanceId=x; }
 	α UpdateStatuses()ι->Task;
 	α Server::StartWebServer()ε->void{
 		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>() );
@@ -101,7 +98,7 @@ namespace Jde::App{
 	}
 	α Server::BroadcastAppStatus()ι->void{
 		FromClient::Status( {} );
-		BroadcastStatus( GetAppPK(), InstancePK(), IApplication::HostName(), FromClient::ToStatus({}) );
+		BroadcastStatus( GetAppPK(), IApplicationServer::InstancePK(), IApplication::HostName(), FromClient::ToStatus({}) );
 	}
 	α Server::FindApplications( str name )ι->vector<Proto::FromClient::Instance>{
 		vector<Proto::FromClient::Instance> y;

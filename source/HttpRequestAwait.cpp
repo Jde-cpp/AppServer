@@ -3,6 +3,7 @@
 #include <jde/access/access.h>
 #include "awaits/CertificateLoginAwait.h"
 #include "GoogleLogin.h"
+#include "../../Google/source/TokenInfo.h"
 #include "WebServer.h"
 #include "types/rest/json.h"
 #define let const auto
@@ -28,14 +29,31 @@ namespace Jde::App{
 		}
 	}
 
-	α GoogleLogin( HttpRequest&& req, HttpRequestAwait::Handle h )ι->GoogleLoginAwait::Task{
+	Ω googleLogin( HttpRequest req, HttpRequestAwait::Handle h )ι->GoogleLoginAwait::Task{
 		try{
 			req.LogRead();
-			let info = co_await GoogleLoginAwait{ Json::AsString(req.Body(), "value") };
-			[&]()->Access::AuthenticateAwait::Task {
-				req.SessionInfo->UserPK = co_await Access::Authenticate( info.Email, underlying(Access::EProviderType::Google) );
-				h.promise().SetValue( {ValueJson(Ƒ("{:x}", req.SessionInfo->SessionId)), move(req)} );
-			}();
+			let token = co_await GoogleLoginAwait{ Json::AsString(req.Body(), "value") };
+			[]( str email, HttpRequest req, HttpRequestAwait::Handle h )->Access::AuthenticateAwait::Task {
+				try{
+					req.SessionInfo->UserPK = co_await Access::Authenticate( email, underlying(Access::EProviderType::Google) );
+					h.promise().SetValue( {ValueJson(Ƒ("{:x}", req.SessionInfo->SessionId)), move(req)} );
+				}
+				catch( exception& e ){
+					h.promise().SetExp( move(e) );
+				}
+				h.resume();
+			}( token.Email, move(req), h );
+		}
+		catch( exception& e ){
+			h.promise().SetExp( move(e) );
+			h.resume();
+		}
+	}
+	α Logout( HttpRequest&& req, HttpRequestAwait::Handle h )ι->void{
+		try{
+			req.LogRead();
+			jobject j{ {"removed", Sessions::Remove(req.SessionInfo->SessionId)} };
+			h.promise().SetValue( {move(j), move(req)} );
 		}
 		catch( IException& e ){
 			h.promise().SetExp( move(e) );
@@ -63,13 +81,18 @@ namespace Jde::App{
 	}
 	α HttpRequestAwait::Suspend()ι->void{
 		up<IException> pException;
+		bool processed{ _request.Method() == http::verb::post };
 		if( _request.Method() == http::verb::post ){
-			if( _request.Target()=="/GoogleLogin" )
-				GoogleLogin( move(_request), _h );
-			else if( _request.Target()=="/CertificateLogin" )
+			if( _request.Target()=="/loginGoogle" )
+				googleLogin( move(_request), _h );
+			else if( _request.Target()=="/loginCertificate" )
 				CertificateLogin( move(_request), _h );
+			else if( _request.Target()=="/logout" )
+				Logout( move(_request), _h );
+			else
+				processed = false;
 		}
-		if( _request.Target().size() ){
+		if( !processed ){
 			_request.LogRead();
 			RestException<http::status::not_found> e{ SRCE_CUR, move(_request), "Unknown target '{}'", _request.Target() };
 			ResumeExp( RestException<http::status::not_found>(move(e)) );
