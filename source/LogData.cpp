@@ -16,10 +16,11 @@ namespace Jde::App{
 	static sp<LogTag> _logTag = Logging::Tag( "app" );
 	sp<DB::AppSchema> _logSchema;
 	constexpr ELogTags _tags{ ELogTags::App };
+	Ω ds()ι->DB::IDataSource&{ return *_logSchema->DS(); }
+	Ω instanceTableName()ε->string{ return _logSchema->GetView("app_instances").DBName; }
+
 namespace Server{
-	α ConfigureDSAwait::Suspend()ι->void{
-		Configure();
-	}
+	α ConfigureDSAwait::Suspend()ι->void{ Configure(); }
 	α ConfigureDSAwait::Configure()ι->Access::ConfigureAwait::Task{
 		sp<Access::IAcl> authorize = Access::LocalAcl();
 		try{
@@ -34,12 +35,22 @@ namespace Server{
 			co_await await;
 			_pDbQueue = ms<DB::DBQueue>( _logSchema->DS() );
 			Process::AddShutdown( _pDbQueue );
-			Resume();
+			EndAppInstances();
 		}
 		catch( IException& e ){
 			ResumeExp( move(e) );
 		}
 	}
+	α ConfigureDSAwait::EndAppInstances()ι->DB::ExecuteAwait::Task{
+		try{
+			co_await ds().ExecuteCo( {Ƒ("update {} set end_time=now() where end_time is null", instanceTableName())} );
+			Resume();
+		}
+		catch( exception& e ){
+			ResumeExp( move(e) );
+		}
+	}
+
 }
 	#define _pQueue if( auto p = _pDbQueue; p )p
 	α Server::SaveString( Proto::FromClient::EFields field, StringPK id, string value, SL sl )ι->void{
@@ -70,9 +81,16 @@ namespace Jde{
 			applicationId = row.GetUInt32(0);
 			applicationInstanceId = row.GetUInt32(1);
 		};
-		_logSchema->DS()->ExecuteProc( "log_app_instance_insert(?,?,?)", {DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn );
+		ds().ExecuteProc( "log_app_instance_insert(?,?,?)", {DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn );
 
 		return make_tuple( applicationId, applicationInstanceId );
+	}
+	α App::EndInstance( AppInstancePK instanceId, SL sl )ι->DB::ExecuteAwait::Task{
+		try{
+			co_await ds().ExecuteCo( {Ƒ("update {} set end_time=now() where id=?", instanceTableName()), {DB::Value{instanceId}}}, sl );
+		}
+		catch( exception& )
+		{}
 	}
 
 /*
@@ -136,7 +154,7 @@ namespace Jde{
 			constexpr uint limit = 1000;
 			statement->Limit( limit );
 			auto where = statement->Where;
-			auto rows = _logSchema->DS()->Select( statement->Move() ); //TODO awaitable
+			auto rows = ds().Select( statement->Move() ); //TODO awaitable
 			for( auto& row : rows ){
 				auto t=FromServer::ToTrace( *row, table.Columns );
 				auto id = t.id();
@@ -153,7 +171,7 @@ namespace Jde{
 					where.Add( "logs.id<?" );
 					where.Params().push_back( {mapTraces.rbegin()->first} );
 				}
-				_logSchema->DS()->Select( Ƒ("{}\n{}\norder by log_id, variable_index", variableSql, where.Move()), addVariables, where.Params() );
+				ds().Select( Ƒ("{}\n{}\norder by log_id, variable_index", variableSql, where.Move()), addVariables, where.Params() );
 			}
 			Proto::FromServer::Traces traces;
 			for( auto& [id,trace] : mapTraces )
@@ -164,7 +182,7 @@ namespace Jde{
 		Ω loadStrings( str tableName, SRCE )ε->concurrent_flat_map<uint,string>{
 			let& table = _logSchema->GetTablePtr( tableName );
 			DB::Statement statement{ table->Columns, DB::FromClause{DB::Join{table->GetPK(), _logSchema->GetTablePtr("entries")->GetPK(), true}}, {} };
-			let rows = _logSchema->DS()->Select( statement.Move(), false, sl );
+			let rows = ds().Select( statement.Move(), false, sl );
 			concurrent_flat_map<uint32,string> map;
 			for( auto& row : rows )
 				map.emplace( row->GetUInt(0), row->MoveString(1) );

@@ -24,6 +24,7 @@ namespace Jde::App{
 		α SharedFromThis()ι->sp<ServerSocketSession>{ return std::dynamic_pointer_cast<ServerSocketSession>(shared_from_this()); }
 		//α WriteException( IException&& e, Request )ι->void override{ WriteException( move(e), 0 ); }
 		α WriteException( exception&& e, RequestId requestId )ι->void override;
+		α WriteException(std::string&&, Jde::RequestId)ι->void override;
 		α WriteSubscriptionAck( vector<QL::SubscriptionId>&& subscriptionIds, RequestId requestId )ι->void override;
 		α WriteSubscription( const jvalue& j, RequestId requestId )ι->void override;
 		α WriteComplete( RequestId requestId )ι->void override;

@@ -104,6 +104,17 @@ local crc64 = common.types.ulong+{ i:0 };
 				name: common.types.varchar+{ length: 11, i:1 }
 			},
 			ops: ["None"]
+		},
+		sessions:{
+			columns: {
+				id: common.types.varchar+{ length: 255, sk:0, i:0 },
+				userId: common.types.uint+{ i:1 },
+				attributes: common.targetColumns.attributes+{ i:2 },
+				created: common.targetColumns.created+{ i:3 },
+				updated: common.types.dateTime+{ i:4 },
+				deleted: common.types.dateTime+{ i:5 }
+			},
+			ops: ["None"]
 		}
 	}
 }

@@ -67,9 +67,9 @@ namespace Jde::App{
 				_request.LogRead();
 				_readyResult = mu<jobject>( ValueJson(Settings::FindString("GoogleAuthClientId").value_or("GoogleAuthClientId Not Configured.")) );
 			}
-			else if( _request.Target()=="/IotWebSocket" ){
+			else if( _request.Target()=="/opcGateways" ){
 				_request.LogRead();
-				let apps = Server::FindApplications( "Jde.IotWebSocket" );
+				let apps = Server::FindApplications( "Jde.OpcGateway" );
 				jarray japps;
 				for( auto& app : apps )
 					japps.push_back( ToJson(app) );

@@ -6,16 +6,13 @@
 #include <jde/ql/types/FilterQL.h>
 #include "../../Framework/source/coroutine/Alarm.h"
 #include <jde/ql/ql.h>
-//#include "../../Framework/source/db/GraphQuery.h"
 #include "LogData.h"
 #include "ServerSocketSession.h"
-//#include "await/GraphQLAwait.h"
-//#include "usings.h"
 
 #define let const auto
 namespace Jde::App{
 	using QL::FilterQL;
-	concurrent_flat_map<AppInstancePK,sp<ServerSocketSession>> _sessions;
+	concurrent_flat_map<AppInstancePK,sp<ServerSocketSession>> _sessions; //Consider using main class+ql subscriptions
 	concurrent_flat_map<AppInstancePK,FilterQL> _logSubscriptions;
 	concurrent_flat_map<AppInstancePK,Proto::FromServer::Status> _statuses;
 	concurrent_flat_set<AppInstancePK> _statusSubscriptions;
@@ -24,6 +21,7 @@ namespace Jde::App{
 	atomic<RequestId> _requestId{0};
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
+		α IsLocal()ι->bool override{ return true; }
 		α GraphQL( string&& q, UserPK userPK, bool returnRaw, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait<jvalue>>( move(q), userPK, returnRaw, sl ); }
 		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<Web::FromServer::SessionInfo>> override{ return {}; }
 	};
@@ -176,9 +174,9 @@ namespace Jde::App{
 		return _statusSubscriptions.erase( instancePK );
 	}
 
-	α RequestHandler::RunWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->void{
+	α RequestHandler::GetWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->sp<IWebsocketSession>{
 		auto session = ms<ServerSocketSession>( move(stream), move(buffer), move(req), move(userEndpoint), connectionIndex );
 		_sessions.emplace( session->Id(), session );
-		session->Run();
+		return session;
 	}
 }

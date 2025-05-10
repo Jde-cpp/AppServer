@@ -128,7 +128,7 @@ namespace Jde::App{
 				_instance = move( *m.mutable_instance() );
 				let [appPK,instancePK] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
 				Information{ ELogTags::SocketServerRead, "[{:x}.{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), requestId, _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
-				_instancePK = instancePK; _appPK = appPK;//TODO return something
+				_instancePK = instancePK; _appPK = appPK;
 				Write( FromServer::ConnectionInfo( appPK, instancePK, requestId ) );
 				break;}
 			case kAddSession:{
@@ -249,6 +249,10 @@ namespace Jde::App{
 		Write( FromServer::Complete(requestId) );
 	}
 	α ServerSocketSession::WriteException( exception&& e, RequestId requestId )ι->void{
+		LogWriteException( e, requestId );
+		Write( FromServer::Exception(move(e), requestId) );
+	}
+	α ServerSocketSession::WriteException(std::string&& e, Jde::RequestId requestId)ι->void{
 		LogWriteException( e, requestId );
 		Write( FromServer::Exception(move(e), requestId) );
 	}
