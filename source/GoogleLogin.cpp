@@ -23,7 +23,7 @@ namespace Jde::App{
 					"www.googleapis.com",
 					string{uri.substr(sizeof("https://www.googleapis.com")-1)},
 					443,
-					{ContentType:"", Verb:http::verb::get}} ).Json() );
+					{.ContentType="", .Verb=http::verb::get}} ).Json() );
 			}
 			let& kid = _jwt.Kid;
 			THROW_IF( kid.empty(), "Could not find kid in header {}", Str::Decode64<string>(_jwt.HeaderBodyEncoded) );

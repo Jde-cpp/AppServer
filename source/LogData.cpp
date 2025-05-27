@@ -13,7 +13,6 @@
 
 namespace Jde::App{
 	sp<DB::DBQueue> _pDbQueue;
-	static sp<LogTag> _logTag = Logging::Tag( "app" );
 	sp<DB::AppSchema> _logSchema;
 	constexpr ELogTags _tags{ ELogTags::App };
 	Ω ds()ι->DB::IDataSource&{ return *_logSchema->DS(); }
@@ -43,7 +42,7 @@ namespace Server{
 	}
 	α ConfigureDSAwait::EndAppInstances()ι->DB::ExecuteAwait::Task{
 		try{
-			co_await ds().ExecuteCo( {Ƒ("update {} set end_time=now() where end_time is null", instanceTableName())} );
+			co_await ds().ExecuteCo( {Ƒ("update {} set end_time={} where end_time is null", instanceTableName(), ds().Syntax().UtcNow())} );
 			Resume();
 		}
 		catch( exception& e ){
@@ -179,7 +178,7 @@ namespace Jde{
 			return traces;
 		}
 
-		Ω loadStrings( str tableName, SRCE )ε->concurrent_flat_map<uint,string>{
+		Ω loadStrings( str tableName, SRCE )ε->concurrent_flat_map<uint32,string>{
 			let& table = _logSchema->GetTablePtr( tableName );
 			DB::Statement statement{ table->Columns, DB::FromClause{DB::Join{table->GetPK(), _logSchema->GetTablePtr("entries")->GetPK(), true}}, {} };
 			let rows = ds().Select( statement.Move(), false, sl );

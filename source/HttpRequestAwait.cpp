@@ -3,7 +3,7 @@
 #include <jde/access/access.h>
 #include "awaits/CertificateLoginAwait.h"
 #include "GoogleLogin.h"
-#include "../../Google/source/TokenInfo.h"
+#include <jde/access/types/GoogleTokenInfo.h>
 #include "WebServer.h"
 #include "types/rest/json.h"
 #define let const auto

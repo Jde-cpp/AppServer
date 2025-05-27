@@ -6,6 +6,7 @@ include( $ENV{JDE_DIR}/Public/build/dependencies.cmake )
 
 set( targetName Jde.App.ServerLib )
 add_library( ${targetName} )
+compileOptions( ${targetName} )
 file(GLOB sources *.cpp **/*.cpp )
 get_filename_component( main_cpp ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ABSOLUTE )
 list( REMOVE_ITEM sources ${main_cpp} )

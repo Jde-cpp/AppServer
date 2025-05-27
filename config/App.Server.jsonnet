@@ -1,3 +1,4 @@
+local args = import 'args.libsonnet';
 {
 	GoogleAuthClientId:"445012155442-1v8ntaa22konm0boge6hj5mfs15o9lvd.apps.googleusercontent.com",
 	http:{
@@ -28,29 +29,12 @@
 	},
 	dbServers: {
 		dataPaths: ["$(JDE_DIR)/AppServer/config", "$(JDE_DIR)/Public/libs/access/config"],
-		scriptPaths: ["$(JDE_DIR)/AppServer/sql/mysql", "$(JDE_DIR)/Public/libs/access/config/sql/mysql"],
-		sync:: false,
+		scriptPaths: ["$(JDE_DIR)/AppServer/config/sql/"+args.sqlType, "$(JDE_DIR)/Public/libs/access/config/sql/"+args.sqlType],
+		sync: false,
 		localhost:{
-			driver: "$(JDE_BUILD_DIR)/$(JDE_BUILD_TYPE)/libs/db/drivers/mysql/libJde.DB.MySql.so",
-			connectionString: "mysqlx://$(JDE_MYSQL_CREDS)@127.0.0.1:33060/jde?ssl-mode=disabled",
-			catalogs: {
-				jde: {
-					schemas:{
-						jde:{ //for sqlserver, test with schema, debug with default schema ie dbo.
-							access:{
-								meta: "$(JDE_DIR)/Public/libs/access/config/access-meta.jsonnet",
-								ql: "$(JDE_DIR)/Public/libs/access/config/access-ql.jsonnet",
-								prefix: "access_",  //test with null prefix, debug with prefix
-								dataPrefixes: ["access", "test"]
-							},
-							log:{
-								meta: "$(JDE_DIR)/AppServer/config/log-meta.jsonnet",
-								prefix: "log_"  //test with null prefix, debug with prefix
-							},
-						}
-					}
-				}
-			}
+			driver: args.dbDriver,
+			connectionString: args.dbConnectionString,
+			catalogs: args.catalogs
 		}
 	},
 	logging:{
@@ -66,9 +50,9 @@
 			critical:[]
 		},
 		sinks:{
-			console:{}
+			console:{},
+			file:{ path: args.logDir, md: false }
 		},
-		file:{ path: "$(ProgramData)/Jde-cpp/AppServer/logs", md: false },
 		breakLevel: "Warning"
 	},
 	workers:{
