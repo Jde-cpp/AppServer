@@ -3,35 +3,31 @@
 #include <jde/web/server/Sessions.h>
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/proto/App.FromClient.h>
-#include <jde/db/graphQL/FilterQL.h>
+#include <jde/ql/types/FilterQL.h>
 #include "../../Framework/source/coroutine/Alarm.h"
-#include "../../Framework/source/db/GraphQL.h"
-#include "../../Framework/source/db/GraphQuery.h"
+#include <jde/ql/ql.h>
 #include "LogData.h"
 #include "ServerSocketSession.h"
-#include "await/GraphQLAwait.h"
-//#include "usings.h"
 
-#define var const auto
+#define let const auto
 namespace Jde::App{
-	concurrent_flat_map<AppInstancePK,sp<ServerSocketSession>> _sessions;
-	concurrent_flat_map<AppInstancePK,DB::FilterQL> _logSubscriptions;
+	using QL::FilterQL;
+	concurrent_flat_map<AppInstancePK,sp<ServerSocketSession>> _sessions; //Consider using main class+ql subscriptions
+	concurrent_flat_map<AppInstancePK,FilterQL> _logSubscriptions;
 	concurrent_flat_map<AppInstancePK,Proto::FromServer::Status> _statuses;
 	concurrent_flat_set<AppInstancePK> _statusSubscriptions;
 
 	AppPK _appId;
-	AppInstancePK _instanceId;
 	atomic<RequestId> _requestId{0};
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
-		α GraphQL( string&& q, UserPK userPK, SL sl )ι->up<TAwait<json>> override{ return mu<Server::GraphQLAwait>( move(q), userPK, sl ); }
-		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<App::Proto::FromServer::SessionInfo>> override{ return {}; }
+		α IsLocal()ι->bool override{ return true; }
+		α GraphQL( string&& q, UserPK userPK, bool returnRaw, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait<jvalue>>( move(q), userPK, returnRaw, sl ); }
+		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<Web::FromServer::SessionInfo>> override{ return {}; }
 	};
 
 	α Server::GetAppPK()ι->AppPK{ return _appId; }
 	α Server::SetAppPK( AppPK x )ι->void{ _appId=x; }
-	α Server::InstancePK()ι->AppInstancePK{ return _instanceId;}
-	α Server::SetInstancePK( AppInstancePK x )ι->void{ _instanceId=x; }
 	α UpdateStatuses()ι->Task;
 	α Server::StartWebServer()ε->void{
 		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>() );
@@ -50,30 +46,30 @@ namespace Jde::App{
 		}
 	}
 
-	α TestLogPub( const DB::FilterQL& subscriptionFilter, AppPK /*appId*/, AppInstancePK /*instancePK*/, const Logging::ExternalMessage& m )ι->bool{
+	α TestLogPub( const FilterQL& subscriptionFilter, AppPK /*appId*/, AppInstancePK /*instancePK*/, const Logging::ExternalMessage& m )ι->bool{
 		bool passesFilter{ true };
-		var logTags = ELogTags::Socket | ELogTags::Server | ELogTags::Subscription;
-		for( var [jsonColName, columnFilters] : subscriptionFilter.ColumnFilters ){
+		let logTags = ELogTags::Socket | ELogTags::Server | ELogTags::Subscription;
+		for( let [jsonColName, columnFilters] : subscriptionFilter.ColumnFilters ){
 			if( jsonColName=="level" )
-				passesFilter = DB::FilterQL::Test( underlying(m.Level), columnFilters, logTags );
+				passesFilter = FilterQL::Test( underlying(m.Level), columnFilters, logTags );
 			else if( jsonColName=="time" )
-				passesFilter = DB::FilterQL::Test( m.TimePoint, columnFilters, logTags );
+				passesFilter = FilterQL::Test( m.TimePoint, columnFilters, logTags );
 			else if( jsonColName=="message" )
-				passesFilter = DB::FilterQL::Test( m.MessageView, columnFilters, logTags );
+				passesFilter = FilterQL::Test( string{m.MessageView}, columnFilters, logTags );
 			else if( jsonColName=="file" )
-				passesFilter = DB::FilterQL::Test( string{m.File}, columnFilters, logTags );
+				passesFilter = FilterQL::Test( string{m.File}, columnFilters, logTags );
 			else if( jsonColName=="function" )
-				passesFilter = DB::FilterQL::Test( string{m.Function}, columnFilters, logTags );
+				passesFilter = FilterQL::Test( string{m.Function}, columnFilters, logTags );
 			else if( jsonColName=="line" )
-				passesFilter = DB::FilterQL::Test( m.LineNumber, columnFilters, logTags );
+				passesFilter = FilterQL::Test( m.LineNumber, columnFilters, logTags );
 			else if( jsonColName=="user_pk" )
-				passesFilter = DB::FilterQL::Test( m.UserPK, columnFilters, logTags );
+				passesFilter = FilterQL::Test( m.UserPK, columnFilters, logTags );
 			else if( jsonColName=="thread_Id" )
-				passesFilter = DB::FilterQL::Test( m.ThreadId, columnFilters, logTags );
+				passesFilter = FilterQL::Test( m.ThreadId, columnFilters, logTags );
 			// else if( jsonColName=="tags" ) TODO
-			// 	passesFilter = DB::FilterQL::Test( m.Tags(), columnFilters, logTags );
+			// 	passesFilter = FilterQL::Test( m.Tags(), columnFilters, logTags );
 			// else if( jsonColName=="args" ) TODO
-			// 	passesFilter = DB::FilterQL::Test( m.Args, columnFilters, logTags );
+			// 	passesFilter = FilterQL::Test( m.Args, columnFilters, logTags );
 			if( !passesFilter )
 				break;
 		}
@@ -81,7 +77,7 @@ namespace Jde::App{
 	}
 
 	α Server::BroadcastLogEntry( LogPK id, AppPK logAppPK, AppInstancePK logInstancePK, const Logging::ExternalMessage& m, const vector<string>& args )ι->void{
-		_logSubscriptions.cvisit_all( [&]( var& kv ){
+		_logSubscriptions.cvisit_all( [&]( let& kv ){
 			if( TestLogPub(kv.second, id, logAppPK, m) ){
 				_sessions.visit( kv.first, [&](auto&& kv){
 						kv.second->Write( FromServer::TraceBroadcast(id, logAppPK, logInstancePK, m, args) );
@@ -100,7 +96,7 @@ namespace Jde::App{
 	}
 	α Server::BroadcastAppStatus()ι->void{
 		FromClient::Status( {} );
-		BroadcastStatus( GetAppPK(), InstancePK(), IApplication::HostName(), FromClient::ToStatus({}) );
+		BroadcastStatus( GetAppPK(), IApplicationServer::InstancePK(), IApplication::HostName(), FromClient::ToStatus({}) );
 	}
 	α Server::FindApplications( str name )ι->vector<Proto::FromClient::Instance>{
 		vector<Proto::FromClient::Instance> y;
@@ -123,7 +119,7 @@ namespace Jde::App{
 		if( !_sessions.visit_while( [&]( auto&& kv ){
 			auto& session = kv.second;
 			auto appInstPK = session->AppPK()==appPK ? session->InstancePK() : 0;
-			var found = appInstPK && appInstPK==instancePK.value_or( appInstPK );
+			let found = appInstPK && appInstPK==instancePK.value_or( appInstPK );
 			if( found )
 				session->Write( move(msg) );
 			return !found;
@@ -144,8 +140,8 @@ namespace Jde::App{
 	}
 
 	α Server::SubscribeLogs( string&& qlText, sp<ServerSocketSession> session )ε->void{
-		auto ql = DB::ParseQL( qlText );
-		auto tables = ql.index()==0 ? get<0>( move(ql) ) : vector<DB::TableQL>{};
+		auto ql = QL::Parse( qlText );
+		auto tables = ql.IsTableQL() ? move(ql.TableQLs()) : vector<QL::TableQL>{};
 		THROW_IF( tables.size()!=1, "Invalid query, expecting single table" );
 		auto table = move( tables.front() );
 		THROW_IF( table.JsonName!="logs", "Invalid query, expecting logs query" );
@@ -178,9 +174,9 @@ namespace Jde::App{
 		return _statusSubscriptions.erase( instancePK );
 	}
 
-	α RequestHandler::RunWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->void{
+	α RequestHandler::GetWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->sp<IWebsocketSession>{
 		auto session = ms<ServerSocketSession>( move(stream), move(buffer), move(req), move(userEndpoint), connectionIndex );
 		_sessions.emplace( session->Id(), session );
-		session->Run();
+		return session;
 	}
 }

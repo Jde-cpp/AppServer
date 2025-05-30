@@ -1,26 +1,24 @@
-﻿#include <jde/TypeDefs.h>
+﻿#include <jde/framework.h>
 DISABLE_WARNINGS
 #include <span>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
+#include <jde/web/client/exports.h>
+#include <jde/web/client/proto/Web.FromServer.pb.h>
 #include <jde/app/shared/exports.h>
 #include <jde/app/shared/proto/App.FromClient.pb.h>
 #include <jde/app/shared/proto/App.FromServer.pb.h>
 ENABLE_WARNINGS
-#include <jde/log/Log.h>
-#include <jde/Exception.h>
 #include <jde/app/shared/StringCache.h>
 #include <jde/web/server/SessionGraphQL.h>
-#include "../../Framework/source/db/Database.h"
-#include "../../Framework/source/Settings.h"
-#include "../../Framework/source/um/UM.h"
+#include <jde/web/server/SettingQL.h>
 #include "graphQL/AppInstanceHook.h"
 #include "ExternalLogger.h"
 #include "LogData.h"
 #include "WebServer.h"
 
-#define var const auto
+#define let const auto
 
 #ifndef _MSC_VER
 namespace Jde{ α OSApp::CompanyName()ι->string{ return "Jde-Cpp"; } }
@@ -28,7 +26,7 @@ namespace Jde{ α OSApp::ProductName()ι->sv{ return "AppServer"; } }
 #endif
 
 namespace Jde::App{
-	α Startup()ι->void;
+	α Startup()ι->Server::ConfigureDSAwait::Task;
 }
 
 int main( int argc, char** argv ){
@@ -36,7 +34,7 @@ int main( int argc, char** argv ){
 	optional<int> exitCode;
 	try{
 		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
-		IApplication::AddThread( ms<Threading::InterruptibleThread>("Startup", [&](){App::Startup();}) );
+		App::Startup();
 		exitCode = IApplication::Pause();
 	}
 	catch( const IException& e ){
@@ -47,30 +45,25 @@ int main( int argc, char** argv ){
 }
 
 namespace Jde{
-	α App::Startup()ι->void{
+	α App::Startup()ι->Server::ConfigureDSAwait::Task{
 		try{
-/*				//if( Settings::TryGet<bool>("um/use").value_or(false) ) currently need to configure um so meta is loaded.
-			{
-				UM::Configure();
-			}*/
-			Server::ConfigureDatasource();
-			var [appId, appInstanceId, dbLogLevel, fileLogLevel] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
+			co_await Server::ConfigureDSAwait{};
+			let [appId, appInstanceId] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
 			Server::SetAppPK( appId );
-			Server::SetInstancePK( appInstanceId );
+			IApplicationServer::SetInstancePK( appInstanceId );
 
 			Data::LoadStrings();
 			Server::StartWebServer();
-			DB::GraphQL::Hook::Add( mu<AppInstanceHook>() );
-			DB::GraphQL::Hook::Add( mu<Web::Server::SessionGraphQL>() );
+			QL::Hook::Add( mu<AppInstanceHook>() );
+			QL::Hook::Add( mu<Web::Server::SettingQL>() );
+			QL::Hook::Add( mu<Web::Server::SessionGraphQL>() );
 			Logging::External::Add( mu<ExternalLogger>() );
+
+			Information( ELogTags::App, "--AppServer Started.--" );
 		}
 		catch( IException& e ){
-			Process::Shutdown( e.Code==0 ? -1 : e.Code );
 			e.Log();
 			OSApp::UnPause();
-			return;
 		}
-		Information( ELogTags::App, "--AppServer Started.--" );
-		IApplication::RemoveThread( "Startup" )->Detach();
 	}
 }

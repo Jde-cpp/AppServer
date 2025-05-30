@@ -4,7 +4,8 @@
 		"name": "AppServer",
 		"sourceDir": "${env:JDE_DIR}/AppServer",
 		"buildTarget": "Debug",
-		"buildRoot": "/mnt/ram/jde/Debug",
+		"compiler": "msvc",
+		"buildRoot": "${env:JDE_BUILD_DIR}/${config:compiler}/jde",
 		"buildDir": "${config:buildRoot}/apps/${config:name}",
 		"sourceBash": "source ${env:JDE_DIR}/Public/build/buildFunctions.sh",
 	},
@@ -38,8 +39,8 @@
 			"name": "Framework"
 		},
 		{
-			"path": "../Public/libs/db/drivers/mysql",
-			"name": "MySql"
+			"path": "../Public/libs/db/drivers/odbc",
+			"name": "odbc"
 		},
 		{
 			"path": "../Public/libs/web/server",
@@ -54,8 +55,12 @@
 			"name": "Crypto"
 		},
 		{
-			"path": "xtests",
-			"name": "tests"
+			"path": "config",
+			"name": "config"
+		},
+		{
+			"path": "../Public/build",
+			"name": "pbuild"
 		},
 		{
 			"path": "xx../Public/libs/app/client",
@@ -68,8 +73,8 @@
 			{
 				"label": "build",
 				"type": "shell",
-				"command": "cd ${config:buildDir}; tput reset;make -j;",
-				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"command": "cd ${config:buildDir}; tput reset;cmake --build .;",
+				"problemMatcher": { "base": "$msCompile", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": true }
 			},
 			{

@@ -3,7 +3,7 @@
 #include "../../Framework/source/threading/Thread.h"
 //#include "../../../Framework/source/log/server/ServerSink.h"
 
-#define var const auto
+#define let const auto
 namespace Jde{
 	static sp<Jde::LogTag> _logTag{ Logging::Tag( "test" ) };
 

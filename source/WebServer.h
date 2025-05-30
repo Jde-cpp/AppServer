@@ -13,8 +13,6 @@ namespace Jde::App{
 	namespace Server{
 		α GetAppPK()ι->AppPK;
 		α SetAppPK( AppPK x )ι->void;
-		α InstancePK()ι->AppInstancePK;
-		α SetInstancePK( AppInstancePK x )ι->void;
 
 		α StartWebServer()ε->void;
 		α StopWebServer()ι->void;
@@ -36,6 +34,6 @@ namespace Jde::App{
 
 	struct RequestHandler final : IRequestHandler{
 		α HandleRequest( HttpRequest&& req, SRCE )ι->up<IHttpRequestAwait> override{ return mu<HttpRequestAwait>( move(req), sl ); }
-		α RunWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->void override;
+		α GetWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->sp<IWebsocketSession> override;
 	};
 }
