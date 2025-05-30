@@ -1,4 +1,4 @@
-create or alter proc log_message_insert_out( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @id bigint out )
+create or alter proc [dbo].log_message_insert_out( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @id bigint out )
 as
 	INSERT INTO log_entries(app_instance_id,message_id,line_number,severity,source_file_id,source_function_id, tags, time,thread_id,user_id)
 	VALUES( @app_instance_id, @messageId, @lineNumber, @level, @fileId, @functionId, @tags, @time, @threadId, @userId );
@@ -17,13 +17,13 @@ as
 	select @id;
 go
 
-create or alter proc log_message_insert( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int ) as
+create or alter proc [dbo].log_message_insert( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int ) as
 	set nocount on;
 	declare @id int;
 	exec log_message_insert_out @app_instance_id, @fileId, @functionId, @lineNumber, @messageId, @level, @threadId, @time, @userId, @id;
 go
 
-create or alter proc log_message_insert1( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095) )
+create or alter proc [dbo].log_message_insert1( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095) )
 as
 	set nocount on;
 	declare @id int;
@@ -31,7 +31,7 @@ as
 	insert into log_variables values(@id,0,@variable0);
 go
 
-create or alter proc log_message_insert2( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095) )
+create or alter proc [dbo].log_message_insert2( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095) )
 as
 	set nocount on;
 	declare @id int;
@@ -41,7 +41,7 @@ as
 go
 
 
-create or alter proc log_message_insert3( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095), @variable2 varchar(4095) )
+create or alter proc [dbo].log_message_insert3( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095), @variable2 varchar(4095) )
 as
 	set nocount on;
 	declare @id int;
@@ -51,7 +51,7 @@ as
 	insert into log_variables values(@id,2,@variable2);
 go
 
-create or alter proc log_message_insert4( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095), @variable2 varchar(4095), @variable3 varchar(4095) )
+create or alter proc [dbo].log_message_insert4( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095), @variable2 varchar(4095), @variable3 varchar(4095) )
 as
 	set nocount on;
 	declare @id int;
@@ -62,7 +62,7 @@ as
 	insert into log_variables values(@id,3,@variable3);
 go
 
-create or alter proc log_message_insert5( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095), @variable2 varchar(4095), @variable3 varchar(4095), @variable4 varchar(4095) )
+create or alter proc [dbo].log_message_insert5( @app_instance_id int, @fileId int, @functionId int, @lineNumber smallint, @messageId int, @level tinyint, @threadId bigint, @tags bigint, @time datetime2,  @userId int, @variable0 varchar(4095), @variable1 varchar(4095), @variable2 varchar(4095), @variable3 varchar(4095), @variable4 varchar(4095) )
 as
 	set nocount on;
 	declare @id int;

@@ -1,4 +1,4 @@
-create or alter procedure log_app_instance_insert( @app_name varchar(255), @host_name varchar(255), @pid bigint )
+create or alter proc [dbo].log_app_instance_insert( @app_name varchar(255), @host_name varchar(255), @pid bigint )
 as
 	set nocount on;
 	declare @host_id int;
@@ -6,7 +6,7 @@ as
 	declare @instance_id int;
 	select @app_id=app_id from log_apps where name=@app_name;
 	if( @app_id is null )
-		exec log_app_insert @app_name, @app_id out;
+		exec [dbo].log_app_insert @app_name, @app_id out;
 
 	select @host_id=host_id from log_hosts where name=@host_name;
 	if @host_id is null

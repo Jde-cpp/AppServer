@@ -39,8 +39,8 @@
 			"name": "Framework"
 		},
 		{
-			"path": "../Public/libs/db/drivers/mysql",
-			"name": "MySql"
+			"path": "../Public/libs/db/drivers/odbc",
+			"name": "odbc"
 		},
 		{
 			"path": "../Public/libs/web/server",

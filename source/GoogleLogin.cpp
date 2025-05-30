@@ -48,8 +48,8 @@ namespace Jde::App{
 		THROW_IF( _jwt.Aud() != Settings::FindSV("/GoogleAuthClientId").value_or(""), "Invalid client id: '{}'", _jwt.Aud() );
 		THROW_IF( _jwt.Iss() != "https://accounts.google.com", "Invalid iss: '{}'", _jwt.Iss() );
 #ifdef NDEBUG
-		let expiration = Clock::from_time_t(token.Expiration);
-		THROW_IF(expiration < Clock::now(), "token expired");
+		//let expiration = Clock::from_time_t(token.Expiration);
+		//THROW_IF(expiration < Clock::now(), "token expired");
 #endif
 		try{
 			Crypto::Verify( _jwt.Modulus, _jwt.Exponent, _jwt.HeaderBodyEncoded, _jwt.Signature );

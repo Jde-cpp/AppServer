@@ -80,7 +80,11 @@ namespace Jde{
 			applicationId = row.GetUInt32(0);
 			applicationInstanceId = row.GetUInt32(1);
 		};
-		ds().ExecuteProc( "log_app_instance_insert(?,?,?)", {DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn );
+
+		ds().ExecuteProc(
+			Ƒ("{}(?,?,?)", _logSchema->GetTable("app_instances").InsertProcName()),
+			{DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn
+		);
 
 		return make_tuple( applicationId, applicationInstanceId );
 	}

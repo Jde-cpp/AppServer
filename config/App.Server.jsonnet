@@ -23,14 +23,11 @@ local args = import 'args.libsonnet';
 			_dh: "{ApplicationDataFolder}/certs/dh.pem",
 			_passcode: "$(JDE_PASSCODE)"
 		},
-		clientSettings:{
-			googleAuthClientId: "445012155442-1v8ntaa22konm0boge6hj5mfs15o9lvd.apps.googleusercontent.com"
-		}
 	},
 	dbServers: {
-		dataPaths: ["$(JDE_DIR)/AppServer/config", "$(JDE_DIR)/Public/libs/access/config"],
-		scriptPaths: ["$(JDE_DIR)/AppServer/config/sql/"+args.sqlType, "$(JDE_DIR)/Public/libs/access/config/sql/"+args.sqlType],
-		sync: false,
+		dataPaths: args.dataPaths,
+		scriptPaths: args.scriptPaths,
+		sync: true,
 		localhost:{
 			driver: args.dbDriver,
 			connectionString: args.dbConnectionString,
