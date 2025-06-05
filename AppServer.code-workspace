@@ -4,8 +4,8 @@
 		"name": "AppServer",
 		"sourceDir": "${env:JDE_DIR}/AppServer",
 		"buildTarget": "Debug",
-		"buildRoot": "/mnt/ram/jde/Debug",
-		"buildDir": "${config:buildRoot}/apps/${config:name}",
+		"buildRoot": "${env:JDE_BUILD_DIR}/jde",
+		"buildDir": "${config:buildRoot}/${config:buildTarget}/apps/${config:name}",
 		"sourceBash": "source ${env:JDE_DIR}/Public/build/buildFunctions.sh",
 	},
 	"folders": [
@@ -38,7 +38,7 @@
 			"name": "Framework"
 		},
 		{
-			"path": "../Public/libs/db/drivers/mysql",
+			"path": "../Public/libs/db/drivers/mysqlb",
 			"name": "MySql"
 		},
 		{
@@ -53,6 +53,11 @@
 			"path": "../Public/libs/crypto/src",
 			"name": "Crypto"
 		},
+		{
+			"path": "config",
+			"name": "config"
+		},
+
 		{
 			"path": "xtests",
 			"name": "tests"
@@ -75,14 +80,14 @@
 			{
 				"label": "compile",
 				"type": "shell",
-				"command": "tput reset;${config:sourceBash};compile ${workspaceFolder} ${fileWorkspaceFolder} ${relativeFile} ${config:buildRoot};",
+				"command": "tput reset;${config:sourceBash};compile ${workspaceFolder} ${fileWorkspaceFolder} ${relativeFile} ${config:buildRoot}/${config:buildTarget};",
 				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": false }
 			},
 			{
 				"label": "buildProject",
 				"type": "shell",
-				"command": "tput reset; source $JDE_DIR/Public/build/buildFunctions.sh;buildProject ${fileWorkspaceFolder} ${config:buildRoot};",
+				"command": "tput reset; source $JDE_DIR/Public/build/buildFunctions.sh;buildProject ${fileWorkspaceFolder} ${config:buildRoot}/${config:buildTarget};",
 				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 				"group": { "kind": "build", "isDefault": false }
 			},
@@ -114,7 +119,7 @@
 			"type": "cppdbg",
 			"request": "launch",
 			"program": "${config:buildDir}/Jde.App.Server",
-			"args": ["-c", "-settings=$JDE_DIR/AppServer/config/App.Server.jsonnet"],
+			"args": ["-c", "-tests", "-settings=$JDE_DIR/AppServer/config/App.Server.jsonnet"],
 			"stopAtEntry": false,
 			"additionalSOLibSearchPath": "/lib/x86_64-linux-gnu",
 			"cwd": "${config:buildDir}",

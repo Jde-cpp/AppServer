@@ -15,7 +15,7 @@ namespace Jde::App{
 		base{ move(stream), move(buffer), move(request), move(userEndpoint), connectionIndex }
 	{}
 
-	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL sl )ι->Access::AuthenticateAwait::Task{
+	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL /*sl*/ )ι->Access::AuthenticateAwait::Task{
 		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
@@ -114,7 +114,7 @@ namespace Jde::App{
 		ProcessTransmission( move(t), _userPK, nullopt );
 	}
 
-	α ServerSocketSession::ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<Jde::UserPK> userPK, optional<RequestId> clientRequestId )ι->void{
+	α ServerSocketSession::ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<Jde::UserPK> /*userPK*/, optional<RequestId> clientRequestId )ι->void{
 		uint cLog{}, cString{};
 		if( transmission.messages_size()==0 )
 			LogRead( "No messages in transmission.", 0, ELogLevel::Error );
