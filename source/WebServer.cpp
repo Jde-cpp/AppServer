@@ -49,7 +49,7 @@ namespace Jde::App{
 	α TestLogPub( const FilterQL& subscriptionFilter, AppPK /*appId*/, AppInstancePK /*instancePK*/, const Logging::ExternalMessage& m )ι->bool{
 		bool passesFilter{ true };
 		let logTags = ELogTags::Socket | ELogTags::Server | ELogTags::Subscription;
-		for( let [jsonColName, columnFilters] : subscriptionFilter.ColumnFilters ){
+		for( let& [jsonColName, columnFilters] : subscriptionFilter.ColumnFilters ){
 			if( jsonColName=="level" )
 				passesFilter = FilterQL::Test( underlying(m.Level), columnFilters, logTags );
 			else if( jsonColName=="time" )
