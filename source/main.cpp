@@ -21,8 +21,8 @@ ENABLE_WARNINGS
 #define let const auto
 
 #ifndef _MSC_VER
-namespace Jde{ α OSApp::CompanyName()ι->string{ return "Jde-Cpp"; } }
-namespace Jde{ α OSApp::ProductName()ι->sv{ return "AppServer"; } }
+namespace Jde{ α Process::CompanyName()ι->string{ return "Jde-Cpp"; } }
+namespace Jde{ α Process::ProductName()ι->sv{ return "AppServer"; } }
 #endif
 
 namespace Jde::App{
@@ -35,7 +35,7 @@ int main( int argc, char** argv ){
 	try{
 		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
 		App::Startup();
-		exitCode = IApplication::Pause();
+		exitCode = Process::Pause();
 	}
 	catch( const IException& e ){
 		std::cerr << (e.Level()==ELogLevel::Trace ? "Exiting..." : "Exiting on error:  ") << e.what() << std::endl;
