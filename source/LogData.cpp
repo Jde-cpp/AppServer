@@ -5,7 +5,7 @@
 #include <jde/db/generators/Syntax.h>
 #include <jde/db/db.h>
 #include <jde/db/IDataSource.h>
-#include <jde/db/IRow.h>
+#include <jde/db/Row.h>
 #include <jde/db/meta/Table.h>
 #include <jde/ql/ql.h>
 
@@ -42,7 +42,7 @@ namespace Server{
 	}
 	α ConfigureDSAwait::EndAppInstances()ι->DB::ExecuteAwait::Task{
 		try{
-			co_await ds().ExecuteAsync( {Ƒ("update {} set end_time={} where end_time is null", instanceTableName(), ds().Syntax().UtcNow())} );
+			co_await ds().Execute( {Ƒ("update {} set end_time={} where end_time is null", instanceTableName(), ds().Syntax().UtcNow())} );
 			Resume();
 		}
 		catch( exception& e ){
@@ -88,7 +88,7 @@ namespace Jde{
 	}
 	α App::EndInstance( AppInstancePK instanceId, SL sl )ι->DB::ExecuteAwait::Task{
 		try{
-			co_await ds().ExecuteAsync( {Ƒ("update {} set end_time=now() where id=?", instanceTableName()), {DB::Value{instanceId}}}, sl );
+			co_await ds().Execute( {Ƒ("update {} set end_time=now() where id=?", instanceTableName()), {DB::Value{instanceId}}}, sl );
 		}
 		catch( exception& )
 		{}
@@ -171,7 +171,7 @@ namespace Jde{
 				for( auto&& row : rows ){
 					let id = row.GetUInt32( 0 );
 					if( auto pTrace = mapTraces.find(id); pTrace!=mapTraces.end() )
-						*pTrace->second.add_args() = row.MoveString( 1 );
+						*pTrace->second.add_args() = move( row.GetString(1) );
 				}
 			}
 			Proto::FromServer::Traces traces;
@@ -186,7 +186,7 @@ namespace Jde{
 			auto rows = ds().Select( {statement.Move()}, sl );
 			concurrent_flat_map<uint32,string> map;
 			for( auto&& row : rows )
-				map.emplace( row.GetUInt(0), row.MoveString(1) );
+				map.emplace( row.GetUInt(0), move(row.GetString(1)) );
 			return map;
 		}
 		Ω loadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{

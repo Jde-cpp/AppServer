@@ -38,6 +38,7 @@ local args = import 'args.libsonnet';
 		}
 	},
 	logging:{
+		flushOn: "Trace",
 		defaultLevel: "Information",
 		tags: {
 			trace:["sql", "parsing", "test", "ql",

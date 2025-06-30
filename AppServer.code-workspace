@@ -38,7 +38,7 @@
 			"name": "Framework"
 		},
 		{
-			"path": "../Public/libs/db/drivers/mysqlb",
+			"path": "../Public/libs/db/drivers/mysql",
 			"name": "MySql"
 		},
 		{
