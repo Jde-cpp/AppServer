@@ -24,17 +24,21 @@ local args = import 'args.libsonnet';
 			_passcode: "$(JDE_PASSCODE)"
 		},
 	},
-	dbServers: {
-		dataPaths: args.dataPaths,
-		scriptPaths: args.scriptPaths,
+	dbServers:{
+		dataPaths: args.dbServers.dataPaths,
+		scriptPaths: args.dbServers.scriptPaths,
 		sync: true,
 		localhost:{
-			driver: args.dbDriver,
-			connectionString: args.dbConnectionString,
-			catalogs: args.catalogs
+			driver: args.dbServers.localhost.driver,
+			connectionString: args.dbServers.localhost.connectionString,
+			username: args.dbServers.localhost.username,
+			password: args.dbServers.localhost.password,
+			schema: args.dbServers.localhost.schema,
+			catalogs: args.dbServers.localhost.catalogs
 		}
 	},
 	logging:{
+		flushOn: "Trace",
 		defaultLevel: "Information",
 		tags: {
 			trace:["sql", "parsing", "test", "ql",

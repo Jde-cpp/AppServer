@@ -5,7 +5,7 @@
 #include <jde/db/generators/Syntax.h>
 #include <jde/db/db.h>
 #include <jde/db/IDataSource.h>
-#include <jde/db/IRow.h>
+#include <jde/db/Row.h>
 #include <jde/db/meta/Table.h>
 #include <jde/ql/ql.h>
 
@@ -42,7 +42,7 @@ namespace Server{
 	}
 	α ConfigureDSAwait::EndAppInstances()ι->DB::ExecuteAwait::Task{
 		try{
-			co_await ds().ExecuteCo( {Ƒ("update {} set end_time={} where end_time is null", instanceTableName(), ds().Syntax().UtcNow())} );
+			co_await ds().Execute( {Ƒ("update {} set end_time={} where end_time is null", instanceTableName(), ds().Syntax().UtcNow())} );
 			Resume();
 		}
 		catch( exception& e ){
@@ -62,35 +62,33 @@ namespace Server{
 			ERRX( "unknown field '{}'.", (int)field );
 			return;
 		}
-		let sql = Ƒ( "insert into {}(id,value)values(?,?)", table );
-		auto pParameters = ms<vector<DB::Value>>();  pParameters->reserve(3);
+		DB::Sql sql{ Ƒ( "insert into {}(id,value)values(?,?)", table ) };
 		//ASSERT( Calc32RunTime(*pValue)==id );
 		if( Calc32RunTime(value)!=id )
 			return ERRX( "id '{}' does not match crc of '{}'", id, value );//locks itself on server log.
-		pParameters->push_back( {id} );
-		pParameters->push_back( {move(value)} );
-		_pQueue->Push( sql, pParameters, false, sl );
+		sql.Params.push_back( {id} );
+		sql.Params.push_back( {move(value)} );
+		_pQueue->Push( move(sql), sl );
 	}
 }
 namespace Jde{
 	α App::AddInstance( str applicationName, str hostName, uint processId )ε->std::tuple<AppPK, AppInstancePK>{
 		AppPK applicationId;
 		AppInstancePK applicationInstanceId;
-		auto fnctn = [&applicationId, &applicationInstanceId](const DB::IRow& row){
+		let rows = ds().Select( {
+			Ƒ("{}(?,?,?)", _logSchema->GetTable("app_instances").InsertProcName()),
+			{DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}},
+			true} );
+		for( auto&& row : rows ){
 			applicationId = row.GetUInt32(0);
 			applicationInstanceId = row.GetUInt32(1);
-		};
-
-		ds().ExecuteProc(
-			Ƒ("{}(?,?,?)", _logSchema->GetTable("app_instances").InsertProcName()),
-			{DB::Value{applicationName}, DB::Value{hostName}, DB::Value{processId}}, fnctn
-		);
+		}
 
 		return make_tuple( applicationId, applicationInstanceId );
 	}
 	α App::EndInstance( AppInstancePK instanceId, SL sl )ι->DB::ExecuteAwait::Task{
 		try{
-			co_await ds().ExecuteCo( {Ƒ("update {} set end_time=now() where id=?", instanceTableName()), {DB::Value{instanceId}}}, sl );
+			co_await ds().Execute( {Ƒ("update {} set end_time=now() where id=?", instanceTableName()), {DB::Value{instanceId}}}, sl );
 		}
 		catch( exception& )
 		{}
@@ -123,17 +121,17 @@ namespace Jde{
 */
 	α App::SaveMessage( AppPK applicationId, AppInstancePK instanceId, const Proto::FromClient::LogEntry& m, const vector<string>* variables, SL sl )ι->void{
 		let variableCount = std::min( (uint)5, variables ? variables->size() : 0 );
-		auto pParameters = ms<vector<DB::Value>>(); pParameters->reserve( 10+variableCount );
-		pParameters->push_back( {applicationId} );
-		pParameters->push_back( {instanceId} );
-		pParameters->push_back( {m.file_id()} );
-		pParameters->push_back( {m.function_id()} );
-		pParameters->push_back( {m.line()} );
-		pParameters->push_back( {m.message_id()} );
-		pParameters->push_back( {(uint8)m.level()} );
-		pParameters->push_back( {m.thread_id()} );
-		pParameters->push_back( {Jde::Proto::ToTimePoint(m.time())} );
-		pParameters->push_back( {m.user_pk()} );
+		vector<DB::Value> params{
+			{applicationId},
+			{instanceId},
+			{m.file_id()},
+			{m.function_id()},
+			{m.line()},
+			{m.message_id()},
+			{(uint8)m.level()},
+			{m.thread_id()},
+			{Jde::Proto::ToTimePoint(m.time())},
+			{m.user_pk()} };
 		constexpr sv procedure = "log_message_insert"sv;
 		constexpr sv args = "(?,?,?,?,?,?,?,?,?,?"sv;
 		std::ostringstream os;
@@ -143,10 +141,10 @@ namespace Jde{
 		os << args;
 		for( uint i=0; i<variableCount; ++i ){
 			os << ",?";
-			pParameters->push_back( {(*variables)[i]} );
+			params.push_back( {(*variables)[i]} );
 		}
 		os << ")";
-		_pQueue->Push( os.str(), pParameters, true, sl );
+		_pQueue->Push( {os.str(), params, true}, sl );
 	}
 	namespace App{
 		α Data::LoadEntries( QL::TableQL table )ε->Proto::FromServer::Traces{
@@ -159,22 +157,22 @@ namespace Jde{
 			auto where = statement->Where;
 			auto rows = ds().Select( statement->Move() ); //TODO awaitable
 			for( auto& row : rows ){
-				auto t=FromServer::ToTrace( *row, table.Columns );
+				auto t=FromServer::ToTrace( move(row), table.Columns );
 				auto id = t.id();
 				mapTraces.emplace( id, move(t) );
 			}
 			if( mapTraces.size() ){
-				auto addVariables = [&mapTraces]( DB::IRow& row ){
-					let id = row.GetUInt32( 0 );
-					if( auto pTrace = mapTraces.find(id); pTrace!=mapTraces.end() )
-						*pTrace->second.add_args() = row.MoveString( 1 );
-				};
 				constexpr sv variableSql = "select log_id, value, variable_index from log_variables join logs on logs.id=log_variables.log_id";
 				if( mapTraces.size()==limit ){
 					where.Add( "logs.id<?" );
 					where.Params().push_back( {mapTraces.rbegin()->first} );
 				}
-				ds().Select( Ƒ("{}\n{}\norder by log_id, variable_index", variableSql, where.Move()), addVariables, where.Params() );
+				auto rows = ds().Select( {Ƒ("{}\n{}\norder by log_id, variable_index", variableSql, where.Move()), where.Params()} );
+				for( auto&& row : rows ){
+					let id = row.GetUInt32( 0 );
+					if( auto pTrace = mapTraces.find(id); pTrace!=mapTraces.end() )
+						*pTrace->second.add_args() = move( row.GetString(1) );
+				}
 			}
 			Proto::FromServer::Traces traces;
 			for( auto& [id,trace] : mapTraces )
@@ -185,10 +183,10 @@ namespace Jde{
 		Ω loadStrings( str tableName, SRCE )ε->concurrent_flat_map<uint32,string>{
 			let& table = _logSchema->GetTablePtr( tableName );
 			DB::Statement statement{ table->Columns, DB::FromClause{DB::Join{table->GetPK(), _logSchema->GetTablePtr("entries")->GetPK(), true}}, {} };
-			let rows = ds().Select( statement.Move(), false, sl );
+			auto rows = ds().Select( {statement.Move()}, sl );
 			concurrent_flat_map<uint32,string> map;
-			for( auto& row : rows )
-				map.emplace( row->GetUInt(0), row->MoveString(1) );
+			for( auto&& row : rows )
+				map.emplace( row.GetUInt(0), move(row.GetString(1)) );
 			return map;
 		}
 		Ω loadFiles( SL sl )ε->concurrent_flat_map<uint32,string>{
