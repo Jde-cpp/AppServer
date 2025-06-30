@@ -1,10 +1,10 @@
 #include "WebServer.h"
+#include <jde/framework/coroutine/Timer.h>
 #include <jde/web/server/IApplicationServer.h>
 #include <jde/web/server/Sessions.h>
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/proto/App.FromClient.h>
 #include <jde/ql/types/FilterQL.h>
-#include "../../Framework/source/coroutine/Alarm.h"
 #include <jde/ql/ql.h>
 #include "LogData.h"
 #include "ServerSocketSession.h"
@@ -28,7 +28,7 @@ namespace Jde::App{
 
 	α Server::GetAppPK()ι->AppPK{ return _appId; }
 	α Server::SetAppPK( AppPK x )ι->void{ _appId=x; }
-	α UpdateStatuses()ι->Task;
+	α UpdateStatuses()ι->DurationTimer::Task;
 	α Server::StartWebServer()ε->void{
 		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>() );
 		Process::AddShutdownFunction( [](bool /*terminate*/){Server::StopWebServer();} );//TODO move to Web::Server
@@ -39,10 +39,10 @@ namespace Jde::App{
 		Web::Server::Stop();
 	}
 
-	α UpdateStatuses()ι->Task{
+	α UpdateStatuses()ι->DurationTimer::Task{
 		while( !Process::ShuttingDown() ){
 			Server::BroadcastAppStatus();
-			co_await Threading::Alarm::Wait( 1min );
+			co_await DurationTimer{ 1min };
 		}
 	}
 
