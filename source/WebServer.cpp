@@ -1,15 +1,19 @@
 #include "WebServer.h"
 #include <jde/framework/coroutine/Timer.h>
+#include <jde/ql/ql.h>
+#include <jde/ql/LocalQL.h>
+#include <jde/ql/types/FilterQL.h>
 #include <jde/web/server/IApplicationServer.h>
 #include <jde/web/server/Sessions.h>
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/proto/App.FromClient.h>
-#include <jde/ql/types/FilterQL.h>
-#include <jde/ql/ql.h>
 #include "LogData.h"
 #include "ServerSocketSession.h"
 
 #define let const auto
+namespace Jde::App::Server{
+	α Schemas()ι->const vector<sp<DB::AppSchema>>&;
+}
 namespace Jde::App{
 	using QL::FilterQL;
 	concurrent_flat_map<AppInstancePK,sp<ServerSocketSession>> _sessions; //Consider using main class+ql subscriptions
@@ -19,18 +23,27 @@ namespace Jde::App{
 
 	AppPK _appId;
 	atomic<RequestId> _requestId{0};
+	sp<QL::LocalQL> _ql;
+
+	α Server::QLPtr()ι->sp<QL::LocalQL>{ ASSERT( _ql ); return _ql; }
+	α Server::QL()ι->QL::LocalQL&{ return *QLPtr(); }
+	α Server::SetLocalQL( sp<QL::LocalQL> ql )ι->void{ _ql=move(ql); }
+	α Server::Schemas()ι->const vector<sp<DB::AppSchema>>&{ return QL().Schemas(); }
+
 
 	struct ApplicationServer final : Web::Server::IApplicationServer{
 		α IsLocal()ι->bool override{ return true; }
-		α GraphQL( string&& q, UserPK userPK, bool returnRaw, SL sl )ι->up<TAwait<jvalue>> override{ return mu<QL::QLAwait<jvalue>>( move(q), userPK, returnRaw, sl ); }
+		α GraphQL( string&& q, UserPK userPK, bool returnRaw, SL sl )ι->up<TAwait<jvalue>> override{
+			return mu<QL::QLAwait<jvalue>>( move(q), userPK, Server::Schemas(), returnRaw, sl );
+		}
 		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<Web::FromServer::SessionInfo>> override{ return {}; }
 	};
 
 	α Server::GetAppPK()ι->AppPK{ return _appId; }
 	α Server::SetAppPK( AppPK x )ι->void{ _appId=x; }
 	α UpdateStatuses()ι->DurationTimer::Task;
-	α Server::StartWebServer()ε->void{
-		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>() );
+	α Server::StartWebServer( jobject&& settings )ε->void{
+		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>(), move(settings) );
 		Process::AddShutdownFunction( [](bool /*terminate*/){Server::StopWebServer();} );//TODO move to Web::Server
 		UpdateStatuses();
 	}
@@ -140,7 +153,7 @@ namespace Jde::App{
 	}
 
 	α Server::SubscribeLogs( string&& qlText, sp<ServerSocketSession> session )ε->void{
-		auto ql = QL::Parse( qlText );
+		auto ql = QL::Parse( qlText, Schemas() );
 		auto tables = ql.IsTableQL() ? move(ql.TableQLs()) : vector<QL::TableQL>{};
 		THROW_IF( tables.size()!=1, "Invalid query, expecting single table" );
 		auto table = move( tables.front() );

@@ -2,7 +2,7 @@
 #include "usings.h"
 #include <jde/framework/coroutine/Await.h>
 #include <jde/db/awaits/ExecuteAwait.h>
-#include <jde/access/access.h>
+//#include <jde/access/access.h>
 
 namespace Jde::DB{ struct IDataSource; }
 namespace Jde::QL{ struct TableQL; }
@@ -12,7 +12,7 @@ namespace Jde::App::Server{
 		α Suspend()ι->void override;
 	private:
 		α EndAppInstances()ι->DB::ExecuteAwait::Task;
-		α Configure()ι->Access::ConfigureAwait::Task;
+		α Configure()ι->VoidAwait<>::Task;
 	};
 	α SaveString( App::Proto::FromClient::EFields field, uint32 id, string value, SRCE )ι->void;
 }

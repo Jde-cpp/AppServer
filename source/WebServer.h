@@ -4,17 +4,24 @@
 #include <jde/web/server/IApplicationServer.h>
 #include <jde/web/server/IRequestHandler.h>
 
-namespace Jde::Web::Server{
-	struct RestStream;
-}
-namespace Jde::App{
+namespace Jde{
+	namespace DB{ struct AppSchema; }
+	namespace QL{ struct LocalQL; }
+	namespace Web::Server{ struct RestStream; }
+
+namespace App{
 	using namespace Jde::Web::Server;
 	struct ServerSocketSession;
 	namespace Server{
 		α GetAppPK()ι->AppPK;
 		α SetAppPK( AppPK x )ι->void;
+		α QLPtr()ι->sp<QL::LocalQL>;
+		α QL()ι->QL::LocalQL&;
+		α SetLocalQL( sp<QL::LocalQL> ql )ι->void;
+		α Schemas()ι->const vector<sp<DB::AppSchema>>&;
 
-		α StartWebServer()ε->void;
+
+		α StartWebServer( jobject&& settings )ε->void;
 		α StopWebServer()ι->void;
 
 		α BroadcastLogEntry( LogPK id, AppPK logAppPK, AppInstancePK logInstancePK, const Logging::ExternalMessage& m, const vector<string>& args )ι->void;
@@ -35,5 +42,6 @@ namespace Jde::App{
 	struct RequestHandler final : IRequestHandler{
 		α HandleRequest( HttpRequest&& req, SRCE )ι->up<IHttpRequestAwait> override{ return mu<HttpRequestAwait>( move(req), sl ); }
 		α GetWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->sp<IWebsocketSession> override;
+		α Schemas()ι->const vector<sp<DB::AppSchema>>& override{ return Server::Schemas(); }
 	};
-}
+}}

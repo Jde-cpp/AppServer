@@ -2,7 +2,7 @@
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/StringCache.h>
 #include <jde/framework/chrono.h>
-#include <jde/access/access.h>
+#include <jde/access/server/accessServer.h>
 #include "LogData.h"
 #include "WebServer.h"
 #include "ServerSocketSession.h"
@@ -15,11 +15,11 @@ namespace Jde::App{
 		base{ move(stream), move(buffer), move(request), move(userEndpoint), connectionIndex }
 	{}
 
-	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL /*sl*/ )ι->Access::AuthenticateAwait::Task{
+	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL /*sl*/ )ι->TAwait<Jde::UserPK>::Task{
 		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("AddSession user: '{}', endpoint: '{}', provider: {}, is_socket: {}", m.domain()+"/"+m.login_name(), m.user_endpoint(), m.provider_pk(), m.is_socket()), requestId );
-			let userPK = co_await Access::Authenticate(m.login_name(), m.provider_pk(), m.domain());
+			let userPK = co_await Access::Server::Authenticate(m.login_name(), m.provider_pk(), m.domain());
 
 			auto sessionInfo = Web::Server::Sessions::Add( userPK, move(*m.mutable_user_endpoint()), m.is_socket() );
 			LogWrite( Ƒ("AddSession id: {:x}", sessionInfo->SessionId), requestId );
@@ -55,7 +55,7 @@ namespace Jde::App{
 		let _ = shared_from_this();
 		try{
 			LogRead( Ƒ("GraphQL{}: {}", returnRaw ? "*" : "", query), requestId );
-			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(Jde::UserPK{0}), returnRaw );
+			auto j = co_await QL::QLAwait( move(query), _userPK.value_or(Jde::UserPK{0}), Server::Schemas(), returnRaw );
 			auto y = serialize( j );
 			LogWrite( Ƒ("GraphQL: {}", y.substr(0,100)), requestId );
 			Write( FromServer::GraphQL(move(y), requestId) );
@@ -63,6 +63,9 @@ namespace Jde::App{
 		catch( IException& e ){
 			WriteException( move(e), requestId );
 		}
+	}
+	α ServerSocketSession::Schemas()Ι->const vector<sp<DB::AppSchema>>&{
+		return Server::Schemas();
 	}
 	α ServerSocketSession::SaveLogEntry( Proto::FromClient::LogEntry l, RequestId requestId )->void{
 		if( !_appPK || !_instancePK ){
@@ -126,10 +129,15 @@ namespace Jde::App{
 			switch( m.Value_case() ){
 			[[unlikely]]case kInstance:{
 				_instance = move( *m.mutable_instance() );
-				let [appPK,instancePK] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
-				Information{ ELogTags::SocketServerRead, "[{:x}.{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), requestId, _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
-				_instancePK = instancePK; _appPK = appPK;
-				Write( FromServer::ConnectionInfo( appPK, instancePK, requestId ) );
+				try{
+					let [appPK,instancePK] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
+					Information{ ELogTags::SocketServerRead, "[{:x}.{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), requestId, _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
+					_instancePK = instancePK; _appPK = appPK;
+					Write( FromServer::ConnectionInfo( appPK, instancePK, requestId ) );
+				}
+				catch( IException& e ){
+					WriteException( move(e), requestId );
+				}
 				break;}
 			case kAddSession:{
 				AddSession( move(*m.mutable_add_session()), requestId, SRCE_CUR );

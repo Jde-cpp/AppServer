@@ -1,69 +1,34 @@
 ﻿#include <jde/framework.h>
-DISABLE_WARNINGS
-#include <span>
-#include <boost/asio.hpp>
-#include <boost/beast.hpp>
-#include <boost/beast/ssl/ssl_stream.hpp>
-#include <jde/web/client/exports.h>
-#include <jde/web/client/proto/Web.FromServer.pb.h>
 #include <jde/app/shared/exports.h>
 #include <jde/app/shared/proto/App.FromClient.pb.h>
+#include <jde/web/client/proto/Web.FromServer.pb.h>
 #include <jde/app/shared/proto/App.FromServer.pb.h>
-ENABLE_WARNINGS
-#include <jde/app/shared/StringCache.h>
-#include <jde/web/server/SessionGraphQL.h>
-#include <jde/web/server/SettingQL.h>
-#include "graphQL/AppInstanceHook.h"
-#include "ExternalLogger.h"
-#include "LogData.h"
-#include "WebServer.h"
+#include "AppStartupAwait.h"
 
-#define let const auto
-
+namespace Jde{
 #ifndef _MSC_VER
-namespace Jde{ α Process::CompanyName()ι->string{ return "Jde-Cpp"; } }
-namespace Jde{ α Process::ProductName()ι->sv{ return "AppServer"; } }
+	α Process::CompanyName()ι->string{ return "Jde-Cpp"; }
+	α Process::ProductName()ι->sv{ return "AppServer"; }
 #endif
 
-namespace Jde::App{
-	α Startup()ι->Server::ConfigureDSAwait::Task;
+	α startup( int argc, char** argv )ε->void{
+		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
+		auto settings = Settings::FindObject( "http" );
+		BlockVoidAwait<App::AppStartupAwait>( App::AppStartupAwait{settings ? move(*settings) : jobject{}} );
+	}
 }
 
-int main( int argc, char** argv ){
+α main( int argc, char** argv )->int{
 	using namespace Jde;
 	optional<int> exitCode;
 	try{
-		OSApp::Startup( argc, argv, "Jde.AppServer", "jde-cpp App Server." );
-		App::Startup();
+		startup( argc, argv );
 		exitCode = Process::Pause();
 	}
 	catch( const IException& e ){
+		exitCode = e.Code;
 		std::cerr << (e.Level()==ELogLevel::Trace ? "Exiting..." : "Exiting on error:  ") << e.what() << std::endl;
 	}
 	Process::Shutdown( exitCode.value_or(EXIT_FAILURE) );
 	return exitCode.value_or( EXIT_FAILURE );
-}
-
-namespace Jde{
-	α App::Startup()ι->Server::ConfigureDSAwait::Task{
-		try{
-			co_await Server::ConfigureDSAwait{};
-			let [appId, appInstanceId] = AddInstance( "Main", IApplication::HostName(), OSApp::ProcessId() );
-			Server::SetAppPK( appId );
-			IApplicationServer::SetInstancePK( appInstanceId );
-
-			Data::LoadStrings();
-			Server::StartWebServer();
-			QL::Hook::Add( mu<AppInstanceHook>() );
-			QL::Hook::Add( mu<Web::Server::SettingQL>() );
-			QL::Hook::Add( mu<Web::Server::SessionGraphQL>() );
-			Logging::External::Add( mu<ExternalLogger>() );
-
-			Information( ELogTags::App, "--AppServer Started.--" );
-		}
-		catch( IException& e ){
-			e.Log();
-			OSApp::UnPause();
-		}
-	}
 }
