@@ -1,6 +1,6 @@
 #pragma once
 #include <jde/crypto/OpenSsl.h>
-#include <jde/web/client/Jwt.h>
+#include <jde/web/Jwt.h>
 
 namespace Jde::App{
 	struct CertificateLoginAwait : TAwait<UserPK>{

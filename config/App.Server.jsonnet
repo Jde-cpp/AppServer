@@ -41,10 +41,10 @@ local args = import 'args.libsonnet';
 		flushOn: "Trace",
 		defaultLevel: "Information",
 		tags: {
-			trace:["sql", "parsing", "test", "ql",
+			trace:["parsing", "test",
 				"http.client.write", "http.client.read", "http.server.write", "http.server.read", "socket.client.write", "socket.client.read", "socket.server.write", "socket.server.read"
 			],
-			debug:["sessions", "settings"],
+			debug:["ql","sql", "sessions", "settings"],
 			information:[],
 			warning:[],
 			"error":[],
@@ -59,6 +59,6 @@ local args = import 'args.libsonnet';
 	workers:{
 		drive: {threads: 1},
 		alarm: {threads: 1},
-		executor: 1
+		executor: 2
 	}
 }

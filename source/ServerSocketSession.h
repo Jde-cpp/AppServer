@@ -6,7 +6,7 @@
 #include <jde/web/server/Sessions.h>
 #include "awaits/ForwardExecutionAwait.h"
 
-namespace Jde::App{
+namespace Jde::App::Server{
 	using namespace Jde::Web::Server;
 	//using namespace Jde::Http;
 	struct ServerSocketSession : TWebsocketSession<Proto::FromServer::Transmission,Proto::FromClient::Transmission>{
@@ -18,7 +18,7 @@ namespace Jde::App{
 		α OnRead( Proto::FromClient::Transmission&& transmission )ι->void override;
 	private:
 		α OnClose()ι->void;
-		//α OnConnect( SessionPK sessionId, RequestId requestId )ι->Web::UpsertAwait::Task;
+		α GetJwt( Jde::RequestId requestId )ι->TAwait<jobject>::Task;
 		α ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<Jde::UserPK> userPK, optional<RequestId> clientRequestId )ι->void;
 		α SharedFromThis()ι->sp<ServerSocketSession>{ return std::dynamic_pointer_cast<ServerSocketSession>(shared_from_this()); }
 		//α WriteException( IException&& e, Request )ι->void override{ WriteException( move(e), 0 ); }
@@ -29,6 +29,7 @@ namespace Jde::App{
 		α WriteComplete( RequestId requestId )ι->void override;
 
 		α AddSession( Proto::FromClient::AddSession addSession, RequestId clientRequestId, SL sl )ι->TAwait<Jde::UserPK>::Task;
+		α AddInstance( Proto::FromClient::Instance instance, RequestId requestId )ι->TAwait<sp<Web::Server::SessionInfo>>::Task;
 		α Execute( string&& bytes, optional<Jde::UserPK> userPK, RequestId clientRequestId )ι->void;
 		α ForwardExecution( Proto::FromClient::ForwardExecution&& clientMsg, bool anonymous, RequestId clientRequestId, SRCE )ι->ForwardExecutionAwait::Task;
 		α GraphQL( string&& query, bool returnRaw, RequestId requestId )ι->QL::QLAwait<jvalue>::Task;

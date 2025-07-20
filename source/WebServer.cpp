@@ -1,9 +1,8 @@
 #include "WebServer.h"
 #include <jde/framework/coroutine/Timer.h>
-#include <jde/ql/ql.h>
 #include <jde/ql/LocalQL.h>
 #include <jde/ql/types/FilterQL.h>
-#include <jde/web/server/IApplicationServer.h>
+#include <jde/app/IApp.h>
 #include <jde/web/server/Sessions.h>
 #include <jde/app/shared/proto/App.FromServer.h>
 #include <jde/app/shared/proto/App.FromClient.h>
@@ -16,40 +15,44 @@ namespace Jde::App::Server{
 }
 namespace Jde::App{
 	using QL::FilterQL;
-	concurrent_flat_map<AppInstancePK,sp<ServerSocketSession>> _sessions; //Consider using main class+ql subscriptions
+	concurrent_flat_map<AppInstancePK,sp<Server::ServerSocketSession>> _sessions; //Consider using main class+ql subscriptions
 	concurrent_flat_map<AppInstancePK,FilterQL> _logSubscriptions;
 	concurrent_flat_map<AppInstancePK,Proto::FromServer::Status> _statuses;
 	concurrent_flat_set<AppInstancePK> _statusSubscriptions;
 
 	AppPK _appId;
+	AppInstancePK _instancePK;
 	atomic<RequestId> _requestId{0};
 	sp<QL::LocalQL> _ql;
+	sp<Server::RequestHandler> _requestHandler;
 
 	α Server::QLPtr()ι->sp<QL::LocalQL>{ ASSERT( _ql ); return _ql; }
 	α Server::QL()ι->QL::LocalQL&{ return *QLPtr(); }
 	α Server::SetLocalQL( sp<QL::LocalQL> ql )ι->void{ _ql=move(ql); }
 	α Server::Schemas()ι->const vector<sp<DB::AppSchema>>&{ return QL().Schemas(); }
 
-
-	struct ApplicationServer final : Web::Server::IApplicationServer{
-		α IsLocal()ι->bool override{ return true; }
-		α GraphQL( string&& q, UserPK userPK, bool returnRaw, SL sl )ι->up<TAwait<jvalue>> override{
-			return mu<QL::QLAwait<jvalue>>( move(q), userPK, Server::Schemas(), returnRaw, sl );
-		}
-		α SessionInfoAwait( SessionPK, SL )ι->up<TAwait<Web::FromServer::SessionInfo>> override{ return {}; }
-	};
+	sp<Server::LocalClient> _appClient = ms<Server::LocalClient>();
+	α Server::AppClient()ι->sp<LocalClient>{ return _appClient; }
 
 	α Server::GetAppPK()ι->AppPK{ return _appId; }
-	α Server::SetAppPK( AppPK x )ι->void{ _appId=x; }
+	α Server::SetAppPKs( std::tuple<AppPK, AppInstancePK> x )ι->void{ _appId=get<0>(x); _appClient->SetInstancePK(get<1>(x)); }
 	α UpdateStatuses()ι->DurationTimer::Task;
 	α Server::StartWebServer( jobject&& settings )ε->void{
-		Web::Server::Start( mu<RequestHandler>(), mu<ApplicationServer>(), move(settings) );
-		Process::AddShutdownFunction( [](bool /*terminate*/){Server::StopWebServer();} );//TODO move to Web::Server
+		_requestHandler = ms<RequestHandler>( move(settings) );
+		Web::Server::Start( _requestHandler );
+		Process::AddShutdownFunction( []( bool terminate ){Server::StopWebServer(terminate);} );//TODO move to Web::Server
 		UpdateStatuses();
 	}
 
-	α Server::StopWebServer()ι->void{
-		Web::Server::Stop();
+	α Server::GetJwt( string name, string target, string endpoint, SessionPK sessionId, TimePoint expires, string description )ι->Web::Jwt{
+		auto requestHandler = _requestHandler;
+		THROW_IF( !requestHandler, "No request Handler." );
+		return requestHandler->GetJwt( move(name), move(target), move(endpoint), sessionId, expires, move(description) );
+	}
+
+
+	α Server::StopWebServer( bool terminate )ι->void{
+		Web::Server::Stop( move(_requestHandler), terminate );
 	}
 
 	α UpdateStatuses()ι->DurationTimer::Task{
@@ -109,7 +112,7 @@ namespace Jde::App{
 	}
 	α Server::BroadcastAppStatus()ι->void{
 		FromClient::Status( {} );
-		BroadcastStatus( GetAppPK(), IApplicationServer::InstancePK(), IApplication::HostName(), FromClient::ToStatus({}) );
+		BroadcastStatus( GetAppPK(), _instancePK, IApplication::HostName(), FromClient::ToStatus({}) );
 	}
 	α Server::FindApplications( str name )ι->vector<Proto::FromClient::Instance>{
 		vector<Proto::FromClient::Instance> y;
@@ -186,10 +189,19 @@ namespace Jde::App{
 	α Server::UnsubscribeStatus( AppInstancePK instancePK )ι->bool{
 		return _statusSubscriptions.erase( instancePK );
 	}
-
+}
+namespace Jde::App::Server{
+	RequestHandler::RequestHandler( jobject&& settings )ι:
+		IRequestHandler{ move(settings), Server::AppClient() }
+	{}
 	α RequestHandler::GetWebsocketSession( sp<RestStream>&& stream, beast::flat_buffer&& buffer, TRequestType req, tcp::endpoint userEndpoint, uint32 connectionIndex )ι->sp<IWebsocketSession>{
 		auto session = ms<ServerSocketSession>( move(stream), move(buffer), move(req), move(userEndpoint), connectionIndex );
 		_sessions.emplace( session->Id(), session );
 		return session;
+	}
+
+	α RequestHandler::GetJwt( string&& name, string&& target, string&& endpoint, SessionPK sessionId, TimePoint expires, string&& description )ι->Web::Jwt{
+		auto publicKey = Crypto::ReadPublicKey( Settings().Crypto().PublicKeyPath );
+		return Web::Jwt{ move(publicKey), move(name), move(target), sessionId, move(endpoint), expires, move(description), Settings().Crypto().PrivateKeyPath };
 	}
 }

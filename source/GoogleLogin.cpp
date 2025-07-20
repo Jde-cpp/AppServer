@@ -52,7 +52,7 @@ namespace Jde::App{
 		//THROW_IF(expiration < Clock::now(), "token expired");
 #endif
 		try{
-			Crypto::Verify( _jwt.Modulus, _jwt.Exponent, _jwt.HeaderBodyEncoded, _jwt.Signature );
+			Crypto::Verify( _jwt.PublicKey, _jwt.HeaderBodyEncoded, _jwt.Signature );
 		}
 		catch( IException& e ){
 			THROW( "Verify failed. {}\n{}", e.what(), _jwt.Payload() );

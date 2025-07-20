@@ -1,8 +1,7 @@
 #pragma once
 #include <jde/framework/coroutine/Await.h>
-#include "LogData.h"
 
-namespace Jde::App{
+namespace Jde::App::Server{
 	struct AppStartupAwait final : VoidAwait<>{
 		using base = VoidAwait<>;
 		AppStartupAwait( jobject webServerSettings, SRCE )ε:base{sl},_webServerSettings{move(webServerSettings)}{}

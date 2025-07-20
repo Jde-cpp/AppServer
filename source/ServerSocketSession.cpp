@@ -8,13 +8,28 @@
 #include "ServerSocketSession.h"
 #define let const auto
 
-namespace Jde::App{
+namespace Jde::App::Server{
 	α ToProto( const Web::Server::SessionInfo& session, RequestId requestId )ι->Proto::FromServer::Transmission;
 
 	ServerSocketSession::ServerSocketSession( sp<RestStream> stream, beast::flat_buffer&& buffer, TRequestType&& request, tcp::endpoint&& userEndpoint, uint32 connectionIndex )ι:
 		base{ move(stream), move(buffer), move(request), move(userEndpoint), connectionIndex }
 	{}
 
+	α ServerSocketSession::AddInstance( Proto::FromClient::Instance instance, RequestId requestId )ι->TAwait<sp<Web::Server::SessionInfo>>::Task{
+		try{
+			auto info = co_await Web::Server::Sessions::UpsertAwait( Ƒ("{:x}", instance.session_id()), _userEndpoint.address().to_string(), true, nullptr );
+			_userPK = info->UserPK;
+			base::SetSessionId( instance.session_id() );
+			let [appPK,instancePK] = App::AddInstance( instance.application(), instance.host(), instance.pid() );//TODO Don't block
+			Information{ ELogTags::SocketServerRead, "[{:x}.{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), requestId, instance.application(), instance.host(), instance.web_port(), instance.pid(), instancePK, instance.session_id(), _userEndpoint.address().to_string() };
+			_instancePK = instancePK; _appPK = appPK;
+			_instance = move( instance );
+			Write( FromServer::ConnectionInfo(appPK, instancePK, requestId, AppClient()->PublicKey()) );
+		}
+		catch( exception& e ){
+			WriteException( move(e), requestId );
+		}
+	}
 	α ServerSocketSession::AddSession( Proto::FromClient::AddSession m, RequestId requestId, SL /*sl*/ )ι->TAwait<Jde::UserPK>::Task{
 		let _ = shared_from_this();
 		try{
@@ -103,7 +118,7 @@ namespace Jde::App{
 	α ServerSocketSession::SetSessionId( SessionPK sessionId, RequestId requestId )->Web::Server::Sessions::UpsertAwait::Task{
 		try{
 			LogRead( Ƒ("SetSessionId={:x}", sessionId), requestId );
-			co_await Web::Server::Sessions::UpsertAwait( Ƒ("{:x}", sessionId), _userEndpoint.address().to_string(), true );
+			co_await Web::Server::Sessions::UpsertAwait( Ƒ("{:x}", sessionId), _userEndpoint.address().to_string(), true, nullptr );
 			base::SetSessionId( sessionId );
 			Write( FromServer::Complete(requestId) );
 		}
@@ -117,6 +132,19 @@ namespace Jde::App{
 		ProcessTransmission( move(t), _userPK, nullopt );
 	}
 
+	α ServerSocketSession::GetJwt( Jde::RequestId requestId )ι->TAwait<jobject>::Task{
+		try{
+			THROW_IF( !_userPK, "Not logged in to system." );
+			let user = co_await QL::QLAwait<jobject>( Ƒ("user(id:{}){{name target}}", _userPK->Value), {UserPK::System}, Server::Schemas() );
+			let info = Web::Server::Sessions::Find( SessionId() );
+			let expiration = Chrono::ToClock<Clock,steady_clock>( info->Expiration );
+			Write( FromServer::Jwt(Server::GetJwt(string{user.at("name").as_string()}, string{user.at("target").as_string()}, _userEndpoint.address().to_string(), SessionId(), expiration, {}), requestId) );
+		}
+		catch( exception& e ){
+			WriteException( move(e), requestId );
+		}
+	}
+
 	α ServerSocketSession::ProcessTransmission( Proto::FromClient::Transmission&& transmission, optional<Jde::UserPK> /*userPK*/, optional<RequestId> clientRequestId )ι->void{
 		uint cLog{}, cString{};
 		if( transmission.messages_size()==0 )
@@ -127,18 +155,9 @@ namespace Jde::App{
 			using enum Proto::FromClient::Message::ValueCase;
 			let requestId = clientRequestId.value_or( m.request_id() );
 			switch( m.Value_case() ){
-			[[unlikely]]case kInstance:{
-				_instance = move( *m.mutable_instance() );
-				try{
-					let [appPK,instancePK] = AddInstance( _instance.application(), _instance.host(), _instance.pid() );//TODO Don't block
-					Information{ ELogTags::SocketServerRead, "[{:x}.{:x}]Adding application app:{}@{}:{} pid:{}, instancePK:{:x}, sessionId: {:x}, endpoint: '{}'", Id(), requestId, _instance.application(), _instance.host(), _instance.web_port(), _instance.pid(), instancePK, _instance.session_id(), _userEndpoint.address().to_string() };
-					_instancePK = instancePK; _appPK = appPK;
-					Write( FromServer::ConnectionInfo( appPK, instancePK, requestId ) );
-				}
-				catch( IException& e ){
-					WriteException( move(e), requestId );
-				}
-				break;}
+			[[unlikely]]case kInstance:
+				AddInstance( move(*m.mutable_instance()), requestId );
+				break;
 			case kAddSession:{
 				AddSession( move(*m.mutable_add_session()), requestId, SRCE_CUR );
 				break;}
@@ -173,6 +192,12 @@ namespace Jde::App{
 			[[likely]]case kLogEntry:
 				++cLog;
 				SaveLogEntry( move(*m.mutable_log_entry()), requestId );
+				break;
+			case kRequestType:
+				if( m.request_type()==Proto::FromClient::ERequestType::Jwt )
+					GetJwt( requestId );
+				else
+					WriteException( Exception{"RequestType: '{}' not implemented.", (uint32)m.request_type()}, requestId );
 				break;
 			case kSessionId:
 				if( !m.session_id() )

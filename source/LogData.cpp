@@ -20,7 +20,7 @@
 namespace Jde::App{
 	sp<DB::DBQueue> _pDbQueue;
 	sp<DB::AppSchema> _logSchema;
-	sp<Access::Authorize> _authorizer = ms<Access::Authorize>();
+	sp<Access::Authorize> _authorizer = ms<Access::Authorize>( "App" );
 	sp<Access::AccessListener> _listener;
 	constexpr ELogTags _tags{ ELogTags::App };
 	Ω ds()ι->DB::IDataSource&{ return *_logSchema->DS(); }
