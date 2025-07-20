@@ -4,7 +4,7 @@
 #include "../WebServer.h"
 #define let const auto
 
-namespace Jde::App{
+namespace Jde::App::Server{
 	struct SessionHandle final{
 		sp<ServerSocketSession> RequestSocketSession;
 		ForwardExecutionAwait::Handle Handle;

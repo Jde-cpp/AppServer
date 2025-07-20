@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <jde/framework/coroutine/Await.h>
 #include <jde/access/types/GoogleTokenInfo.h>
-#include <jde/web/client/Jwt.h>
+#include <jde/web/Jwt.h>
 #include <jde/web/client/http/ClientHttpAwait.h>
 
 namespace Jde::App{
@@ -9,7 +9,7 @@ namespace Jde::App{
 	struct GoogleLoginAwait : TAwait<Google::TokenInfo>{
 		using base = TAwait<Google::TokenInfo>;
 		GoogleLoginAwait( string&& jwt ):_jwt{ move(jwt) }{}
-		α await_ready()ι->bool override{ return !_jwt.Modulus.empty() && !_jwt.Exponent.empty(); }
+		α await_ready()ι->bool override{ return !_jwt.PublicKey.Modulus.empty() && !_jwt.PublicKey.Exponent.empty(); }
 		α Suspend()ι->void override{ Execute(); }
 		α await_resume()ε->Google::TokenInfo;
 	private:

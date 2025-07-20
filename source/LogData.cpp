@@ -6,32 +6,49 @@
 #include <jde/db/db.h>
 #include <jde/db/IDataSource.h>
 #include <jde/db/Row.h>
+#include <jde/db/meta/AppSchema.h>
 #include <jde/db/meta/Table.h>
 #include <jde/ql/ql.h>
+#include <jde/ql/LocalQL.h>
+#include <jde/access/server/accessServer.h>
+#include <jde/access/Authorize.h>
+#include <jde/access/AccessListener.h>
+#include "WebServer.h"
 
 #define let const auto
 
 namespace Jde::App{
 	sp<DB::DBQueue> _pDbQueue;
 	sp<DB::AppSchema> _logSchema;
+	sp<Access::Authorize> _authorizer = ms<Access::Authorize>( "App" );
+	sp<Access::AccessListener> _listener;
 	constexpr ELogTags _tags{ ELogTags::App };
 	Ω ds()ι->DB::IDataSource&{ return *_logSchema->DS(); }
 	Ω instanceTableName()ε->string{ return _logSchema->GetView("app_instances").DBName; }
 
 namespace Server{
+
 	α ConfigureDSAwait::Suspend()ι->void{ Configure(); }
-	α ConfigureDSAwait::Configure()ι->Access::ConfigureAwait::Task{
-		sp<Access::IAcl> authorize = Access::LocalAcl();
+	α ConfigureDSAwait::Configure()ι->VoidAwait<>::Task{
 		try{
-			auto accessSchema = DB::GetAppSchema( "access", authorize );
-			_logSchema = DB::GetAppSchema( "log", authorize );
-			QL::Configure( {accessSchema, _logSchema} );
-			if( auto sync = Settings::FindBool("/dbServers/sync").value_or(true); sync ){
-				DB::SyncSchema( *accessSchema, QL::Local() );
-				DB::SyncSchema( *_logSchema, QL::Local() );
+			auto accessSchema = DB::GetAppSchema( "access", _authorizer );
+			_logSchema = DB::GetAppSchema( "log", _authorizer );
+			SetLocalQL( QL::Configure({accessSchema, _logSchema}, _authorizer) );
+			_listener = ms<Access::AccessListener>( QLPtr() );
+			Process::AddShutdownFunction( []( bool terminate ){
+				_listener->Shutdown( terminate );
+				_listener = nullptr;
+			});
+
+			if( Settings::FindBool("/testing/recreateDB").value_or(false) ){
+				DB::NonProd::Recreate( *accessSchema, QLPtr() );
+				DB::NonProd::Recreate( *_logSchema, QLPtr() );
 			}
-			auto await = Access::Configure( accessSchema, {accessSchema, _logSchema}, QL::Local(), UserPK{UserPK::System} );
-			co_await await;
+			else if( Settings::FindBool("/dbServers/sync").value_or(false) ){
+				DB::SyncSchema( *accessSchema, QLPtr() );
+				DB::SyncSchema( *_logSchema, QLPtr() );
+			}
+			co_await Access::Server::Configure( {accessSchema, _logSchema}, QLPtr(), UserPK{UserPK::System}, _authorizer, _listener );
 			_pDbQueue = ms<DB::DBQueue>( _logSchema->DS() );
 			Process::AddShutdown( _pDbQueue );
 			EndAppInstances();

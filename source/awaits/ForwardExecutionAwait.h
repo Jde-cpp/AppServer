@@ -1,7 +1,7 @@
 #pragma once
 #include <jde/framework/coroutine/Await.h>
 
-namespace Jde::App{
+namespace Jde::App::Server{
 	struct ServerSocketSession;
 	struct ForwardExecutionAwait final: TAwait<string>{//kCustomResponse
 		using base = TAwait<string>;
