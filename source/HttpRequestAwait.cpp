@@ -1,9 +1,6 @@
 #include "HttpRequestAwait.h"
 #include <jde/framework/thread/execution.h>
-#include <jde/access/server/accessServer.h>
-#include "awaits/CertificateLoginAwait.h"
-#include "GoogleLogin.h"
-#include <jde/access/types/GoogleTokenInfo.h>
+#include <jde/web/server/auth/JwtLoginAwait.h>
 #include "WebServer.h"
 #include "types/rest/json.h"
 #define let const auto
@@ -15,11 +12,10 @@ namespace Jde::App{
 
 	α ValueJson( string&& value )ι{ return Json::Parse( Ƒ("{{\"value\": \"{}\"}}", value) ); }
 
-	α CertificateLogin( HttpRequest req, HttpRequestAwait::Handle h )ι->CertificateLoginAwait::Task{
+	Ω login( HttpRequest req, HttpRequestAwait::Handle h )ι->TAwait<UserPK>::Task{
 		try{
 			req.LogRead();
-			let token = Json::AsString( req.Body(), "jwt" );
-			req.SessionInfo->UserPK = co_await CertificateLoginAwait( token, req.UserEndpoint.address().to_string() );
+			req.SessionInfo->UserPK = co_await JwtLoginAwait( Web::Jwt{Json::AsString(req.Body(), "jwt")}, req.UserEndpoint.address().to_string() );
 			jobject j{ {"expiration", ToIsoString(req.SessionInfo->Expiration)} };
 			req.SessionInfo->IsInitialRequest = true;  //expecting sessionId to be set.
 			h.promise().Resume( {move(j), move(req)}, h );
@@ -29,26 +25,6 @@ namespace Jde::App{
 		}
 	}
 
-	Ω googleLogin( HttpRequest req, HttpRequestAwait::Handle h )ι->GoogleLoginAwait::Task{
-		try{
-			req.LogRead();
-			let token = co_await GoogleLoginAwait{ Json::AsString(req.Body(), "value") };
-			[]( str email, HttpRequest req, HttpRequestAwait::Handle h )->TAwait<UserPK>::Task {
-				try{
-					req.SessionInfo->UserPK = co_await Access::Server::Authenticate( email, underlying(Access::EProviderType::Google) );
-					h.promise().SetValue( {ValueJson(Ƒ("{:x}", req.SessionInfo->SessionId)), move(req)} );
-				}
-				catch( exception& e ){
-					h.promise().SetExp( move(e) );
-				}
-				h.resume();
-			}( token.Email, move(req), h );
-		}
-		catch( exception& e ){
-			h.promise().SetExp( move(e) );
-			h.resume();
-		}
-	}
 	α Logout( HttpRequest&& req, HttpRequestAwait::Handle h )ι->void{
 		try{
 			req.LogRead();
@@ -83,10 +59,8 @@ namespace Jde::App{
 		up<IException> pException;
 		bool processed{ _request.Method() == http::verb::post };
 		if( _request.Method() == http::verb::post ){
-			if( _request.Target()=="/loginGoogle" )
-				googleLogin( move(_request), _h );
-			else if( _request.Target()=="/loginCertificate" )
-				CertificateLogin( move(_request), _h );
+			if( _request.Target()=="/login" )
+				login( move(_request), _h );
 			else if( _request.Target()=="/logout" )
 				Logout( move(_request), _h );
 			else
