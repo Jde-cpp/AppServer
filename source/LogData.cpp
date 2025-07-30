@@ -27,9 +27,8 @@ namespace Jde::App{
 	Ω instanceTableName()ε->string{ return _logSchema->GetView("app_instances").DBName; }
 
 namespace Server{
-
 	α ConfigureDSAwait::Suspend()ι->void{ Configure(); }
-	α ConfigureDSAwait::Configure()ι->VoidAwait<>::Task{
+	α ConfigureDSAwait::Configure()ι->VoidAwait::Task{
 		try{
 			auto accessSchema = DB::GetAppSchema( "access", _authorizer );
 			_logSchema = DB::GetAppSchema( "log", _authorizer );

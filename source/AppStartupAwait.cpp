@@ -1,20 +1,20 @@
 #include "AppStartupAwait.h"
+#include <jde/web/server/SessionGraphQL.h>
+#include <jde/web/server/SettingQL.h>
 #include "WebServer.h"
 #include "graphQL/AppInstanceHook.h"
-#include <jde/web/server/SettingQL.h>
 #include "ExternalLogger.h"
 #include "LogData.h"
-#include <jde/web/server/SessionGraphQL.h>
 
 #define let const auto
 namespace Jde::App::Server{
-	α AppStartupAwait::Execute()ι->VoidAwait<>::Task{
+	α AppStartupAwait::Execute()ι->VoidAwait::Task{
 		try{
-			co_await Server::ConfigureDSAwait{};
-			Server::SetAppPKs( AddInstance("Main", IApplication::HostName(), OSApp::ProcessId()) );
+			co_await ConfigureDSAwait{};
+			SetAppPKs( AddInstance("Main", IApplication::HostName(), OSApp::ProcessId()) );
 
 			Data::LoadStrings();
-			auto appClient = Server::AppClient();
+			auto appClient = AppClient();
 			appClient->SetPublicKey( Crypto::CryptoSettings{Json::FindDefaultObject(_webServerSettings, "ssl")}.PublicKey() );
 			Server::StartWebServer( move(_webServerSettings) );
 			QL::Hook::Add( mu<AppInstanceHook>(appClient) );
@@ -25,7 +25,7 @@ namespace Jde::App::Server{
 			Information( ELogTags::App, "--AppServer Started.--" );
 			Resume();
 		}
-		catch( IException& e ){
+		catch( exception& e ){
 			ResumeExp( move(e) );
 			//OSApp::UnPause();
 		}

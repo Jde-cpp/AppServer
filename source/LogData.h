@@ -9,11 +9,11 @@ namespace Jde::DB{ struct IDataSource; }
 namespace Jde::QL{ struct TableQL; }
 
 namespace Jde::App::Server{
-	struct ConfigureDSAwait : VoidAwait<>{
+	struct ConfigureDSAwait : VoidAwait{
 		α Suspend()ι->void override;
 	private:
 		α EndAppInstances()ι->DB::ExecuteAwait::Task;
-		α Configure()ι->VoidAwait<>::Task;
+		α Configure()ι->VoidAwait::Task;
 	};
 	α SaveString( App::Proto::FromClient::EFields field, uint32 id, string value, SRCE )ι->void;
 }
