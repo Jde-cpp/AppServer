@@ -5,7 +5,7 @@
 
 #define let const auto
 
-namespace Jde::App{
+namespace Jde::App::Server{
 	struct StartAwait : TAwait<jvalue>{
 		StartAwait( QL::MutationQL /*mutation*/, UserPK, SL sl )ι:
 			TAwait<jvalue>{ sl }
@@ -22,14 +22,15 @@ namespace Jde::App{
 	}
 
 	struct StopAwait : TAwait<jvalue>{
-		StopAwait( QL::MutationQL mutation, UserPK userPK, SL sl )ι:
+		StopAwait( QL::MutationQL mutation, UserPK userPK, sp<IApp> appClient, SL sl )ι:
 			TAwait<jvalue>{ sl },
 			_mutation{mutation},
-			_userPK{userPK}
+			_userPK{userPK},
+			_appClient{move(appClient)}
 		{}
 		α Suspend()ι->void override{
 			let id = _mutation.Id<AppInstancePK>();
-			auto pid = id==IApplicationServer::InstancePK() ? OSApp::ProcessId() : 0;
+			auto pid = id==_appClient->InstancePK() ? OSApp::ProcessId() : 0;
 			if( auto p = pid ? sp<ServerSocketSession>{} : Server::FindInstance( id ); p )
 				pid = p->Instance().pid();
 			if( pid ){
@@ -43,9 +44,10 @@ namespace Jde::App{
 		}
 		QL::MutationQL _mutation;
 		UserPK _userPK;
+		sp<IApp> _appClient;
 	};
 
 	α AppInstanceHook::Stop( const QL::MutationQL& m, UserPK userPK, SL sl )ι->up<TAwait<jvalue>>{
-		return m.JsonTableName=="applicationInstance" ? mu<StopAwait>( m, userPK, sl ) : nullptr;
+		return m.JsonTableName=="applicationInstance" ? mu<StopAwait>( m, userPK, _appClient, sl ) : nullptr;
 	}
 }

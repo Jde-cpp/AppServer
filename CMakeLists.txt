@@ -2,7 +2,6 @@ cmake_minimum_required( VERSION ${MIN_REQ_CMAKE_VERSION} )
 
 include( $ENV{JDE_DIR}/Public/build/functions.cmake )
 project( Jde.App.Server VERSION ${JDE_VERSION} LANGUAGES CXX )
-#link_directories( ${JSONNET_DIR}/lib )
 
 add_subdirectory( $ENV{JDE_DIR}/Framework/source ../../libs/framework )
 add_subdirectory( $ENV{JDE_DIR}/Public/libs/crypto/src ../../libs/crypto )
@@ -20,11 +19,6 @@ add_subdirectory( $ENV{JDE_DIR}/Public/libs/app/shared ../../libs/app/shared )
 
 add_subdirectory( source lib )
 
-# if( buildTests )
-# 	add_subdirectory( tests )
-# 	set( CMAKE_CTEST_ARGUMENTS -c -settings=$ENV{JDE_DIR}/AppServer/config/App.Server.jsonnet )
-# 	add_test( NAME AppTests COMMAND $<TARGET_FILE:Jde.App.Tests> )
-# endif()
 if( WIN32 )
 	add_definitions( -DZLIB_USE_STATIC_LIBS -D )
 	set( ZLIB_ROOT ${LIB_ROOT}/zlib )
@@ -54,7 +48,6 @@ endif()
 target_link_libraries( ${targetName} Boost::json )
 target_link_libraries( ${targetName} protobuf::libprotobuf )
 
-#target_link_libraries( ${targetName} jsonnet )
 target_link_libraries( ${targetName} Jde Jde.QL Jde.Web.Server Jde.App.ServerLib )
 
 add_custom_command( TARGET ${targetName} POST_BUILD COMMAND ${CMAKE_COMMAND} -E create_symlink "$ENV{JDE_DIR}/Public/libs/db/config/common-meta.libsonnet" "$ENV{JDE_DIR}/AppServer/config/common-meta.libsonnet" COMMENT "mklink common-meta.libsonnet" )
